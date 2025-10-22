@@ -3,11 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Production Log v10.0 (Stable)</title>
+    <title>Production Log v11.0 (Stable)</title>
+    
+    <!-- === PWA / Full-Screen Tags === -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#F97316">
+    
+    <!-- === Libraries === -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- === Styles === -->
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #FFF8F0; }
         .modal { transition: opacity 0.3s ease; }
@@ -25,6 +35,7 @@
 </head>
 <body class="text-gray-800">
 
+    <!-- === HEADER === -->
     <div class="container mx-auto p-4 max-w-7xl">
         <header class="bg-white shadow-lg rounded-xl p-4 mb-6 border-t-4 border-orange-500">
              <div class="flex flex-col md:flex-row justify-between items-center">
@@ -39,6 +50,7 @@
             </div>
         </header>
 
+        <!-- === MAIN CONTENT (TABLE) === -->
         <main class="bg-white shadow-lg rounded-xl p-4">
             <div class="controls flex items-center mb-4">
                 <button id="add-entry-btn" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-5 rounded-lg shadow-md transition-transform transform hover:scale-105">
@@ -65,7 +77,8 @@
         </main>
     </div>
 
-    <!-- Modal for Data Entry -->
+    <!-- === MODALS === -->
+    <!-- Data Entry Modal -->
     <div id="entry-modal" class="modal fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 hidden pointer-events-none opacity-0">
         <div class="bg-white rounded-lg shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
             <div class="p-5 border-b bg-orange-50"><h2 class="text-xl font-bold text-orange-800">New Slurry Batch Entry</h2></div>
@@ -77,7 +90,7 @@
         </div>
     </div>
     
-    <!-- Modal for Export Preview -->
+    <!-- Export Preview Modal -->
     <div id="export-preview-modal" class="modal fixed inset-0 bg-black bg-opacity-70 flex flex-col items-center justify-center p-4 hidden pointer-events-none opacity-0">
         <p class="text-white text-lg mb-4">Long-press the image to save</p>
         <img id="preview-image" src="" alt="Batch Summary Preview" />
@@ -87,6 +100,7 @@
     <!-- Hidden container for generating exports -->
     <div id="export-container" class="fixed top-0 left-0 -z-10 opacity-0 pointer-events-none"></div>
 
+    <!-- === COMPLETE JAVASCRIPT === -->
     <script>
     const { jsPDF } = window.jspdf;
 
@@ -97,6 +111,8 @@
         let currentShiftInfo = {};
         let savedBatches = [];
         const isMobile = /Mobi/i.test(window.navigator.userAgent);
+        
+        // Data for products and ingredients
         const appData = {
             productionLines: ['Can Line', 'SUP Line', 'Sachet Line'],
             products: {
@@ -127,6 +143,7 @@
             document.getElementById('current-shift').textContent = `${currentShiftInfo.shift} (${currentShiftInfo.key})`;
         };
         
+        // This is the iOS-compatible submission function
         async function handleFormSubmit(e) {
             e.preventDefault();
             const form = e.target;
@@ -160,7 +177,6 @@
             const rowData = { "Date": newBatch.date, "Time Saved": newBatch.timeSaved, "Shift": newBatch.shift, "Line": newBatch.line, "Product": newBatch.productName, "Slurry Batch #": newBatch.slurryBatch, "Mix Time": newBatch.mixTime, "Brix": newBatch.brix, "Color (L)": newBatch.colorL, "Color (a/b)": newBatch.colorAB };
             newBatch.ingredients.forEach(ing => { rowData[ing.name] = ing.name.toLowerCase().includes('bulk paste') ? `Batch: ${ing.batch}, Ratio: ${ing.ratio}, Qty: ${ing.qty} Kg` : (ing.name.toLowerCase() === 'water' ? ing.qty : ing.batch); });
 
-            // This is the iOS-compatible submission method
             const hiddenForm = document.createElement('form');
             hiddenForm.method = 'post';
             hiddenForm.action = GOOGLE_SCRIPT_URL;
@@ -173,16 +189,13 @@
             hiddenForm.appendChild(input);
             document.body.appendChild(hiddenForm);
             
-            hiddenForm.submit(); // Submit the data
-            
+            hiddenForm.submit();
             document.body.removeChild(hiddenForm);
             
-            // We can't easily get a response from an iframe submit, so we'll optimistically update the UI.
-            // A full solution would involve postMessage, but this is far more reliable for submission.
             const batchToUpdate = savedBatches.find(b => b.id === batchId);
             if (batchToUpdate) {
                 batchToUpdate.syncStatus = 'success';
-                renderTable(); // Re-render to show "Synced"
+                setTimeout(() => renderTable(), 500); // Re-render after a short delay
             }
         }
 
@@ -281,14 +294,27 @@
             document.querySelector('#entry-modal .cancel-btn').addEventListener('click', () => { document.getElementById('entry-modal').classList.add('hidden', 'opacity-0', 'pointer-events-none'); });
             document.getElementById('entry-form').addEventListener('submit', handleFormSubmit);
             document.getElementById('close-preview-btn').addEventListener('click', () => { document.getElementById('export-preview-modal').classList.add('hidden', 'opacity-0', 'pointer-events-none'); document.getElementById('preview-image').src = ''; });
+            
+            // This listener handles clicks on the main table for expanding rows and triggering exports
             document.getElementById('log-table-body').addEventListener('click', (e) => {
-                const action = e.target.dataset.action;
-                if (action === 'export-png' || action === 'export-pdf') { exportBatch(e.target.dataset.batchId, action.split('-')[1], e.target); return; }
+                const actionButton = e.target.closest('[data-action]');
+                if (actionButton) {
+                    const action = actionButton.dataset.action;
+                    if (action === 'export-png' || action === 'export-pdf') {
+                        exportBatch(actionButton.dataset.batchId, action.split('-')[1], actionButton);
+                        return;
+                    }
+                }
+                
                 const summaryRow = e.target.closest('.summary-row');
                 if (summaryRow) {
-                    const batchId = summaryRow.dataset.batchId; const detailsRow = document.querySelector(`.details-row[data-details-for="${batchId}"]`);
-                    summaryRow.classList.toggle('expanded'); detailsRow.style.display = detailsRow.style.display === 'table-row' ? 'none' : 'table-row';
-                    summaryRow.querySelector('.expand-icon').textContent = summaryRow.classList.contains('expanded') ? '-' : '+';
+                    const batchId = summaryRow.dataset.batchId; 
+                    const detailsRow = document.querySelector(`.details-row[data-details-for="${batchId}"]`);
+                    if (!detailsRow) return; // Safety check
+                    summaryRow.classList.toggle('expanded');
+                    detailsRow.style.display = detailsRow.style.display === 'table-row' ? 'none' : 'table-row';
+                    const icon = summaryRow.querySelector('.expand-icon');
+                    if (icon) icon.textContent = summaryRow.classList.contains('expanded') ? '-' : '+';
                 }
             });
         }
@@ -298,12 +324,14 @@
             updateDateTime();
             setInterval(updateDateTime, 60000);
             setupEventListeners();
+            // Add the hidden iframe for iOS-compatible form submissions
             const iframe = document.createElement('iframe');
             iframe.name = 'hidden-iframe';
             iframe.style.display = 'none';
             document.body.appendChild(iframe);
         }
 
+        // Start the application
         initializeApp();
     });
     </script>
