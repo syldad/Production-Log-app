@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Production Log v10.0 (Stable)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #FFF8F0; }
+        .modal { transition: opacity 0.3s ease; }
+        .details-row { display: none; }
+        .summary-row { cursor: pointer; transition: background-color 0.2s; }
+        .summary-row:hover { background-color: #FFFAF0; }
+        .summary-row.expanded { background-color: #FFEAD9; }
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #FB923C; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .export-card { background-color: white; padding: 1.5rem; border: 1px solid #ddd; font-family: 'Inter', sans-serif; width: 600px; color: #333; }
+        #export-preview-modal img { max-width: 90vw; max-height: 70vh; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        input[type="number"]::-webkit-inner-spin-button, 
+        input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: auto; opacity: 1; }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <div class="container mx-auto p-4 max-w-7xl">
+        <header class="bg-white shadow-lg rounded-xl p-4 mb-6 border-t-4 border-orange-500">
+             <div class="flex flex-col md:flex-row justify-between items-center">
+                <div>
+                    <h1 class="text-3xl font-bold text-orange-800">Production Process Log</h1>
+                    <p class="text-gray-500">Live Sync with Master Production Sheet</p>
+                </div>
+                <div class="text-right mt-4 md:mt-0">
+                    <p class="text-lg font-semibold text-gray-700" id="current-date">--/--/----</p>
+                    <p class="text-md text-gray-600">Shift: <span id="current-shift" class="font-bold px-3 py-1 bg-orange-100 text-orange-800 rounded-full">--</span></p>
+                </div>
+            </div>
+        </header>
+
+        <main class="bg-white shadow-lg rounded-xl p-4">
+            <div class="controls flex items-center mb-4">
+                <button id="add-entry-btn" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-5 rounded-lg shadow-md transition-transform transform hover:scale-105">
+                    + Add New Slurry Batch
+                </button>
+            </div>
+            <div id="table-container" class="table-container overflow-x-auto">
+                <table class="min-w-full bg-white">
+                    <thead class="bg-orange-50">
+                        <tr>
+                            <th class="py-3 px-3 border-b-2 border-orange-200 text-left text-sm font-semibold text-orange-900 w-10"></th>
+                            <th class="py-3 px-3 border-b-2 border-orange-200 text-left text-sm font-semibold text-orange-900">Slurry Batch #</th>
+                            <th class="py-3 px-3 border-b-2 border-orange-200 text-left text-sm font-semibold text-orange-900">Product</th>
+                            <th class="py-3 px-3 border-b-2 border-orange-200 text-left text-sm font-semibold text-orange-900">Line</th>
+                            <th class="py-3 px-3 border-b-2 border-orange-200 text-left text-sm font-semibold text-orange-900">Time Saved</th>
+                            <th class="py-3 px-3 border-b-2 border-orange-200 text-left text-sm font-semibold text-orange-900 text-center">Sync Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="log-table-body">
+                        <tr class="text-center no-data-row"><td colspan="6" class="py-10 text-gray-500">No data for the current shift.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal for Data Entry -->
+    <div id="entry-modal" class="modal fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 hidden pointer-events-none opacity-0">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+            <div class="p-5 border-b bg-orange-50"><h2 class="text-xl font-bold text-orange-800">New Slurry Batch Entry</h2></div>
+            <form id="entry-form" class="flex-grow overflow-y-auto p-6 space-y-4"></form>
+            <div class="p-4 bg-gray-50 border-t flex justify-end gap-3">
+                <button type="button" class="cancel-btn bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg">Cancel</button>
+                <button type="submit" form="entry-form" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded-lg">Save & Sync</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal for Export Preview -->
+    <div id="export-preview-modal" class="modal fixed inset-0 bg-black bg-opacity-70 flex flex-col items-center justify-center p-4 hidden pointer-events-none opacity-0">
+        <p class="text-white text-lg mb-4">Long-press the image to save</p>
+        <img id="preview-image" src="" alt="Batch Summary Preview" />
+        <button id="close-preview-btn" class="mt-6 bg-white text-black font-bold py-2 px-6 rounded-lg">Close</button>
+    </div>
+    
+    <!-- Hidden container for generating exports -->
+    <div id="export-container" class="fixed top-0 left-0 -z-10 opacity-0 pointer-events-none"></div>
+
+    <script>
+    const { jsPDF } = window.jspdf;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- 1. CONFIGURATION & STATE ---
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwEz9bz3P2Z5fSYgmQcvuv2j4fDCErygGSBzzpZThmN20iOQWbJInE86aXgohOfg3f1hA/exec';
+        const SYNC_PASSWORD = 'RAS';
+        let currentShiftInfo = {};
+        let savedBatches = [];
+        const isMobile = /Mobi/i.test(window.navigator.userAgent);
+        const appData = {
+            productionLines: ['Can Line', 'SUP Line', 'Sachet Line'],
+            products: {
+                gino_pomo: { name: "GINO / POMO", ingredients: [ { name: '36-38% Bulk paste', qty: 975 }, { name: 'Fibre', qty: 300 }, { name: 'Maltose syrup', qty: 105 }, { name: 'Fructose syrup F42', qty: 170 }, { name: 'Fructose syrup F55', qty: 170 }, { name: 'Molasses', qty: 205 }, { name: 'Resistamyl', qty: 25 }, { name: 'Starch', qty: 65 }, { name: 'Pulpiz', qty: 15 }, { name: 'Salt', qty: 31 }, { name: 'Citric acid', qty: 26 }, { name: 'HIPRAROM 234-HD s/25', qty: 10 }, { name: 'Vitamin A', qty: 1.6 }, { name: 'Potassium iodine', qty: 0.01 }, { name: 'Zinc Oxide', qty: 0.69 }, { name: 'Caramel color 150d', qty: 0.1 }, { name: 'Additive color (E129)', qty: 0.5 }, { name: 'Additive color (E160d)Lycored', qty: 0.35 }, { name: 'Additive color (E110)', qty: 0.30 }, { name: 'D-Sodium isoasorbate', qty: 6 }, { name: 'HIB FLR CLR POWDER NG', qty: 17.5 }, { name: 'Water', qty: 2875.95 } ]},
+                peppe_onion: { name: "Peppe & Onion", ingredients: [ { name: '36-38% Bulk paste', qty: 1280.14 }, { name: 'Fibre', qty: 281.630 }, { name: 'Maltose syrup', qty: 163.860 }, { name: 'Fructose syrup F42', qty: 204.820 }, { name: 'Fructose syrup F55', qty: 204.820 }, { name: 'Modified Corn Starch E1422', qty: 25.600 }, { name: 'Modified Corn Starch E1412', qty: 25.600 }, { name: 'Modified Tapioca starch', qty: 61.450 }, { name: 'Salt', qty: 27.650 }, { name: 'Citric acid', qty: 24.580 }, { name: 'HIPRAROM 234-HD s/25', qty: 15.360 }, { name: 'Vitamin premix', qty: 0.510 }, { name: 'Additive color (E129)', qty: 0.650 }, { name: 'Additive color (E160d)Lycopene', qty: 0.5 }, { name: 'Additive color (E110)', qty: 0.05 }, { name: 'Caramel', qty: 3 }, { name: 'Oleoresin Capsicum', qty: 9.27 }, { name: 'Peppe oil', qty: 5.4 }, { name: 'D- sodium isoasorbate', qty: 5.12 }, { name: 'Water', qty: 2659.730 } ]},
+                brisk_farm: { name: "BRISK FARM", ingredients: [ { name: '36-38% Bulk paste', qty: 750 }, { name: 'Fibre', qty: 350 }, { name: 'Sugar', qty: 370 }, { name: 'Molasses', qty: 270 }, { name: 'Starch', qty: 90 }, { name: 'Pulpiz', qty: 20 }, { name: 'Salt', qty: 30 }, { name: 'Citric acid', qty: 27 }, { name: 'Vitamin A', qty: 1.714 }, { name: 'Potassium iodine', qty: 0.015 }, { name: 'Zinc Oxide', qty: 0.737 }, { name: 'Caramel color 150d', qty: 0.025 }, { name: 'Additive color (E129)', qty: 0.5 }, { name: 'Additive color (E160d)Lycored', qty: 0.35 }, { name: 'Additive color (E110)', qty: 0.15 }, { name: 'D-Sodium isoasorbate', qty: 6 }, { name: 'HIB FLR CLR POWDER NG', qty: 25 }, { name: 'Water', qty: 3058.509 } ]},
+                jollof_mix: { name: "Jollof Mix", ingredients: [ { name: '36-38% Bulk paste', qty: 1125 }, { name: 'Fibre', qty: 300 }, { name: 'Maltose syrup', qty: 205 }, { name: 'Fructose syrup F42', qty: 135 }, { name: 'Fructose syrup F55', qty: 135 }, { name: 'Modified Corn Starch E1422', qty: 50 }, { name: 'Modified Tapioca starch', qty: 75 }, { name: 'Salt', qty: 25 }, { name: 'Citric acid', qty: 25 }, { name: 'Vitamin premix', qty: 0.5 }, { name: 'Caramel color 150d', qty: 5 }, { name: 'Additive color (E129)', qty: 0.5 }, { name: 'Additive color (E110)', qty: 0.01 }, { name: 'Oleoresin Capsicum', qty: 5 }, { name: 'Peppe oil', qty: 3 }, { name: 'D- sodium isoasorbate', qty: 5 }, { name: 'Boiled chicken flavor Halal 106691', qty: 15 }, { name: 'Smoky jollof flavor(local)', qty: 17.5 }, { name: 'Tastykan jollof spice', qty: 10.5 }, { name: 'Onion powder', qty: 17.5 }, { name: 'Bulk curry powder', qty: 20 }, { name: 'Garlic powder', qty: 17.5 }, { name: 'Bulk monosodium Glutamate', qty: 55 }, { name: 'Ginger powder', qty: 10 }, { name: 'Water', qty: 2742.69 } ]}
+            }
+        };
+
+        // --- 2. CORE FUNCTIONS ---
+        const getShiftInfo = () => {
+            const hours = new Date().getUTCHours();
+            if (hours >= 6 && hours < 14) return { shift: 'Morning', key: 'SHa' };
+            if (hours >= 14 && hours < 22) return { shift: 'Afternoon', key: 'SHb' };
+            return { shift: 'Night', key: 'SHc' };
+        };
+        
+        const updateDateTime = () => {
+            const now = new Date();
+            document.getElementById('current-date').textContent = now.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+            const newShift = getShiftInfo();
+            if (currentShiftInfo.key && currentShiftInfo.key !== newShift.key) {
+                savedBatches = [];
+                renderTable();
+            }
+            currentShiftInfo = newShift;
+            document.getElementById('current-shift').textContent = `${currentShiftInfo.shift} (${currentShiftInfo.key})`;
+        };
+        
+        async function handleFormSubmit(e) {
+            e.preventDefault();
+            const form = e.target;
+            const password = prompt(`Enter the password to sync data for Shift ${currentShiftInfo.key}:`);
+            if (password !== SYNC_PASSWORD) {
+                if (password !== null) alert("Incorrect password. Data will not be synced.");
+                return;
+            }
+
+            const now = new Date(); const batchId = Date.now();
+            const productTypeSelect = form.querySelector('#product-type');
+            const newBatch = {
+                id: batchId, date: now.toLocaleDateString('en-CA'), timeSaved: now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
+                shift: currentShiftInfo.key, line: form.querySelector('#production-line').value, productKey: productTypeSelect.value,
+                productName: appData.products[productTypeSelect.value].name, slurryBatch: form.querySelector('#slurry-batch-number').value,
+                mixTime: form.querySelector('#mixing-time').value, brix: form.querySelector('#brix-value').value, colorL: form.querySelector('#color-l').value,
+                colorAB: form.querySelector('#color-ab').value, ingredients: [], syncStatus: 'syncing'
+            };
+
+            const ingredientInputs = form.querySelectorAll('#ingredients-container input[data-type="batch"]');
+            ingredientInputs.forEach(input => {
+                const name = input.dataset.ingName; const qty = input.dataset.ingQty; const batch = input.value; let ratio = null;
+                if (name.toLowerCase().includes('bulk paste')) { const ratioInput = input.closest('.grid').querySelector('input[data-type="ratio"]'); ratio = ratioInput ? ratioInput.value : ''; }
+                newBatch.ingredients.push({ name, qty, batch, ratio });
+            });
+            
+            savedBatches.push(newBatch);
+            renderTable();
+            document.getElementById('entry-modal').classList.add('hidden', 'opacity-0', 'pointer-events-none');
+
+            const rowData = { "Date": newBatch.date, "Time Saved": newBatch.timeSaved, "Shift": newBatch.shift, "Line": newBatch.line, "Product": newBatch.productName, "Slurry Batch #": newBatch.slurryBatch, "Mix Time": newBatch.mixTime, "Brix": newBatch.brix, "Color (L)": newBatch.colorL, "Color (a/b)": newBatch.colorAB };
+            newBatch.ingredients.forEach(ing => { rowData[ing.name] = ing.name.toLowerCase().includes('bulk paste') ? `Batch: ${ing.batch}, Ratio: ${ing.ratio}, Qty: ${ing.qty} Kg` : (ing.name.toLowerCase() === 'water' ? ing.qty : ing.batch); });
+
+            // This is the iOS-compatible submission method
+            const hiddenForm = document.createElement('form');
+            hiddenForm.method = 'post';
+            hiddenForm.action = GOOGLE_SCRIPT_URL;
+            hiddenForm.target = 'hidden-iframe'; 
+            const dataToSubmit = { password, rowData };
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'postData';
+            input.value = JSON.stringify(dataToSubmit);
+            hiddenForm.appendChild(input);
+            document.body.appendChild(hiddenForm);
+            
+            hiddenForm.submit(); // Submit the data
+            
+            document.body.removeChild(hiddenForm);
+            
+            // We can't easily get a response from an iframe submit, so we'll optimistically update the UI.
+            // A full solution would involve postMessage, but this is far more reliable for submission.
+            const batchToUpdate = savedBatches.find(b => b.id === batchId);
+            if (batchToUpdate) {
+                batchToUpdate.syncStatus = 'success';
+                renderTable(); // Re-render to show "Synced"
+            }
+        }
+
+        // --- 3. UI RENDERING & INTERACTION FUNCTIONS ---
+        function buildAndOpenModal() {
+            const form = document.getElementById('entry-form');
+            form.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div><label for="production-line" class="block text-sm font-medium text-gray-700">Production Line (SKU)</label><select id="production-line" required class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm"></select></div>
+                    <div><label for="product-type" class="block text-sm font-medium text-gray-700">Product Type</label><select id="product-type" required class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm"></select></div>
+                </div>
+                <div><label for="slurry-batch-number" class="block text-sm font-medium text-gray-700">Slurry Batch Number</label><input type="text" id="slurry-batch-number" required class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm" placeholder="e.g., SL001"></div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t">
+                    <div><label for="mixing-time" class="block text-sm font-medium text-gray-700">Mixing Time (mins)</label><input type="number" step="0.0001" id="mixing-time" required class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm" placeholder="e.g., 15.25"></div>
+                    <div><label for="brix-value" class="block text-sm font-medium text-gray-700">Brix</label><input type="number" step="0.0001" id="brix-value" required class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm" placeholder="e.g., 28.5123"></div>
+                    <div><label for="color-l" class="block text-sm font-medium text-gray-700">Color (L)</label><input type="number" step="0.0001" id="color-l" required class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm" placeholder="e.g., 23.1000"></div>
+                    <div><label for="color-ab" class="block text-sm font-medium text-gray-700">Color (a/b)</label><input type="number" step="0.0001" id="color-ab" required class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm" placeholder="e.g., 2.1500"></div>
+                </div>
+                <div id="ingredients-container" class="pt-4 border-t space-y-3"><p class="text-gray-500 text-sm">Select a product to see ingredients.</p></div>
+            `;
+            
+            const productionLineSelect = form.querySelector('#production-line');
+            const productTypeSelect = form.querySelector('#product-type');
+
+            productionLineSelect.innerHTML = appData.productionLines.map(line => `<option value="${line}">${line}</option>`).join('');
+            productTypeSelect.innerHTML = '<option value="">-- Select Product --</option>' + Object.keys(appData.products).map(key => `<option value="${key}">${appData.products[key].name}</option>`).join('');
+            
+            productTypeSelect.addEventListener('change', (e) => populateIngredientsForm(e.target.value));
+            document.getElementById('entry-modal').classList.remove('hidden', 'opacity-0', 'pointer-events-none');
+        }
+
+        function populateIngredientsForm(productKey) {
+            const container = document.getElementById('ingredients-container');
+            if (!productKey) { container.innerHTML = '<p class="text-gray-500 text-sm">Select a product to see ingredients.</p>'; return; }
+            container.innerHTML = '<h4 class="text-md font-semibold text-gray-800 mb-2">Enter Ingredient Details</h4>';
+            appData.products[productKey].ingredients.forEach(ing => {
+                const isWater = ing.name.toLowerCase() === 'water'; const isBulkPaste = ing.name.toLowerCase().includes('bulk paste');
+                const div = document.createElement('div'); div.className = 'grid grid-cols-1 md:grid-cols-3 gap-3 items-center border-t py-2';
+                let inputsHtml = '';
+                if (isWater) { inputsHtml = `<div class="md:col-span-2 flex items-center"><span class="text-sm text-gray-600 font-semibold">Quantity: ${ing.qty} Kg (Auto)</span><input type="hidden" data-ing-name="${ing.name}" data-ing-qty="${ing.qty}" data-type="batch" value="N/A"></div>`; }
+                else if (isBulkPaste) { inputsHtml = `<div class="md:col-span-2 grid grid-cols-2 gap-2"><input type="text" data-ing-name="${ing.name}" data-ing-qty="${ing.qty}" data-type="batch" required class="p-2 border border-gray-300 rounded-md shadow-sm" placeholder="Batch #"><input type="text" data-ing-name="${ing.name}" data-ing-qty="${ing.qty}" data-type="ratio" required class="p-2 border border-gray-300 rounded-md shadow-sm" placeholder="Ratio / Note"></div>`; }
+                else { inputsHtml = `<div class="md:col-span-2 grid grid-cols-2 gap-2"><input type="text" data-ing-name="${ing.name}" data-ing-qty="${ing.qty}" data-type="batch" required class="p-2 border border-gray-300 rounded-md shadow-sm" placeholder="Batch #"><span class="text-sm text-gray-500 self-center">Qty: ${ing.qty} Kg</span></div>`; }
+                div.innerHTML = `<label class="text-sm text-gray-700">${ing.name}</label>${inputsHtml}`;
+                container.appendChild(div);
+            });
+        }
+        
+        function renderTable() {
+            const tableBody = document.getElementById('log-table-body');
+            tableBody.innerHTML = '';
+            if (savedBatches.length === 0) { tableBody.innerHTML = `<tr class="text-center no-data-row"><td colspan="6" class="py-10 text-gray-500">No data for the current shift.</td></tr>`; return; }
+            savedBatches.forEach(batch => {
+                const summaryRow = document.createElement('tr'); summaryRow.className = 'summary-row'; summaryRow.dataset.batchId = batch.id;
+                let statusHtml;
+                if(batch.syncStatus === 'syncing') statusHtml = '<div class="flex justify-center items-center"><div class="loader"></div></div>';
+                else if(batch.syncStatus === 'success') statusHtml = '<span class="font-bold text-green-600">Synced</span>';
+                else if(batch.syncStatus === 'error') statusHtml = '<span class="font-bold text-red-600">Failed</span>';
+                summaryRow.innerHTML = `<td class="py-3 px-3 border-b border-gray-200 text-orange-600 font-bold expand-icon">+</td> <td class="py-3 px-3 border-b border-gray-200 font-semibold">${batch.slurryBatch}</td> <td class="py-3 px-3 border-b border-gray-200">${batch.productName}</td> <td class="py-3 px-3 border-b border-gray-200">${batch.line}</td> <td class="py-3 px-3 border-b border-gray-200">${batch.timeSaved}</td> <td class="py-3 px-3 border-b border-gray-200 text-center">${statusHtml}</td>`;
+                const detailsRow = document.createElement('tr'); detailsRow.className = 'details-row'; detailsRow.dataset.detailsFor = batch.id;
+                let detailsHtml = `<td colspan="6" class="p-4 bg-orange-50/50"><div class="max-w-4xl mx-auto"><div class="flex justify-between items-start"><div> <h4 class="font-bold mb-2 text-orange-900">Batch Details:</h4> <table class="text-sm"> <tr><td class="font-semibold pr-2">Mix Time:</td><td>${batch.mixTime}</td><td class="font-semibold pr-2 pl-4">Brix:</td><td>${batch.brix}</td></tr> <tr><td class="font-semibold pr-2">Color (L):</td><td>${batch.colorL}</td><td class="font-semibold pr-2 pl-4">Color (a/b):</td><td>${batch.colorAB}</td></tr> </table> </div><div class="flex gap-2"> <button data-action="export-png" data-batch-id="${batch.id}" class="export-btn bg-white hover:bg-gray-100 text-gray-700 text-sm font-bold py-1 px-3 border rounded-md">Export Image</button> <button data-action="export-pdf" data-batch-id="${batch.id}" class="export-btn bg-white hover:bg-gray-100 text-gray-700 text-sm font-bold py-1 px-3 border rounded-md">Export PDF</button> </div></div> <h4 class="font-bold mt-4 mb-2 text-orange-900">Ingredient Details:</h4> <table class="min-w-full text-sm bg-white rounded-md shadow-sm"> <thead class="bg-gray-100"><tr><th class="px-2 py-1 text-left font-semibold">Ingredient</th><th class="px-2 py-1 text-left font-semibold">Batch #</th><th class="px-2 py-1 text-left font-semibold">Details</th></tr></thead><tbody>`;
+                batch.ingredients.forEach(ing => { const details = ing.name.toLowerCase().includes('bulk paste') ? `Ratio: ${ing.ratio}, Qty: ${ing.qty} Kg` : `Qty: ${ing.qty} Kg`; detailsHtml += `<tr class="border-t"><td class="px-2 py-1">${ing.name}</td><td class="px-2 py-1">${ing.batch}</td><td class="px-2 py-1">${details}</td></tr>`; });
+                detailsHtml += '</tbody></table></div></td>';
+                detailsRow.innerHTML = detailsHtml;
+                tableBody.appendChild(summaryRow); tableBody.appendChild(detailsRow);
+            });
+        }
+        
+        async function exportBatch(batchId, format, buttonEl) {
+            const batch = savedBatches.find(b => b.id == batchId); if (!batch) return;
+            const originalText = buttonEl.textContent; buttonEl.textContent = 'Generating...'; buttonEl.disabled = true;
+            const exportContainer = document.getElementById('export-container');
+            const card = document.createElement('div'); card.className = 'export-card';
+            let ingredientsTable = '';
+            batch.ingredients.forEach(ing => { const details = ing.name.toLowerCase().includes('bulk paste') ? `Ratio: ${ing.ratio}, Qty: ${ing.qty} Kg` : `Qty: ${ing.qty} Kg`; ingredientsTable += `<tr style="border-top: 1px solid #eee;"><td style="padding: 4px;">${ing.name}</td><td style="padding: 4px;">${ing.batch}</td><td style="padding: 4px;">${details}</td></tr>`; });
+            card.innerHTML = `<div style="border-bottom: 2px solid #F97316; padding-bottom: 0.5rem; margin-bottom: 1rem;"><h2 style="font-size: 1.5rem; font-weight: 700; color: #7C2D12;">Batch Summary: ${batch.slurryBatch}</h2><p style="color: #666;">${batch.productName} - ${batch.line}</p></div><table style="width: 100%; font-size: 0.9rem; margin-bottom: 1rem;"><tr><td><strong>Date:</strong> ${batch.date}</td><td><strong>Time:</strong> ${batch.timeSaved}</td></tr><tr><td><strong>Shift:</strong> ${currentShiftInfo.shift} (${batch.shift})</td><td><strong>Mix Time:</strong> ${batch.mixTime}</td></tr><tr><td><strong>Brix:</strong> ${batch.brix}</td><td><strong>Color (L/ab):</strong> ${batch.colorL} / ${batch.colorAB}</td></tr></table><h3 style="font-size: 1.1rem; font-weight: 600; color: #7C2D12; border-top: 1px solid #ddd; padding-top: 1rem;">Ingredients</h3><table style="width: 100%; font-size: 0.85rem; border-collapse: collapse;"><thead style="text-align: left; background-color: #f4f4f4;"><tr><th style="padding: 4px;">Ingredient</th><th style="padding: 4px;">Batch #</th><th style="padding: 4px;">Details</th></tr></thead><tbody>${ingredientsTable}</tbody></table>`;
+            exportContainer.appendChild(card);
+            try {
+                const canvas = await html2canvas(card, { scale: 2 });
+                const imgData = canvas.toDataURL('image/png'); const filename = `Batch_${batch.slurryBatch}_Summary`;
+                if (isMobile) {
+                    const previewModal = document.getElementById('export-preview-modal');
+                    const previewImage = document.getElementById('preview-image');
+                    previewImage.src = imgData;
+                    previewModal.classList.remove('hidden', 'opacity-0', 'pointer-events-none');
+                } else {
+                    if (format === 'png') { const link = document.createElement('a'); link.download = `${filename}.png`; link.href = imgData; link.click(); }
+                    else if (format === 'pdf') { const pdf = new jsPDF({ orientation: 'p', unit: 'px', format: [canvas.width, canvas.height] }); pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height); pdf.save(`${filename}.pdf`); }
+                }
+            } catch(err) { console.error("Export failed:", err); alert("Sorry, the summary could not be exported."); }
+            finally { exportContainer.innerHTML = ''; buttonEl.textContent = originalText; buttonEl.disabled = false; }
+        }
+        
+        // --- 4. EVENT LISTENERS ---
+        function setupEventListeners() {
+            document.getElementById('add-entry-btn').addEventListener('click', buildAndOpenModal);
+            document.querySelector('#entry-modal .cancel-btn').addEventListener('click', () => { document.getElementById('entry-modal').classList.add('hidden', 'opacity-0', 'pointer-events-none'); });
+            document.getElementById('entry-form').addEventListener('submit', handleFormSubmit);
+            document.getElementById('close-preview-btn').addEventListener('click', () => { document.getElementById('export-preview-modal').classList.add('hidden', 'opacity-0', 'pointer-events-none'); document.getElementById('preview-image').src = ''; });
+            document.getElementById('log-table-body').addEventListener('click', (e) => {
+                const action = e.target.dataset.action;
+                if (action === 'export-png' || action === 'export-pdf') { exportBatch(e.target.dataset.batchId, action.split('-')[1], e.target); return; }
+                const summaryRow = e.target.closest('.summary-row');
+                if (summaryRow) {
+                    const batchId = summaryRow.dataset.batchId; const detailsRow = document.querySelector(`.details-row[data-details-for="${batchId}"]`);
+                    summaryRow.classList.toggle('expanded'); detailsRow.style.display = detailsRow.style.display === 'table-row' ? 'none' : 'table-row';
+                    summaryRow.querySelector('.expand-icon').textContent = summaryRow.classList.contains('expanded') ? '-' : '+';
+                }
+            });
+        }
+        
+        // --- 5. INITIALIZE THE APP ---
+        function initializeApp() {
+            updateDateTime();
+            setInterval(updateDateTime, 60000);
+            setupEventListeners();
+            const iframe = document.createElement('iframe');
+            iframe.name = 'hidden-iframe';
+            iframe.style.display = 'none';
+            document.body.appendChild(iframe);
+        }
+
+        initializeApp();
+    });
+    </script>
+</body>
+</html>
+
+
