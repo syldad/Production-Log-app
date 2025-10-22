@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Production Log v11.0 (Stable)</title>
+    <title>Production Log v10.0 (Stable)</title>
     
     <!-- === PWA / Full-Screen Tags === -->
     <link rel="manifest" href="manifest.json">
@@ -78,7 +78,6 @@
     </div>
 
     <!-- === MODALS === -->
-    <!-- Data Entry Modal -->
     <div id="entry-modal" class="modal fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 hidden pointer-events-none opacity-0">
         <div class="bg-white rounded-lg shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
             <div class="p-5 border-b bg-orange-50"><h2 class="text-xl font-bold text-orange-800">New Slurry Batch Entry</h2></div>
@@ -89,15 +88,11 @@
             </div>
         </div>
     </div>
-    
-    <!-- Export Preview Modal -->
     <div id="export-preview-modal" class="modal fixed inset-0 bg-black bg-opacity-70 flex flex-col items-center justify-center p-4 hidden pointer-events-none opacity-0">
         <p class="text-white text-lg mb-4">Long-press the image to save</p>
         <img id="preview-image" src="" alt="Batch Summary Preview" />
         <button id="close-preview-btn" class="mt-6 bg-white text-black font-bold py-2 px-6 rounded-lg">Close</button>
     </div>
-    
-    <!-- Hidden container for generating exports -->
     <div id="export-container" class="fixed top-0 left-0 -z-10 opacity-0 pointer-events-none"></div>
 
     <!-- === COMPLETE JAVASCRIPT === -->
@@ -111,8 +106,6 @@
         let currentShiftInfo = {};
         let savedBatches = [];
         const isMobile = /Mobi/i.test(window.navigator.userAgent);
-        
-        // Data for products and ingredients
         const appData = {
             productionLines: ['Can Line', 'SUP Line', 'Sachet Line'],
             products: {
@@ -171,12 +164,13 @@
             });
             
             savedBatches.push(newBatch);
-            renderTable();
+            renderTable(); // Update UI to show "syncing"
             document.getElementById('entry-modal').classList.add('hidden', 'opacity-0', 'pointer-events-none');
 
             const rowData = { "Date": newBatch.date, "Time Saved": newBatch.timeSaved, "Shift": newBatch.shift, "Line": newBatch.line, "Product": newBatch.productName, "Slurry Batch #": newBatch.slurryBatch, "Mix Time": newBatch.mixTime, "Brix": newBatch.brix, "Color (L)": newBatch.colorL, "Color (a/b)": newBatch.colorAB };
             newBatch.ingredients.forEach(ing => { rowData[ing.name] = ing.name.toLowerCase().includes('bulk paste') ? `Batch: ${ing.batch}, Ratio: ${ing.ratio}, Qty: ${ing.qty} Kg` : (ing.name.toLowerCase() === 'water' ? ing.qty : ing.batch); });
 
+            // Using hidden form for reliable submission across browsers
             const hiddenForm = document.createElement('form');
             hiddenForm.method = 'post';
             hiddenForm.action = GOOGLE_SCRIPT_URL;
@@ -189,14 +183,37 @@
             hiddenForm.appendChild(input);
             document.body.appendChild(hiddenForm);
             
-            hiddenForm.submit();
-            document.body.removeChild(hiddenForm);
+            // Handle submission complete (iframe load) - this indicates data was sent
+            const iframe = document.getElementsByName('hidden-iframe')[0];
+            iframe.onload = () => {
+                const batchToUpdate = savedBatches.find(b => b.id === batchId);
+                 if (batchToUpdate) {
+                     // Assume success as we can't read iframe response easily
+                     batchToUpdate.syncStatus = 'success';
+                     renderTable();
+                 }
+                // Clean up the form after submission attempt
+                if (document.body.contains(hiddenForm)) {
+                    document.body.removeChild(hiddenForm);
+                }
+            };
+             // Handle potential errors during submission (less reliable with iframe)
+            iframe.onerror = () => {
+                 const batchToUpdate = savedBatches.find(b => b.id === batchId);
+                 if (batchToUpdate) {
+                     batchToUpdate.syncStatus = 'error';
+                     renderTable();
+                 }
+                 alert("Failed to send data. Please check connection and try again.");
+                 // Clean up the form after submission attempt
+                 if (document.body.contains(hiddenForm)) {
+                     document.body.removeChild(hiddenForm);
+                 }
+            };
+
+            hiddenForm.submit(); // Submit the data
             
-            const batchToUpdate = savedBatches.find(b => b.id === batchId);
-            if (batchToUpdate) {
-                batchToUpdate.syncStatus = 'success';
-                setTimeout(() => renderTable(), 500); // Re-render after a short delay
-            }
+            // Note: We don't remove the form immediately, wait for iframe onload/onerror
         }
 
         // --- 3. UI RENDERING & INTERACTION FUNCTIONS ---
@@ -209,7 +226,7 @@
                 </div>
                 <div><label for="slurry-batch-number" class="block text-sm font-medium text-gray-700">Slurry Batch Number</label><input type="text" id="slurry-batch-number" required class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm" placeholder="e.g., SL001"></div>
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t">
-                    <div><label for="mixing-time" class="block text-sm font-medium text-gray-700">Mixing Time (mins)</label><input type="number" step="0.0001" id="mixing-time" required class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm" placeholder="e.g., 15.25"></div>
+                    <div><label for="mixing-time" class="block text-sm font-medium text-gray-700">Mixing Time (mins)</label><input type="number" step="0.0001" id="mixing-time" required class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm" placeholder="e.g., 15.2500"></div>
                     <div><label for="brix-value" class="block text-sm font-medium text-gray-700">Brix</label><input type="number" step="0.0001" id="brix-value" required class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm" placeholder="e.g., 28.5123"></div>
                     <div><label for="color-l" class="block text-sm font-medium text-gray-700">Color (L)</label><input type="number" step="0.0001" id="color-l" required class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm" placeholder="e.g., 23.1000"></div>
                     <div><label for="color-ab" class="block text-sm font-medium text-gray-700">Color (a/b)</label><input type="number" step="0.0001" id="color-ab" required class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm" placeholder="e.g., 2.1500"></div>
@@ -245,20 +262,31 @@
         
         function renderTable() {
             const tableBody = document.getElementById('log-table-body');
-            tableBody.innerHTML = '';
-            if (savedBatches.length === 0) { tableBody.innerHTML = `<tr class="text-center no-data-row"><td colspan="6" class="py-10 text-gray-500">No data for the current shift.</td></tr>`; return; }
-            savedBatches.forEach(batch => {
-                const summaryRow = document.createElement('tr'); summaryRow.className = 'summary-row'; summaryRow.dataset.batchId = batch.id;
+            tableBody.innerHTML = ''; // Clear previous entries
+            if (savedBatches.length === 0) {
+                tableBody.innerHTML = `<tr class="text-center no-data-row"><td colspan="6" class="py-10 text-gray-500">No data for the current shift.</td></tr>`;
+                return;
+            }
+
+            // Render rows in reverse order (newest first)
+            savedBatches.slice().reverse().forEach(batch => {
+                const summaryRow = document.createElement('tr');
+                summaryRow.className = 'summary-row';
+                summaryRow.dataset.batchId = batch.id;
                 let statusHtml;
                 if(batch.syncStatus === 'syncing') statusHtml = '<div class="flex justify-center items-center"><div class="loader"></div></div>';
                 else if(batch.syncStatus === 'success') statusHtml = '<span class="font-bold text-green-600">Synced</span>';
                 else if(batch.syncStatus === 'error') statusHtml = '<span class="font-bold text-red-600">Failed</span>';
                 summaryRow.innerHTML = `<td class="py-3 px-3 border-b border-gray-200 text-orange-600 font-bold expand-icon">+</td> <td class="py-3 px-3 border-b border-gray-200 font-semibold">${batch.slurryBatch}</td> <td class="py-3 px-3 border-b border-gray-200">${batch.productName}</td> <td class="py-3 px-3 border-b border-gray-200">${batch.line}</td> <td class="py-3 px-3 border-b border-gray-200">${batch.timeSaved}</td> <td class="py-3 px-3 border-b border-gray-200 text-center">${statusHtml}</td>`;
-                const detailsRow = document.createElement('tr'); detailsRow.className = 'details-row'; detailsRow.dataset.detailsFor = batch.id;
-                let detailsHtml = `<td colspan="6" class="p-4 bg-orange-50/50"><div class="max-w-4xl mx-auto"><div class="flex justify-between items-start"><div> <h4 class="font-bold mb-2 text-orange-900">Batch Details:</h4> <table class="text-sm"> <tr><td class="font-semibold pr-2">Mix Time:</td><td>${batch.mixTime}</td><td class="font-semibold pr-2 pl-4">Brix:</td><td>${batch.brix}</td></tr> <tr><td class="font-semibold pr-2">Color (L):</td><td>${batch.colorL}</td><td class="font-semibold pr-2 pl-4">Color (a/b):</td><td>${batch.colorAB}</td></tr> </table> </div><div class="flex gap-2"> <button data-action="export-png" data-batch-id="${batch.id}" class="export-btn bg-white hover:bg-gray-100 text-gray-700 text-sm font-bold py-1 px-3 border rounded-md">Export Image</button> <button data-action="export-pdf" data-batch-id="${batch.id}" class="export-btn bg-white hover:bg-gray-100 text-gray-700 text-sm font-bold py-1 px-3 border rounded-md">Export PDF</button> </div></div> <h4 class="font-bold mt-4 mb-2 text-orange-900">Ingredient Details:</h4> <table class="min-w-full text-sm bg-white rounded-md shadow-sm"> <thead class="bg-gray-100"><tr><th class="px-2 py-1 text-left font-semibold">Ingredient</th><th class="px-2 py-1 text-left font-semibold">Batch #</th><th class="px-2 py-1 text-left font-semibold">Details</th></tr></thead><tbody>`;
+                
+                const detailsRow = document.createElement('tr');
+                detailsRow.className = 'details-row';
+                detailsRow.dataset.detailsFor = batch.id;
+                let detailsHtml = `<td colspan="6" class="p-4 bg-orange-50/50"><div class="max-w-4xl mx-auto"><div class="flex justify-between items-start mb-3"><div> <h4 class="font-bold mb-1 text-orange-900">Batch Details:</h4> <table class="text-sm"> <tr><td class="font-semibold pr-2">Mix Time:</td><td>${batch.mixTime} mins</td><td class="font-semibold pr-2 pl-4">Brix:</td><td>${batch.brix}</td></tr> <tr><td class="font-semibold pr-2">Color (L):</td><td>${batch.colorL}</td><td class="font-semibold pr-2 pl-4">Color (a/b):</td><td>${batch.colorAB}</td></tr> </table> </div><div class="flex flex-col sm:flex-row gap-2"> <button data-action="export-png" data-batch-id="${batch.id}" class="export-btn bg-white hover:bg-gray-100 text-gray-700 text-sm font-bold py-1 px-3 border rounded-md">Export Image</button> <button data-action="export-pdf" data-batch-id="${batch.id}" class="export-btn bg-white hover:bg-gray-100 text-gray-700 text-sm font-bold py-1 px-3 border rounded-md">Export PDF</button> </div></div> <h4 class="font-bold mt-3 mb-1 text-orange-900">Ingredient Details:</h4> <table class="min-w-full text-sm bg-white rounded-md shadow-sm"> <thead class="bg-gray-100"><tr><th class="px-2 py-1 text-left font-semibold">Ingredient</th><th class="px-2 py-1 text-left font-semibold">Batch #</th><th class="px-2 py-1 text-left font-semibold">Details</th></tr></thead><tbody>`;
                 batch.ingredients.forEach(ing => { const details = ing.name.toLowerCase().includes('bulk paste') ? `Ratio: ${ing.ratio}, Qty: ${ing.qty} Kg` : `Qty: ${ing.qty} Kg`; detailsHtml += `<tr class="border-t"><td class="px-2 py-1">${ing.name}</td><td class="px-2 py-1">${ing.batch}</td><td class="px-2 py-1">${details}</td></tr>`; });
                 detailsHtml += '</tbody></table></div></td>';
                 detailsRow.innerHTML = detailsHtml;
+                
                 tableBody.appendChild(summaryRow); tableBody.appendChild(detailsRow);
             });
         }
@@ -270,7 +298,7 @@
             const card = document.createElement('div'); card.className = 'export-card';
             let ingredientsTable = '';
             batch.ingredients.forEach(ing => { const details = ing.name.toLowerCase().includes('bulk paste') ? `Ratio: ${ing.ratio}, Qty: ${ing.qty} Kg` : `Qty: ${ing.qty} Kg`; ingredientsTable += `<tr style="border-top: 1px solid #eee;"><td style="padding: 4px;">${ing.name}</td><td style="padding: 4px;">${ing.batch}</td><td style="padding: 4px;">${details}</td></tr>`; });
-            card.innerHTML = `<div style="border-bottom: 2px solid #F97316; padding-bottom: 0.5rem; margin-bottom: 1rem;"><h2 style="font-size: 1.5rem; font-weight: 700; color: #7C2D12;">Batch Summary: ${batch.slurryBatch}</h2><p style="color: #666;">${batch.productName} - ${batch.line}</p></div><table style="width: 100%; font-size: 0.9rem; margin-bottom: 1rem;"><tr><td><strong>Date:</strong> ${batch.date}</td><td><strong>Time:</strong> ${batch.timeSaved}</td></tr><tr><td><strong>Shift:</strong> ${currentShiftInfo.shift} (${batch.shift})</td><td><strong>Mix Time:</strong> ${batch.mixTime}</td></tr><tr><td><strong>Brix:</strong> ${batch.brix}</td><td><strong>Color (L/ab):</strong> ${batch.colorL} / ${batch.colorAB}</td></tr></table><h3 style="font-size: 1.1rem; font-weight: 600; color: #7C2D12; border-top: 1px solid #ddd; padding-top: 1rem;">Ingredients</h3><table style="width: 100%; font-size: 0.85rem; border-collapse: collapse;"><thead style="text-align: left; background-color: #f4f4f4;"><tr><th style="padding: 4px;">Ingredient</th><th style="padding: 4px;">Batch #</th><th style="padding: 4px;">Details</th></tr></thead><tbody>${ingredientsTable}</tbody></table>`;
+            card.innerHTML = `<div style="border-bottom: 2px solid #F97316; padding-bottom: 0.5rem; margin-bottom: 1rem;"><h2 style="font-size: 1.5rem; font-weight: 700; color: #7C2D12;">Batch Summary: ${batch.slurryBatch}</h2><p style="color: #666;">${batch.productName} - ${batch.line}</p></div><table style="width: 100%; font-size: 0.9rem; margin-bottom: 1rem;"><tr><td><strong>Date:</strong> ${batch.date}</td><td><strong>Time:</strong> ${batch.timeSaved}</td></tr><tr><td><strong>Shift:</strong> ${currentShiftInfo.shift} (${batch.shift})</td><td><strong>Mix Time:</strong> ${batch.mixTime} mins</td></tr><tr><td><strong>Brix:</strong> ${batch.brix}</td><td><strong>Color (L/ab):</strong> ${batch.colorL} / ${batch.colorAB}</td></tr></table><h3 style="font-size: 1.1rem; font-weight: 600; color: #7C2D12; border-top: 1px solid #ddd; padding-top: 1rem;">Ingredients</h3><table style="width: 100%; font-size: 0.85rem; border-collapse: collapse;"><thead style="text-align: left; background-color: #f4f4f4;"><tr><th style="padding: 4px;">Ingredient</th><th style="padding: 4px;">Batch #</th><th style="padding: 4px;">Details</th></tr></thead><tbody>${ingredientsTable}</tbody></table>`;
             exportContainer.appendChild(card);
             try {
                 const canvas = await html2canvas(card, { scale: 2 });
@@ -294,8 +322,6 @@
             document.querySelector('#entry-modal .cancel-btn').addEventListener('click', () => { document.getElementById('entry-modal').classList.add('hidden', 'opacity-0', 'pointer-events-none'); });
             document.getElementById('entry-form').addEventListener('submit', handleFormSubmit);
             document.getElementById('close-preview-btn').addEventListener('click', () => { document.getElementById('export-preview-modal').classList.add('hidden', 'opacity-0', 'pointer-events-none'); document.getElementById('preview-image').src = ''; });
-            
-            // This listener handles clicks on the main table for expanding rows and triggering exports
             document.getElementById('log-table-body').addEventListener('click', (e) => {
                 const actionButton = e.target.closest('[data-action]');
                 if (actionButton) {
@@ -305,16 +331,15 @@
                         return;
                     }
                 }
-                
                 const summaryRow = e.target.closest('.summary-row');
                 if (summaryRow) {
                     const batchId = summaryRow.dataset.batchId; 
                     const detailsRow = document.querySelector(`.details-row[data-details-for="${batchId}"]`);
-                    if (!detailsRow) return; // Safety check
+                    if (!detailsRow) return;
                     summaryRow.classList.toggle('expanded');
                     detailsRow.style.display = detailsRow.style.display === 'table-row' ? 'none' : 'table-row';
                     const icon = summaryRow.querySelector('.expand-icon');
-                    if (icon) icon.textContent = summaryRow.classList.contains('expanded') ? '-' : '+';
+                    if(icon) icon.textContent = summaryRow.classList.contains('expanded') ? '-' : '+';
                 }
             });
         }
@@ -322,13 +347,15 @@
         // --- 5. INITIALIZE THE APP ---
         function initializeApp() {
             updateDateTime();
-            setInterval(updateDateTime, 60000);
+            setInterval(updateDateTime, 60000); // Check time/shift every minute
             setupEventListeners();
-            // Add the hidden iframe for iOS-compatible form submissions
+            // Create the hidden iframe for form submissions
             const iframe = document.createElement('iframe');
             iframe.name = 'hidden-iframe';
             iframe.style.display = 'none';
             document.body.appendChild(iframe);
+            // Initial render
+            renderTable(); 
         }
 
         // Start the application
