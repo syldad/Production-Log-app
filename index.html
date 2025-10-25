@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Production Log v12.1</title>
+    <title>Production Log v13.1</title>
     
     <!-- PWA / Full-Screen Tags -->
     <link rel="manifest" href="manifest.json">
@@ -24,14 +24,19 @@
         .summary-row { cursor: pointer; transition: background-color 0.2s; }
         .summary-row:hover { background-color: #FFFAF0; }
         .summary-row.expanded { background-color: #FFEAD9; }
+        /* Shito details row */
+        .summary-row.shito:hover { background-color: #FFF5F5; }
+        .summary-row.shito.expanded { background-color: #FFEBEE; }
+        
         .loader { border: 4px solid #f3f3f3; border-top: 4px solid #FB923C; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .export-card { background-color: white; padding: 1.5rem; border: 1px solid #ddd; font-family: 'Inter', sans-serif; width: 600px; color: #333; }
         #export-preview-modal img { max-width: 90vw; max-height: 70vh; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
         input[type="number"]::-webkit-inner-spin-button, 
         input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: auto; opacity: 1; }
-        /* Hide pages by default */
         .page { display: none; }
+        /* Simple Alert Modal */
+        #alert-modal { transition: opacity 0.2s ease; }
     </style>
 </head>
 <body class="text-gray-800">
@@ -43,10 +48,10 @@
             <p class="text-gray-500">Select a process to begin</p>
         </header>
         <div class="grid grid-cols-1 gap-6">
-            <button onclick="showPage('page-slurry')" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-6 px-8 rounded-lg shadow-md transition-transform transform hover:scale-105">
+            <button onclick="requestAccess('slurry')" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-6 px-8 rounded-lg shadow-md transition-transform transform hover:scale-105">
                 <span class="text-2xl">Add New Slurry Batch</span>
             </button>
-            <button onclick="showPage('page-shito')" class="bg-red-700 hover:bg-red-800 text-white font-bold py-6 px-8 rounded-lg shadow-md transition-transform transform hover:scale-105">
+            <button onclick="requestAccess('shito')" class="bg-red-700 hover:bg-red-800 text-white font-bold py-6 px-8 rounded-lg shadow-md transition-transform transform hover:scale-105">
                 <span class="text-2xl">Add New SHITO Batch</span>
             </button>
         </div>
@@ -55,8 +60,8 @@
     <!-- === SLURRY PAGE === -->
     <div id="page-slurry" class="page container mx-auto p-4 max-w-7xl">
         <header class="bg-white shadow-lg rounded-xl p-4 mb-6 border-t-4 border-orange-500">
-             <div class="flex justify-between items-center">
-                <div>
+             <div class="flex flex-col sm:flex-row justify-between items-center">
+                <div class="mb-4 sm:mb-0">
                     <h1 class="text-3xl font-bold text-orange-800">Slurry Process Log</h1>
                     <p class="text-gray-500" id="current-date">--/--/----</p>
                 </div>
@@ -66,7 +71,6 @@
                 </div>
             </div>
         </header>
-
         <main class="bg-white shadow-lg rounded-xl p-4">
             <div class="controls flex items-center mb-4">
                 <button id="add-entry-btn-slurry" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-5 rounded-lg shadow-md transition-transform transform hover:scale-105">
@@ -85,9 +89,7 @@
                             <th class="py-3 px-3 border-b-2 border-orange-200 text-left text-sm font-semibold text-orange-900 text-center">Sync Status</th>
                         </tr>
                     </thead>
-                    <tbody id="log-table-body-slurry">
-                        <tr class="text-center no-data-row"><td colspan="6" class="py-10 text-gray-500">No data for the current shift.</td></tr>
-                    </tbody>
+                    <tbody id="log-table-body-slurry"></tbody>
                 </table>
             </div>
         </main>
@@ -96,8 +98,8 @@
     <!-- === SHITO PAGE === -->
     <div id="page-shito" class="page container mx-auto p-4 max-w-7xl">
          <header class="bg-white shadow-lg rounded-xl p-4 mb-6 border-t-4 border-red-700">
-             <div class="flex justify-between items-center">
-                <div>
+             <div class="flex flex-col sm:flex-row justify-between items-center">
+                <div class="mb-4 sm:mb-0">
                     <h1 class="text-3xl font-bold text-red-800">Shito Process Log</h1>
                     <p class="text-gray-500" id="current-date-shito">--/--/----</p>
                 </div>
@@ -107,7 +109,6 @@
                 </div>
             </div>
         </header>
-
         <main class="bg-white shadow-lg rounded-xl p-4">
             <div class="controls flex items-center mb-4">
                 <button id="add-entry-btn-shito" class="bg-red-700 hover:bg-red-800 text-white font-bold py-2 px-5 rounded-lg shadow-md transition-transform transform hover:scale-105">
@@ -118,6 +119,7 @@
                 <table class="min-w-full bg-white">
                     <thead class="bg-red-50">
                         <tr>
+                            <th class="py-3 px-3 border-b-2 border-red-200 text-left text-sm font-semibold text-red-900 w-10"></th>
                             <th class="py-3 px-3 border-b-2 border-red-200 text-left text-sm font-semibold text-red-900">Batch #</th>
                             <th class="py-3 px-3 border-b-2 border-red-200 text-left text-sm font-semibold text-red-900">Variant</th>
                             <th class="py-3 px-3 border-b-2 border-red-200 text-left text-sm font-semibold text-red-900">SKU</th>
@@ -125,9 +127,7 @@
                             <th class="py-3 px-3 border-b-2 border-red-200 text-left text-sm font-semibold text-red-900 text-center">Sync Status</th>
                         </tr>
                     </thead>
-                    <tbody id="log-table-body-shito">
-                        <tr class="text-center no-data-row"><td colspan="5" class="py-10 text-gray-500">No data for the current shift.</td></tr>
-                    </tbody>
+                    <tbody id="log-table-body-shito"></tbody>
                 </table>
             </div>
         </main>
@@ -164,6 +164,17 @@
         <img id="preview-image" src="" alt="Batch Summary Preview" />
         <button id="close-preview-btn" class="mt-6 bg-white text-black font-bold py-2 px-6 rounded-lg">Close</button>
     </div>
+
+    <!-- Alert Modal -->
+    <div id="alert-modal" class="modal fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 hidden pointer-events-none opacity-0">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-sm overflow-hidden flex flex-col">
+            <div class="p-5 border-b"><h2 id="alert-title" class="text-xl font-bold text-gray-800">Alert</h2></div>
+            <p id="alert-message" class="p-6 text-gray-700">This is an alert message.</p>
+            <div class="p-4 bg-gray-50 border-t flex justify-end gap-3">
+                <button type="button" id="alert-ok-btn" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded-lg">OK</button>
+            </div>
+        </div>
+    </div>
     
     <!-- Hidden container for generating exports -->
     <div id="export-container" class="fixed top-0 left-0 -z-10 opacity-0 pointer-events-none"></div>
@@ -178,18 +189,19 @@
     document.addEventListener('DOMContentLoaded', () => {
         // --- 1. CONFIGURATION & STATE ---
         const GOOGLE_SCRIPT_URL_SLURRY = 'https://script.google.com/macros/s/AKfycbwEz9bz3P2Z5fSYgmQcvuv2j4fDCErygGSBzzpZThmN20iOQWbJInE86aXgohOfg3f1hA/exec';
-        // === THIS IS YOUR NEW, PASTED URL ===
         const GOOGLE_SCRIPT_URL_SHITO = 'https://script.google.com/macros/s/AKfycbw-ZHeruo5GEdjn96iTCb1Gj8p-SPNRUtSx2LU-HKUxDzUiioJLEcM0HWjBc7rEvsGm/exec'; 
         
-        const SYNC_PASSWORD = 'RAS';
+        const MODULE_PASSWORDS = {
+            slurry: "GB",
+            shito: "DIDI"
+        };
+        
         let currentShiftInfo = {};
         let savedSlurryBatches = [];
         let savedShitoBatches = [];
-        const isMobile = /Mobi/i.test(window.navigator.userAgent);
+        let enteredBatchNumbers = new Set();
         
-        // --- Batch number suggestion cache ---
-        // Use a Set to automatically handle duplicates
-        const enteredBatchNumbers = new Set();
+        const isMobile = /MOBI/i.test(window.navigator.userAgent);
         
         const appData = {
             productionLines: ['Can Line', 'SUP Line', 'Sachet Line'],
@@ -218,23 +230,72 @@
 
         // --- 2. CORE FUNCTIONS ---
         
-        // --- Page Navigation ---
-        // Make showPage globally accessible
+        // --- Page Navigation & Access Control ---
         window.showPage = (pageId) => {
             document.querySelectorAll('.page').forEach(page => page.style.display = 'none');
             const pageToShow = document.getElementById(pageId);
             if (pageToShow) {
                 pageToShow.style.display = 'block';
             }
-            // Refresh date/time on page load
             updateDateTime();
         };
 
+        window.requestAccess = (moduleType) => {
+            const password = prompt(`Enter Access Code for ${moduleType.toUpperCase()} Module:`);
+            if (password === MODULE_PASSWORDS[moduleType]) {
+                showPage(`page-${moduleType}`);
+            } else if (password !== null) {
+                showAlert("Access Denied", "The access code you entered is incorrect.");
+            }
+        };
+        
+        // --- Data Persistence (localStorage) ---
+        const saveState = () => {
+            try {
+                const appState = {
+                    slurryBatches: savedSlurryBatches,
+                    shitoBatches: savedShitoBatches,
+                    batchNumbers: Array.from(enteredBatchNumbers),
+                    timestamp: Date.now()
+                };
+                localStorage.setItem('productionLogState', JSON.stringify(appState));
+            } catch (e) {
+                console.error("Failed to save state:", e);
+                showAlert("Save Error", "Could not save data. Your device storage might be full.");
+            }
+        };
+        
+        const loadState = () => {
+            const savedState = localStorage.getItem('productionLogState');
+            if (!savedState) return;
+
+            try {
+                const appState = JSON.parse(savedState);
+                const now = Date.now();
+                const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+
+                if ((now - appState.timestamp) > TWENTY_FOUR_HOURS) {
+                    localStorage.removeItem('productionLogState');
+                    return;
+                }
+
+                savedSlurryBatches = appState.slurryBatches || [];
+                savedShitoBatches = appState.shitoBatches || [];
+                enteredBatchNumbers = new Set(appState.batchNumbers || []);
+                updateBatchSuggestions(); // Populate the datalist
+                
+            } catch (e) {
+                console.error("Failed to load saved state:", e);
+                localStorage.removeItem('productionLogState');
+            }
+        };
+
+        // --- Utility Functions ---
         const getShiftInfo = () => {
-            const hours = new Date().getUTCHours(); // Use GMT as requested
+            const hours = new Date().getUTCHours();
             if (hours >= 6 && hours < 14) return { shift: 'Morning', key: 'SHa' };
             if (hours >= 14 && hours < 22) return { shift: 'Afternoon', key: 'SHb' };
-            return { shift: 'Night', key: 'SHc' }; // 22:00 to 05:59
+            return { shift: 'Night', key: 'SHc' };
         };
         
         const updateDateTime = () => {
@@ -242,59 +303,59 @@
             const dateString = now.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
             currentShiftInfo = getShiftInfo();
             
-            // Update Slurry Page elements
-            const slurryDate = document.getElementById('current-date');
-            if (slurryDate) slurryDate.textContent = dateString;
-            const slurryShift = document.getElementById('current-shift');
-            if (slurryShift) slurryShift.textContent = `${currentShiftInfo.shift} (${currentShiftInfo.key})`;
-
-            // Update Shito Page elements
-            const shitoDate = document.getElementById('current-date-shito');
-            if (shitoDate) shitoDate.textContent = dateString;
-            const shitoShift = document.getElementById('current-shift-shito');
-            if (shitoShift) shitoShift.textContent = `${currentShiftInfo.shift} (${currentShiftInfo.key})`;
+            ['current-date', 'current-date-shito'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = dateString;
+            });
+            ['current-shift', 'current-shift-shito'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = `${currentShiftInfo.shift} (${currentShiftInfo.key})`;
+            });
+        };
+        
+        const showAlert = (title, message) => {
+            document.getElementById('alert-title').textContent = title;
+            document.getElementById('alert-message').textContent = message;
+            document.getElementById('alert-modal').classList.remove('hidden', 'opacity-0', 'pointer-events-none');
         };
 
         // --- Batch Suggestion Functions ---
-        const updateBatchSuggestions = (batchNumber) => {
-            if (batchNumber && batchNumber.trim() !== '') {
-                enteredBatchNumbers.add(batchNumber.trim());
-                const datalist = document.getElementById('batch-suggestions');
-                if (!datalist) return;
-                datalist.innerHTML = ''; // Clear existing
-                enteredBatchNumbers.forEach(num => {
-                    const option = document.createElement('option');
-                    option.value = num;
-                    datalist.appendChild(option);
-                });
+        const updateBatchSuggestions = (newBatchNumber = null) => {
+            if (newBatchNumber && newBatchNumber.trim() !== '') {
+                enteredBatchNumbers.add(newBatchNumber.trim());
             }
+            
+            const datalist = document.getElementById('batch-suggestions');
+            if (!datalist) return;
+            datalist.innerHTML = '';
+            enteredBatchNumbers.forEach(num => {
+                const option = document.createElement('option');
+                option.value = num;
+                datalist.appendChild(option);
+            });
+            
+            if (newBatchNumber) saveState();
         };
 
-        // Attaches listener and list attribute to a batch input
         const addBatchInputListener = (input) => {
             input.setAttribute('list', 'batch-suggestions');
             input.addEventListener('change', (e) => updateBatchSuggestions(e.target.value));
         };
 
         // --- Generic Form Submission Function ---
-        const submitDataToGoogle = (url, batchId, batchData, localCache, tableRenderer) => {
-            // Find the hidden iframe
+        const submitDataToGoogle = (url, password, batchId, batchData, localCache, tableRenderer) => {
             const iframe = document.getElementsByName('hidden-iframe')[0];
-            if (!iframe) {
-                console.error("Submission iframe not found!");
-                return;
-            }
+            if (!iframe) { console.error("Submission iframe not found!"); return; }
 
-            // Create a temporary form
             const hiddenForm = document.createElement('form');
             hiddenForm.method = 'post';
             hiddenForm.action = url;
-            hiddenForm.target = 'hidden-iframe'; // Target the hidden iframe
+            hiddenForm.target = 'hidden-iframe'; 
             
-            const dataToSubmit = { password: SYNC_PASSWORD, rowData: batchData };
+            const dataToSubmit = { password: password, rowData: batchData };
             const input = document.createElement('input');
             input.type = 'hidden';
-            input.name = 'postData'; // The script expects this parameter name
+            input.name = 'postData';
             input.value = JSON.stringify(dataToSubmit);
             hiddenForm.appendChild(input);
 
@@ -309,28 +370,25 @@
                 const batchToUpdate = localCache.find(b => b.id === batchId);
                 if (batchToUpdate) {
                     batchToUpdate.syncStatus = status;
-                    tableRenderer(); // Re-render the table with the new status
+                    tableRenderer();
+                    saveState();
                 }
                 if (document.body.contains(hiddenForm)) {
                     document.body.removeChild(hiddenForm);
                 }
-                
-                // Clear the iframe load listener
                 iframe.onload = null;
                 iframe.onerror = null;
             };
             
-            // Set up listeners on the iframe
             iframe.onload = () => onSubmissionEnd('success');
             iframe.onerror = () => onSubmissionEnd('error');
 
-            hiddenForm.submit(); // Submit the data
+            hiddenForm.submit();
 
-            // Failsafe timer: If no response in 10s, mark as error
             setTimeout(() => {
                 if (!submissionHandled) {
                     onSubmissionEnd('error');
-                    alert("Submission timed out. Please check your connection.");
+                    showAlert("Submission Timeout", "The server did not respond. Please check your connection.");
                 }
             }, 10000);
         };
@@ -381,10 +439,7 @@
                 else if (isBulkPaste) { inputsHtml = `<div class="md:col-span-2 grid grid-cols-2 gap-2"><input type="text" data-ing-name="${ing.name}" data-ing-qty="${ing.qty}" data-type="batch" required class="batch-input p-2 border border-gray-300 rounded-md shadow-sm" placeholder="Batch #"><input type="text" data-ing-name="${ing.name}" data-ing-qty="${ing.qty}" data-type="ratio" required class="p-2 border border-gray-300 rounded-md shadow-sm" placeholder="Ratio / Note"></div>`; }
                 else { inputsHtml = `<div class="md:col-span-2 grid grid-cols-2 gap-2"><input type="text" data-ing-name="${ing.name}" data-ing-qty="${ing.qty}" data-type="batch" required class="batch-input p-2 border border-gray-300 rounded-md shadow-sm" placeholder="Batch #"><span class="text-sm text-gray-500 self-center">Qty: ${ing.qty} Kg</span></div>`; }
                 div.innerHTML = `<label class="text-sm text-gray-700">${ing.name}</label>${inputsHtml}`;
-                
-                // Add listener to batch inputs for suggestions
                 div.querySelectorAll('.batch-input').forEach(addBatchInputListener);
-                
                 container.appendChild(div);
             });
         }
@@ -407,27 +462,26 @@
                 const name = input.dataset.ingName; const qty = input.dataset.ingQty; const batch = input.value; let ratio = null;
                 if (name.toLowerCase().includes('bulk paste')) { const ratioInput = input.closest('.grid').querySelector('input[data-type="ratio"]'); ratio = ratioInput ? ratioInput.value : ''; }
                 newBatch.ingredients.push({ name, qty, batch, ratio });
-                // Add to suggestions
-                if (!name.toLowerCase().includes('water')) {
-                    updateBatchSuggestions(batch);
-                }
+                if (!name.toLowerCase().includes('water')) { updateBatchSuggestions(batch); }
             });
             
             savedSlurryBatches.push(newBatch);
+            saveState();
             renderSlurryTable();
             document.getElementById('modal-slurry').classList.add('hidden', 'opacity-0', 'pointer-events-none');
 
             const rowData = { "Date": newBatch.date, "Time Saved": newBatch.timeSaved, "Shift": newBatch.shift, "Line": newBatch.line, "Product": newBatch.productName, "Slurry Batch #": newBatch.slurryBatch, "Mix Time": newBatch.mixTime, "Brix": newBatch.brix, "Color (L)": newBatch.colorL, "Color (a/b)": newBatch.colorAB };
             newBatch.ingredients.forEach(ing => { rowData[ing.name] = ing.name.toLowerCase().includes('bulk paste') ? `Batch: ${ing.batch}, Ratio: ${ing.ratio}, Qty: ${ing.qty} Kg` : (ing.name.toLowerCase() === 'water' ? ing.qty : ing.batch); });
 
-            submitDataToGoogle(GOOGLE_SCRIPT_URL_SLURRY, batchId, rowData, savedSlurryBatches, renderSlurryTable);
+            submitDataToGoogle(GOOGLE_SCRIPT_URL_SLURRY, MODULE_PASSWORDS.slurry, batchId, rowData, savedSlurryBatches, renderSlurryTable);
         }
 
         function renderSlurryTable() {
             const tableBody = document.getElementById('log-table-body-slurry');
             if (!tableBody) return;
             tableBody.innerHTML = '';
-            if (savedSlurryBatches.length === 0) { tableBody.innerHTML = `<tr class="text-center no-data-row"><td colspan="6" class="py-10 text-gray-500">No data for the current shift.</td></tr>`; return; }
+            if (savedSlurryBatches.length === 0) { tableBody.innerHTML = `<tr class="text-center no-data-row"><td colspan="6" class="py-10 text-gray-500">No data saved locally.</td></tr>`; return; }
+            
             savedSlurryBatches.slice().reverse().forEach(batch => {
                 const summaryRow = document.createElement('tr'); summaryRow.className = 'summary-row'; summaryRow.dataset.batchId = batch.id;
                 let statusHtml;
@@ -468,7 +522,6 @@
                 <div id="shito-ingredients-container" class="pt-4 border-t space-y-3"><p class="text-gray-500 text-sm">Select a variant to see ingredients.</p></div>
             `;
             
-            // Add listeners for dynamic changes
             const variantSelect = form.querySelector('#shito-variant');
             const sizeSelect = form.querySelector('#shito-size');
             const startTime = form.querySelector('#shito-start-time');
@@ -482,7 +535,6 @@
             startTime.addEventListener('input', calculateMixingTime);
             endTime.addEventListener('input', calculateMixingTime);
             
-            // Set default aesthetics
             updateShitoModalAesthetics('');
             document.getElementById('modal-shito').classList.remove('hidden', 'opacity-0', 'pointer-events-none');
         }
@@ -492,16 +544,20 @@
             if (!modalContent) return;
             const header = modalContent.querySelector('.p-5');
             const title = header.querySelector('h2');
+            const submitBtn = modalContent.querySelector('button[type="submit"]');
             
             if (variant === 'MILD') {
                 modalContent.style.background = 'linear-gradient(to top right, #FFF8E1, #FFECB3)';
                 header.style.background = '#FFF3E0'; header.style.color = '#E65100'; title.style.color = '#E65100';
+                submitBtn.className = "bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded-lg";
             } else if (variant === 'HOT') {
                 modalContent.style.background = 'linear-gradient(to top right, #FFEBEE, #EF9A9A)';
                 header.style.background = '#FFCDD2'; header.style.color = '#B71C1C'; title.style.color = '#B71C1C';
+                submitBtn.className = "bg-red-700 hover:bg-red-800 text-white font-bold py-2 px-4 rounded-lg";
             } else {
                 modalContent.style.background = 'white';
                 header.style.background = '#F9FAFB'; header.style.color = '#374151'; title.style.color = '#374151';
+                submitBtn.className = "bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded-lg";
             }
         }
 
@@ -515,14 +571,10 @@
             const endTime = endTimeInput.value;
             
             if (startTime && endTime) {
-                const start = new Date(`1970-01-01T${startTime}:00Z`); // Use Z for UTC to avoid timezone issues
+                const start = new Date(`1970-01-01T${startTime}:00Z`);
                 const end = new Date(`1970-01-01T${endTime}:00Z`);
-                
-                let diff = (end.getTime() - start.getTime()) / 60000; // Difference in minutes
-                
-                if (diff < 0) { 
-                    diff += 1440; // Add 24 hours in minutes if end time is on the next day
-                }
+                let diff = (end.getTime() - start.getTime()) / 60000;
+                if (diff < 0) { diff += 1440; }
                 totalTimeInput.value = diff;
             } else {
                 totalTimeInput.value = '';
@@ -550,7 +602,6 @@
                         <span class="text-sm text-gray-500 self-center">Qty: ${calculatedQty.toFixed(2)} Kg</span>
                     </div>
                 `;
-                // Add listener to batch inputs for suggestions
                 div.querySelectorAll('.batch-input').forEach(addBatchInputListener);
                 container.appendChild(div);
             });
@@ -576,7 +627,6 @@
                 syncStatus: 'syncing'
             };
             
-            // Prep rowData for Google Sheet
             const rowData = {
                 "Date": newBatch.date, "Time Saved": newBatch.timeSaved, "Shift": newBatch.shift,
                 "Batch Number": newBatch.batchNumber, "Variant": newBatch.variant, "SKU": newBatch.sku,
@@ -584,9 +634,8 @@
                 "Total Mixing Time (min)": newBatch.totalTime
             };
             
-            // Get all possible ingredient names for headers
             const allShitoIngredients = new Set([...appData.shitoRecipes.MILD.map(i => i.name), ...appData.shitoRecipes.HOT.map(i => i.name)]);
-            allShitoIngredients.forEach(name => rowData[name] = ''); // Initialize all as empty
+            allShitoIngredients.forEach(name => rowData[name] = '');
 
             const ingredientInputs = form.querySelectorAll('#shito-ingredients-container input[data-type="batch"]');
             ingredientInputs.forEach(input => {
@@ -594,73 +643,113 @@
                 const qty = input.dataset.ingQty;
                 const batch = input.value;
                 newBatch.ingredients.push({ name, qty, batch });
-                rowData[name] = `Batch: ${batch}, Qty: ${qty} Kg`; // Populate the ones used
-                // Add to suggestions
+                rowData[name] = `Batch: ${batch}, Qty: ${qty} Kg`;
                 updateBatchSuggestions(batch);
             });
             
             savedShitoBatches.push(newBatch);
+            saveState();
             renderShitoTable();
             document.getElementById('modal-shito').classList.add('hidden', 'opacity-0', 'pointer-events-none');
             
-            if (GOOGLE_SCRIPT_URL_SHITO === 'PASTE_YOUR_NEW_SHITO_SCRIPT_URL_HERE') {
-                alert("Error: Shito Script URL is not configured. Data not saved.");
-                const batchToUpdate = savedShitoBatches.find(b => b.id === batchId);
-                if (batchToUpdate) {
-                    batchToUpdate.syncStatus = 'error';
-                    renderShitoTable();
-                }
-                return;
-            }
-            submitDataToGoogle(GOOGLE_SCRIPT_URL_SHITO, batchId, rowData, savedShitoBatches, renderShitoTable);
+            submitDataToGoogle(GOOGLE_SCRIPT_URL_SHITO, MODULE_PASSWORDS.shito, batchId, rowData, savedShitoBatches, renderShitoTable);
         }
         
         function renderShitoTable() {
             const tableBody = document.getElementById('log-table-body-shito');
             if (!tableBody) return;
             tableBody.innerHTML = '';
-            if (savedShitoBatches.length === 0) { tableBody.innerHTML = `<tr class="text-center no-data-row"><td colspan="5" class="py-10 text-gray-500">No data for the current shift.</td></tr>`; return; }
+            if (savedShitoBatches.length === 0) { tableBody.innerHTML = `<tr class="text-center no-data-row"><td colspan="6" class="py-10 text-gray-500">No data saved locally.</td></tr>`; return; }
+            
             savedShitoBatches.slice().reverse().forEach(batch => {
-                const row = document.createElement('tr');
-                row.className = 'summary-row'; // Can add expand logic later if needed
+                const summaryRow = document.createElement('tr');
+                summaryRow.className = 'summary-row shito';
+                summaryRow.dataset.batchId = batch.id;
                 let statusHtml;
                 if(batch.syncStatus === 'syncing') statusHtml = '<div class="flex justify-center items-center"><div class="loader"></div></div>';
                 else if(batch.syncStatus === 'success') statusHtml = '<span class="font-bold text-green-600">Synced</span>';
                 else if(batch.syncStatus === 'error') statusHtml = '<span class="font-bold text-red-600">Failed</span>';
                 
-                row.innerHTML = `
+                summaryRow.innerHTML = `
+                    <td class="py-3 px-3 border-b border-gray-200 text-red-700 font-bold expand-icon">+</td>
                     <td class="py-3 px-3 border-b border-gray-200 font-semibold">${batch.batchNumber}</td>
                     <td class="py-3 px-3 border-b border-gray-200">${batch.variant}</td>
                     <td class="py-3 px-3 border-b border-gray-200">${batch.sku}</td>
                     <td class="py-3 px-3 border-b border-gray-200">${batch.timeSaved}</td>
                     <td class="py-3 px-3 border-b border-gray-200 text-center">${statusHtml}</td>
                 `;
-                tableBody.appendChild(row);
+                
+                const detailsRow = document.createElement('tr');
+                detailsRow.className = 'details-row';
+                detailsRow.dataset.detailsFor = batch.id;
+                
+                let ingredientsTable = '';
+                batch.ingredients.forEach(ing => {
+                    ingredientsTable += `<tr class="border-t"><td class="px-2 py-1">${ing.name}</td><td class="px-2 py-1">${ing.batch}</td><td class="px-2 py-1">Qty: ${ing.qty} Kg</td></tr>`;
+                });
+                
+                detailsRow.innerHTML = `<td colspan="6" class="p-4 bg-red-50/50"><div class="max-w-4xl mx-auto">
+                    <div class="flex flex-col sm:flex-row justify-between items-start mb-3">
+                        <div>
+                            <h4 class="font-bold mb-1 text-red-900">Batch Details:</h4>
+                            <table class="text-sm">
+                                <tr><td class="font-semibold pr-2">Batch Size:</td><td>${batch.batchSize} Ton</td><td class="font-semibold pr-2 pl-4">SKU:</td><td>${batch.sku}</td></tr>
+                                <tr><td class="font-semibold pr-2">Start Time:</td><td>${batch.startTime}</td><td class="font-semibold pr-2 pl-4">End Time:</td><td>${batch.endTime}</td></tr>
+                                <tr><td class="font-semibold pr-2">Total Time:</td><td>${batch.totalTime} mins</td><td class="font-semibold pr-2 pl-4">Variant:</td><td>${batch.variant}</td></tr>
+                            </table>
+                        </div>
+                        <div class="flex flex-col sm:flex-row gap-2 mt-2 sm:mt-0">
+                            <button data-action="export-png" data-batch-id="${batch.id}" data-type="shito" class="export-btn bg-white hover:bg-gray-100 text-gray-700 text-sm font-bold py-1 px-3 border rounded-md">Export Image</button>
+                            <button data-action="export-pdf" data-batch-id="${batch.id}" data-type="shito" class="export-btn bg-white hover:bg-gray-100 text-gray-700 text-sm font-bold py-1 px-3 border rounded-md">Export PDF</button>
+                        </div>
+                    </div>
+                    <h4 class="font-bold mt-3 mb-1 text-red-900">Ingredient Details:</h4>
+                    <table class="min-w-full text-sm bg-white rounded-md shadow-sm">
+                        <thead class="bg-gray-100"><tr><th class="px-2 py-1 text-left font-semibold">Ingredient</th><th class="px-2 py-1 text-left font-semibold">Batch #</th><th class="px-2 py-1 text-left font-semibold">Details</th></tr></thead>
+                        <tbody>${ingredientsTable}</tbody>
+                    </table>
+                </div></td>`;
+                
+                tableBody.appendChild(summaryRow);
+                tableBody.appendChild(detailsRow);
             });
         }
 
         // --- 4. EXPORT FUNCTIONS ---
         async function exportBatch(batchId, format, type, buttonEl) {
-            // This function is currently only configured for SLURRY
-            // Can be expanded for Shito if needed
-            if (type !== 'slurry') return;
-
-            const batch = savedSlurryBatches.find(b => b.id == batchId);
+            const batch = (type === 'slurry') 
+                ? savedSlurryBatches.find(b => b.id == batchId) 
+                : savedShitoBatches.find(b => b.id == batchId);
+            
             if (!batch) return;
 
             const originalText = buttonEl.textContent;
             buttonEl.textContent = 'Generating...'; buttonEl.disabled = true;
             const exportContainer = document.getElementById('export-container');
-            const card = document.createElement('div'); card.className = 'export-card';
+            const card = document.createElement('div');
+            card.className = 'export-card';
             
-            let ingredientsTable = '';
-            batch.ingredients.forEach(ing => { const details = ing.name.toLowerCase().includes('bulk paste') ? `Ratio: ${ing.ratio}, Qty: ${ing.qty} Kg` : `Qty: ${ing.qty} Kg`; ingredientsTable += `<tr style="border-top: 1px solid #eee;"><td style="padding: 4px;">${ing.name}</td><td style="padding: 4px;">${ing.batch}</td><td style="padding: 4px;">${details}</td></tr>`; });
-            card.innerHTML = `<div style="border-bottom: 2px solid #F97316; padding-bottom: 0.5rem; margin-bottom: 1rem;"><h2 style="font-size: 1.5rem; font-weight: 700; color: #7C2D12;">Batch Summary: ${batch.slurryBatch}</h2><p style="color: #666;">${batch.productName} - ${batch.line}</p></div><table style="width: 100%; font-size: 0.9rem; margin-bottom: 1rem;"><tr><td><strong>Date:</strong> ${batch.date}</td><td><strong>Time:</strong> ${batch.timeSaved}</td></tr><tr><td><strong>Shift:</strong> ${currentShiftInfo.shift} (${batch.shift})</td><td><strong>Mix Time:</strong> ${batch.mixTime} mins</td></tr><tr><td><strong>Brix:</strong> ${batch.brix}</td><td><strong>Color (L/ab):</strong> ${batch.colorL} / ${batch.colorAB}</td></tr></table><h3 style="font-size: 1.1rem; font-weight: 600; color: #7C2D12; border-top: 1px solid #ddd; padding-top: 1rem;">Ingredients</h3><table style="width: 100%; font-size: 0.85rem; border-collapse: collapse;"><thead style="text-align: left; background-color: #f4f4f4;"><tr><th style="padding: 4px;">Ingredient</th><th style="padding: 4px;">Batch #</th><th style="padding: 4px;">Details</th></tr></thead><tbody>${ingredientsTable}</tbody></table>`;
+            let cardHTML = '';
+            let filename = '';
+
+            if (type === 'slurry') {
+                let ingredientsTable = '';
+                batch.ingredients.forEach(ing => { const details = ing.name.toLowerCase().includes('bulk paste') ? `Ratio: ${ing.ratio}, Qty: ${ing.qty} Kg` : `Qty: ${ing.qty} Kg`; ingredientsTable += `<tr style="border-top: 1px solid #eee;"><td style="padding: 4px;">${ing.name}</td><td style="padding: 4px;">${ing.batch}</td><td style="padding: 4px;">${details}</td></tr>`; });
+                cardHTML = `<div style="border-bottom: 2px solid #F97316; padding-bottom: 0.5rem; margin-bottom: 1rem;"><h2 style="font-size: 1.5rem; font-weight: 700; color: #7C2D12;">Slurry Summary: ${batch.slurryBatch}</h2><p style="color: #666;">${batch.productName} - ${batch.line}</p></div><table style="width: 100%; font-size: 0.9rem; margin-bottom: 1rem;"><tr><td><strong>Date:</strong> ${batch.date}</td><td><strong>Time:</strong> ${batch.timeSaved}</td></tr><tr><td><strong>Shift:</strong> ${currentShiftInfo.shift} (${batch.shift})</td><td><strong>Mix Time:</strong> ${batch.mixTime} mins</td></tr><tr><td><strong>Brix:</strong> ${batch.brix}</td><td><strong>Color (L/ab):</strong> ${batch.colorL} / ${batch.colorAB}</td></tr></table><h3 style="font-size: 1.1rem; font-weight: 600; color: #7C2D12; border-top: 1px solid #ddd; padding-top: 1rem;">Ingredients</h3><table style="width: 100%; font-size: 0.85rem; border-collapse: collapse;"><thead style="text-align: left; background-color: #f4f4f4;"><tr><th style="padding: 4px;">Ingredient</th><th style="padding: 4px;">Batch #</th><th style="padding: 4px;">Details</th></tr></thead><tbody>${ingredientsTable}</tbody></table>`;
+                filename = `Slurry_${batch.slurryBatch}_Summary`;
+            } else if (type === 'shito') {
+                let ingredientsTable = '';
+                batch.ingredients.forEach(ing => { ingredientsTable += `<tr style="border-top: 1px solid #eee;"><td style="padding: 4px;">${ing.name}</td><td style="padding: 4px;">${ing.batch}</td><td style="padding: 4px;">Qty: ${ing.qty} Kg</td></tr>`; });
+                cardHTML = `<div style="border-bottom: 2px solid #B71C1C; padding-bottom: 0.5rem; margin-bottom: 1rem;"><h2 style="font-size: 1.5rem; font-weight: 700; color: #B71C1C;">Shito Summary: ${batch.batchNumber}</h2><p style="color: #666;">${batch.variant} - ${batch.sku}</p></div><table style="width: 100%; font-size: 0.9rem; margin-bottom: 1rem;"><tr><td><strong>Date:</strong> ${batch.date}</td><td><strong>Time:</strong> ${batch.timeSaved}</td></tr><tr><td><strong>Shift:</strong> ${currentShiftInfo.shift} (${batch.shift})</td><td><strong>Batch Size:</strong> ${batch.batchSize} Ton</td></tr><tr><td><strong>Start Time:</strong> ${batch.startTime}</td><td><strong>End Time:</strong> ${batch.endTime}</td></tr><tr><td colspan="2"><strong>Total Time:</strong> ${batch.totalTime} mins</td></tr></table><h3 style="font-size: 1.1rem; font-weight: 600; color: #B71C1C; border-top: 1px solid #ddd; padding-top: 1rem;">Ingredients</h3><table style="width: 100%; font-size: 0.85rem; border-collapse: collapse;"><thead style="text-align: left; background-color: #f4f4f4;"><tr><th style="padding: 4px;">Ingredient</th><th style="padding: 4px;">Batch #</th><th style="padding: 4px;">Details</th></tr></thead><tbody>${ingredientsTable}</tbody></table>`;
+                filename = `Shito_${batch.batchNumber}_Summary`;
+            }
             
+            card.innerHTML = cardHTML;
             exportContainer.appendChild(card);
+            
             try {
                 const canvas = await html2canvas(card, { scale: 2 });
-                const imgData = canvas.toDataURL('image/png'); const filename = `Batch_${batch.slurryBatch}_Summary`;
+                const imgData = canvas.toDataURL('image/png');
                 if (isMobile) {
                     const previewModal = document.getElementById('export-preview-modal');
                     const previewImage = document.getElementById('preview-image');
@@ -670,7 +759,7 @@
                     if (format === 'png') { const link = document.createElement('a'); link.download = `${filename}.png`; link.href = imgData; link.click(); }
                     else if (format === 'pdf') { const pdf = new jsPDF({ orientation: 'p', unit: 'px', format: [canvas.width, canvas.height] }); pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height); pdf.save(`${filename}.pdf`); }
                 }
-            } catch(err) { console.error("Export failed:", err); alert("Sorry, the summary could not be exported."); }
+            } catch(err) { console.error("Export failed:", err); showAlert("Export Failed", "Sorry, the summary could not be exported."); }
             finally { exportContainer.innerHTML = ''; buttonEl.textContent = originalText; buttonEl.disabled = false; }
         }
         
@@ -682,11 +771,8 @@
             document.getElementById('log-table-body-slurry').addEventListener('click', (e) => {
                 const actionButton = e.target.closest('[data-action]');
                 if (actionButton) {
-                    const action = actionButton.dataset.action;
-                    if (action === 'export-png' || action === 'export-pdf') {
-                        exportBatch(actionButton.dataset.batchId, action.split('-')[1], 'slurry', actionButton);
-                        return;
-                    }
+                    exportBatch(actionButton.dataset.batchId, actionButton.dataset.action.split('-')[1], 'slurry', actionButton);
+                    return;
                 }
                 const summaryRow = e.target.closest('.summary-row');
                 if (summaryRow) {
@@ -696,14 +782,30 @@
                     summaryRow.classList.toggle('expanded');
                     detailsRow.style.display = detailsRow.style.display === 'table-row' ? 'none' : 'table-row';
                     const icon = summaryRow.querySelector('.expand-icon');
-                    if(icon) icon.textContent = summaryRow.classList.contains('expanded') ? '-' : '+';
+                    if(icon) icon.textContent = summaryRow.classList.contains('expanded') ? '−' : '+';
                 }
             });
             
             // Shito Listeners
             document.getElementById('add-entry-btn-shito').addEventListener('click', buildShitoModal);
             document.getElementById('form-shito').addEventListener('submit', handleShitoFormSubmit);
-            // (No listeners for shito table yet, as expand/export is not defined)
+            document.getElementById('log-table-body-shito').addEventListener('click', (e) => {
+                const actionButton = e.target.closest('[data-action]');
+                if (actionButton) {
+                    exportBatch(actionButton.dataset.batchId, actionButton.dataset.action.split('-')[1], 'shito', actionButton);
+                    return;
+                }
+                const summaryRow = e.target.closest('.summary-row');
+                if (summaryRow) {
+                    const batchId = summaryRow.dataset.batchId; 
+                    const detailsRow = document.querySelector(`#page-shito .details-row[data-details-for="${batchId}"]`);
+                    if (!detailsRow) return;
+                    summaryRow.classList.toggle('expanded');
+                    detailsRow.style.display = detailsRow.style.display === 'table-row' ? 'none' : 'table-row';
+                    const icon = summaryRow.querySelector('.expand-icon');
+                    if(icon) icon.textContent = summaryRow.classList.contains('expanded') ? '−' : '+';
+                }
+            });
 
             // Shared Modal Listeners
             document.querySelectorAll('.cancel-btn').forEach(btn => {
@@ -715,26 +817,24 @@
                 });
             });
             document.getElementById('close-preview-btn').addEventListener('click', () => { document.getElementById('export-preview-modal').classList.add('hidden', 'opacity-0', 'pointer-events-none'); document.getElementById('preview-image').src = ''; });
+            document.getElementById('alert-ok-btn').addEventListener('click', () => { document.getElementById('alert-modal').classList.add('hidden', 'opacity-0', 'pointer-events-none'); });
         }
         
         // --- 6. INITIALIZE THE APP ---
         function initializeApp() {
+            loadState(); // Load 24-hour persistent data
             updateDateTime();
-            setInterval(updateDateTime, 60000); // Check time/shift every minute
+            setInterval(updateDateTime, 60000);
             setupEventListeners();
-            // Create the hidden iframe for form submissions
             const iframe = document.createElement('iframe');
             iframe.name = 'hidden-iframe';
             iframe.style.display = 'none';
             document.body.appendChild(iframe);
-            // Initial render
             renderSlurryTable(); 
             renderShitoTable();
-            // Go to home page on load
             showPage('page-home');
         }
 
-        // Start the application
         initializeApp();
     });
     </script>
