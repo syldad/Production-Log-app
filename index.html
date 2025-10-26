@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Production Log v14.3</title>
+    <title>Production Log v15.0 (Firebase)</title>
     
     <!-- PWA / Full-Screen Tags -->
     <link rel="manifest" href="manifest.json">
@@ -105,7 +105,6 @@
                             <th class="py-3 px-3 border-b-2 border-orange-200 text-left text-sm font-semibold text-orange-900">Product</th>
                             <th class="py-3 px-3 border-b-2 border-orange-200 text-left text-sm font-semibold text-orange-900">Line</th>
                             <th class="py-3 px-3 border-b-2 border-orange-200 text-left text-sm font-semibold text-orange-900">Time Saved</th>
-                            <th class="py-3 px-3 border-b-2 border-orange-200 text-left text-sm font-semibold text-orange-900 text-center">Sync Status</th>
                         </tr>
                     </thead>
                     <tbody id="log-table-body-slurry"></tbody>
@@ -143,7 +142,6 @@
                             <th class="py-3 px-3 border-b-2 border-red-200 text-left text-sm font-semibold text-red-900">Variant</th>
                             <th class="py-3 px-3 border-b-2 border-red-200 text-left text-sm font-semibold text-red-900">SKU</th>
                             <th class="py-3 px-3 border-b-2 border-red-200 text-left text-sm font-semibold text-red-900">Time Saved</th>
-                            <th class="py-3 px-3 border-b-2 border-red-200 text-left text-sm font-semibold text-red-900 text-center">Sync Status</th>
                         </tr>
                     </thead>
                     <tbody id="log-table-body-shito-batch"></tbody>
@@ -181,7 +179,6 @@
                             <th class="py-3 px-3 border-b-2 border-gray-200 text-left text-sm font-semibold text-gray-900">Variant</th>
                             <th class="py-3 px-3 border-b-2 border-gray-200 text-left text-sm font-semibold text-gray-900">Boule ID</th>
                             <th class="py-3 px-3 border-b-2 border-gray-200 text-left text-sm font-semibold text-gray-900">Time Saved</th>
-                            <th class="py-3 px-3 border-b-2 border-gray-200 text-left text-sm font-semibold text-gray-900 text-center">Sync Status</th>
                         </tr>
                     </thead>
                     <tbody id="log-table-body-shito-cooking"></tbody>
@@ -198,7 +195,7 @@
             <form id="form-slurry" class="flex-grow overflow-y-auto p-6 space-y-4"></form>
             <div class="p-4 bg-gray-50 border-t flex justify-end gap-3">
                 <button type="button" class="cancel-btn bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg" data-modal="modal-slurry">Cancel</button>
-                <button type="submit" form="form-slurry" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded-lg">Save & Sync</button>
+                <button type="submit" form="form-slurry" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded-lg">Save</button>
             </div>
         </div>
     </div>
@@ -210,7 +207,7 @@
             <form id="form-shito-batch-add" class="flex-grow overflow-y-auto p-6 space-y-4"></form>
             <div class="p-4 bg-gray-50 border-t flex justify-end gap-3">
                 <button type="button" class="cancel-btn bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg" data-modal="modal-shito-batch-add">Cancel</button>
-                <button type="submit" form="form-shito-batch-add" class="bg-red-700 hover:bg-red-800 text-white font-bold py-2 px-4 rounded-lg">Save & Sync</button>
+                <button type="submit" form="form-shito-batch-add" class="bg-red-700 hover:bg-red-800 text-white font-bold py-2 px-4 rounded-lg">Save</button>
             </div>
         </div>
     </div>
@@ -222,7 +219,7 @@
             <form id="form-shito-cooking" class="flex-grow overflow-y-auto p-6 space-y-4"></form>
             <div class="p-4 bg-gray-50 border-t flex justify-end gap-3">
                 <button type="button" class="cancel-btn bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg" data-modal="modal-shito-cooking">Cancel</button>
-                <button type="submit" form="form-shito-cooking" id="submit-shito-cooking" class="bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded-lg">Save & Sync</button>
+                <button type="submit" form="form-shito-cooking" id="submit-shito-cooking" class="bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded-lg">Save</button>
             </div>
         </div>
     </div>
@@ -251,31 +248,75 @@
     <!-- Datalist for batch number suggestions -->
     <datalist id="batch-suggestions"></datalist>
 
-    <!-- === COMPLETE JAVASCRIPT === -->
-    <script>
+    <!-- === COMPLETE JAVASCRIPT (v15.0 - Firebase) === -->
+    <script type="module">
+    
+    // --- 1. EXTERNAL LIBRARIES ---
     const { jsPDF } = window.jspdf;
 
-    document.addEventListener('DOMContentLoaded', () => {
-        // --- 1. CONFIGURATION & STATE ---
-        const GOOGLE_SCRIPT_URL_SLURRY = 'https://script.google.com/macros/s/AKfycbwEz9bz3P2Z5fSYgmQcvuv2j4fDCErygGSBzzpZThmN20iOQWbJInE86aXgohOfg3f1hA/exec';
-        const GOOGLE_SCRIPT_URL_SHITO_BATCH = 'https://script.google.com/macros/s/AKfycbw-ZHeruo5GEdjn96iTCb1Gj8p-SPNRUtSx2LU-HKUxDzUiioJLEcM0HWjBc7rEvsGm/exec'; 
-        const GOOGLE_SCRIPT_URL_SHITO_COOKING = 'https://script.google.com/macros/s/AKfycbykcdMJFjbB3uL05BVqwumwQg-yZ6eubPw5kQqIHjEuG2pgu5xZXenC2RuxIZeJaf6nOw/exec';
+    // --- 2. FIREBASE LIBRARIES ---
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { 
+        getFirestore, 
+        collection, 
+        addDoc, 
+        onSnapshot, 
+        query, 
+        orderBy, 
+        serverTimestamp 
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    // --- 3. FIREBASE CONFIGURATION (From your project) ---
+    const firebaseConfig = {
+      apiKey: "AIzaSyB2jsnwvaQIJvUPLIvdWx7yS4o0xU0QOis",
+      authDomain: "production-log-16c82.firebaseapp.com",
+      projectId: "production-log-16c82",
+      storageBucket: "production-log-16c82.firebasestorage.app",
+      messagingSenderId: "751331602949",
+      appId: "1:751331602949:web:86843596e32483865aa26c",
+      measurementId: "G-29Q2HK3SG4"
+    };
+
+    // --- 4. FIREBASE INITIALIZATION ---
+    let app, auth, db;
+    try {
+        app = initializeApp(firebaseConfig);
+        auth = getAuth(app);
+        db = getFirestore(app);
         
+        // Sign in the user anonymously. This gives them a unique ID
+        // and allows them to write to the database (in test mode).
+        signInAnonymously(auth).catch((error) => {
+            console.error("Anonymous auth failed:", error);
+            showAlert("Connection Failed", "Could not connect to the database. Please check your internet connection and reload.");
+        });
+    } catch (e) {
+        console.error("Firebase initialization failed:", e);
+        showAlert("Fatal Error", "Could not initialize the app. Please contact support.");
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- 5. CONFIGURATION & STATE ---
+        // Passwords remain the same
         const MODULE_PASSWORDS = {
             slurry: "GB",
             shitoMenu: "DIDI",
             shitoCooking: "DIDI shito"
         };
         
+        // These arrays will now be populated by our LIVE Firebase listeners
         let currentShiftInfo = {};
         let savedSlurryBatches = [];
         let savedShitoBatchLogs = [];
         let savedShitoCookingLogs = [];
-        let enteredBatchNumbers = new Set();
-        let chartInstances = {}; // To store and destroy chart instances
+        
+        let enteredBatchNumbers = new Set(); // This is still saved to localStorage for convenience
+        let chartInstances = {};
         
         const isMobile = /MOBI/i.test(window.navigator.userAgent);
         
+        // App data (recipes) remains the same
         const appData = {
             productionLines: ['Can Line', 'SUP Line', 'Sachet Line'],
             slurryRecipes: {
@@ -301,7 +342,7 @@
             }
         };
 
-        // --- 2. CORE FUNCTIONS ---
+        // --- 6. CORE FUNCTIONS ---
         
         // --- Page Navigation & Access Control ---
         window.showPage = (pageId) => {
@@ -328,46 +369,26 @@
             }
         };
         
-        // --- Data Persistence (localStorage) ---
-        const saveState = () => {
+        // --- Data Persistence (Batch Suggestions Only) ---
+        // We still use localStorage for this one non-critical feature
+        const saveBatchNumbers = () => {
             try {
-                const appState = {
-                    slurryBatches: savedSlurryBatches,
-                    shitoBatchLogs: savedShitoBatchLogs,
-                    shitoCookingLogs: savedShitoCookingLogs,
-                    batchNumbers: Array.from(enteredBatchNumbers),
-                    timestamp: Date.now()
-                };
-                localStorage.setItem('productionLogState', JSON.stringify(appState));
+                localStorage.setItem('productionLogBatchNumbers', JSON.stringify(Array.from(enteredBatchNumbers)));
             } catch (e) {
-                console.error("Failed to save state:", e);
-                showAlert("Save Error", "Could not save data. Your device storage might be full.");
+                console.warn("Could not save batch numbers to localStorage:", e);
             }
         };
         
-        const loadState = () => {
-            const savedState = localStorage.getItem('productionLogState');
-            if (!savedState) return;
-
+        const loadBatchNumbers = () => {
             try {
-                const appState = JSON.parse(savedState);
-                const now = Date.now();
-                const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
-
-                if ((now - appState.timestamp) > TWENTY_FOUR_HOURS) {
-                    localStorage.removeItem('productionLogState');
-                    return;
+                const savedNumbers = localStorage.getItem('productionLogBatchNumbers');
+                if (savedNumbers) {
+                    enteredBatchNumbers = new Set(JSON.parse(savedNumbers));
+                    updateBatchSuggestions();
                 }
-
-                savedSlurryBatches = appState.slurryBatches || [];
-                savedShitoBatchLogs = appState.shitoBatchLogs || [];
-                savedShitoCookingLogs = appState.shitoCookingLogs || [];
-                enteredBatchNumbers = new Set(appState.batchNumbers || []);
-                updateBatchSuggestions();
-                
             } catch (e) {
-                console.error("Failed to load saved state:", e);
-                localStorage.removeItem('productionLogState');
+                console.warn("Could not load batch numbers from localStorage:", e);
+                localStorage.removeItem('productionLogBatchNumbers');
             }
         };
 
@@ -425,62 +446,15 @@
                 option.value = num;
                 datalist.appendChild(option);
             });
-            if (newBatchNumber) saveState();
+            if (newBatchNumber) saveBatchNumbers(); // Save to localStorage
         };
 
         const addBatchInputListener = (input) => {
             input.setAttribute('list', 'batch-suggestions');
             input.addEventListener('change', (e) => updateBatchSuggestions(e.target.value));
         };
-
-        // --- Generic Form Submission Function ---
-        const submitDataToGoogle = (url, password, batchId, batchData, localCache, tableRenderer) => {
-            const iframe = document.getElementsByName('hidden-iframe')[0];
-            if (!iframe) { console.error("Submission iframe not found!"); return; }
-
-            const hiddenForm = document.createElement('form');
-            hiddenForm.method = 'post';
-            hiddenForm.action = url;
-            hiddenForm.target = 'hidden-iframe'; 
-            
-            const dataToSubmit = { password: password, rowData: batchData };
-            const input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = 'postData';
-            input.value = JSON.stringify(dataToSubmit);
-            hiddenForm.appendChild(input);
-            document.body.appendChild(hiddenForm);
-
-            let submissionHandled = false;
-            const onSubmissionEnd = (status) => {
-                if (submissionHandled) return;
-                submissionHandled = true;
-                const batchToUpdate = localCache.find(b => b.id === batchId);
-                if (batchToUpdate) {
-                    batchToUpdate.syncStatus = status;
-                    tableRenderer();
-                    saveState();
-                }
-                if (document.body.contains(hiddenForm)) {
-                    document.body.removeChild(hiddenForm);
-                }
-                iframe.onload = null;
-                iframe.onerror = null;
-            };
-            
-            iframe.onload = () => onSubmissionEnd('success');
-            iframe.onerror = () => onSubmissionEnd('error');
-            hiddenForm.submit();
-
-            setTimeout(() => {
-                if (!submissionHandled) {
-                    onSubmissionEnd('error');
-                    showAlert("Submission Timeout", "The server did not respond. Please check your connection.");
-                }
-            }, 10000);
-        };
         
-        // --- 3A. SLURRY MODULE ---
+        // --- 7A. SLURRY MODULE ---
         
         function buildSlurryModal() {
             const form = document.getElementById('form-slurry');
@@ -531,17 +505,28 @@
             });
         }
         
-        function handleSlurryFormSubmit(e) {
+        async function handleSlurryFormSubmit(e) {
             e.preventDefault();
             const form = e.target;
-            const now = new Date(); const batchId = Date.now();
+            const now = new Date();
             const productSelect = form.querySelector('#slurry-product');
+            
+            // 1. Create the data object to save
             const newBatch = {
-                id: batchId, date: now.toLocaleDateString('en-CA'), timeSaved: now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
-                shift: currentShiftInfo.key, line: form.querySelector('#slurry-line').value, productKey: productSelect.value,
-                productName: appData.slurryRecipes[productSelect.value].name, slurryBatch: form.querySelector('#slurry-batch').value,
-                mixTime: form.querySelector('#slurry-mix-time').value, brix: form.querySelector('#slurry-brix').value, colorL: form.querySelector('#slurry-color-l').value,
-                colorAB: form.querySelector('#slurry-color-ab').value, ingredients: [], syncStatus: 'syncing'
+                // We no longer need a local 'id', Firebase will provide one
+                date: now.toLocaleDateString('en-CA'), 
+                timeSaved: now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
+                createdAt: serverTimestamp(), // For sorting
+                shift: currentShiftInfo.key, 
+                line: form.querySelector('#slurry-line').value, 
+                productKey: productSelect.value,
+                productName: appData.slurryRecipes[productSelect.value].name, 
+                slurryBatch: form.querySelector('#slurry-batch').value,
+                mixTime: form.querySelector('#slurry-mix-time').value, 
+                brix: form.querySelector('#slurry-brix').value, 
+                colorL: form.querySelector('#slurry-color-l').value,
+                colorAB: form.querySelector('#slurry-color-ab').value, 
+                ingredients: []
             };
 
             const ingredientInputs = form.querySelectorAll('#slurry-ingredients-container input[data-type="batch"]');
@@ -552,42 +537,65 @@
                 if (!name.toLowerCase().includes('water')) { updateBatchSuggestions(batch); }
             });
             
-            savedSlurryBatches.push(newBatch);
-            saveState();
-            renderSlurryTable();
-            document.getElementById('modal-slurry').classList.add('hidden', 'opacity-0', 'pointer-events-none');
-
-            const rowData = { "Date": newBatch.date, "Time Saved": newBatch.timeSaved, "Shift": newBatch.shift, "Line": newBatch.line, "Product": newBatch.productName, "Slurry Batch #": newBatch.slurryBatch, "Mix Time": newBatch.mixTime, "Brix": newBatch.brix, "Color (L)": newBatch.colorL, "Color (a/b)": newBatch.colorAB };
-            newBatch.ingredients.forEach(ing => { rowData[ing.name] = ing.name.toLowerCase().includes('bulk paste') ? `Batch: ${ing.batch}, Ratio: ${ing.ratio}, Qty: ${ing.qty} Kg` : (ing.name.toLowerCase() === 'water' ? ing.qty : ing.batch); });
-
-            submitDataToGoogle(GOOGLE_SCRIPT_URL_SLURRY, MODULE_PASSWORDS.slurry, batchId, rowData, savedSlurryBatches, renderSlurryTable);
+            // 2. Disable button and save to Firebase
+            const submitBtn = form.closest('.modal').querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Saving...';
+            
+            try {
+                const docRef = await addDoc(collection(db, "slurryBatches"), newBatch);
+                console.log("Slurry batch saved with ID: ", docRef.id);
+                document.getElementById('modal-slurry').classList.add('hidden', 'opacity-0', 'pointer-events-none');
+            } catch (err) {
+                console.error("Error saving slurry batch: ", err);
+                showAlert("Save Failed", "Could not save data. Please check your connection and try again.");
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Save';
+            }
         }
 
         function renderSlurryTable() {
             const tableBody = document.getElementById('log-table-body-slurry');
             if (!tableBody) return;
             tableBody.innerHTML = '';
-            if (savedSlurryBatches.length === 0) { tableBody.innerHTML = `<tr class="text-center no-data-row"><td colspan="6" class="py-10 text-gray-500">No data saved locally.</td></tr>`; return; }
             
-            savedSlurryBatches.slice().reverse().forEach(batch => {
-                const summaryRow = document.createElement('tr'); summaryRow.className = 'summary-row'; summaryRow.dataset.batchId = batch.id;
-                let statusHtml;
-                if(batch.syncStatus === 'syncing') statusHtml = '<div class="flex justify-center items-center"><div class="loader"></div></div>';
-                else if(batch.syncStatus === 'success') statusHtml = '<span class="font-bold text-green-600">Synced</span>';
-                else if(batch.syncStatus === 'error') statusHtml = '<span class="font-bold text-red-600">Failed</span>';
-                summaryRow.innerHTML = `<td class="py-3 px-3 border-b border-gray-200 text-orange-600 font-bold expand-icon">+</td> <td class="py-3 px-3 border-b border-gray-200 font-semibold">${batch.slurryBatch}</td> <td class="py-3 px-3 border-b border-gray-200">${batch.productName}</td> <td class="py-3 px-3 border-b border-gray-200">${batch.line}</td> <td class="py-3 px-3 border-b border-gray-200">${batch.timeSaved}</td> <td class="py-3 px-3 border-b border-gray-200 text-center">${statusHtml}</td>`;
+            // We removed the "Sync Status" column
+            if (savedSlurryBatches.length === 0) { 
+                tableBody.innerHTML = `<tr class="text-center no-data-row"><td colspan="5" class="py-10 text-gray-500">No data saved. Add a new batch to get started.</td></tr>`; 
+                return; 
+            }
+            
+            // The `onSnapshot` listener already sorts by newest first. No .slice().reverse() needed.
+            savedSlurryBatches.forEach(batch => {
+                const summaryRow = document.createElement('tr'); 
+                summaryRow.className = 'summary-row'; 
+                summaryRow.dataset.batchId = batch.id; // Use Firebase ID
                 
-                const detailsRow = document.createElement('tr'); detailsRow.className = 'details-row'; detailsRow.dataset.detailsFor = batch.id;
-                let detailsHtml = `<td colspan="6" class="p-4 bg-orange-50/50"><div class="max-w-4xl mx-auto"><div class="flex flex-col sm:flex-row justify-between items-start mb-3"><div> <h4 class="font-bold mb-1 text-orange-900">Batch Details:</h4> <table class="text-sm"> <tr><td class="font-semibold pr-2">Mix Time:</td><td>${batch.mixTime} mins</td><td class="font-semibold pr-2 pl-4">Brix:</td><td>${batch.brix}</td></tr> <tr><td class="font-semibold pr-2">Color (L):</td><td>${batch.colorL}</td><td class="font-semibold pr-2 pl-4">Color (a/b):</td><td>${batch.colorAB}</td></tr> </table> </div><div class="flex flex-col sm:flex-row gap-2 mt-2 sm:mt-0"> <button data-action="export-png" data-batch-id="${batch.id}" data-type="slurry" class="export-btn bg-white hover:bg-gray-100 text-gray-700 text-sm font-bold py-1 px-3 border rounded-md">Export Image</button> <button data-action="export-pdf" data-batch-id="${batch.id}" data-type="slurry" class="export-btn bg-white hover:bg-gray-100 text-gray-700 text-sm font-bold py-1 px-3 border rounded-md">Export PDF</button> </div></div> <h4 class="font-bold mt-3 mb-1 text-orange-900">Ingredient Details:</h4> <table class="min-w-full text-sm bg-white rounded-md shadow-sm"> <thead class="bg-gray-100"><tr><th class="px-2 py-1 text-left font-semibold">Ingredient</th><th class="px-2 py-1 text-left font-semibold">Batch #</th><th class="px-2 py-1 text-left font-semibold">Details</th></tr></thead><tbody>`;
-                batch.ingredients.forEach(ing => { const details = ing.name.toLowerCase().includes('bulk paste') ? `Ratio: ${ing.ratio}, Qty: ${ing.qty} Kg` : `Qty: ${ing.qty} Kg`; detailsHtml += `<tr class="border-t"><td class="px-2 py-1">${ing.name}</td><td class="px-2 py-1">${ing.batch}</td><td class="px-2 py-1">${details}</td></tr>`; });
+                // Note: No "Sync Status" column
+                summaryRow.innerHTML = `
+                    <td class="py-3 px-3 border-b border-gray-200 text-orange-600 font-bold expand-icon">+</td> 
+                    <td class="py-3 px-3 border-b border-gray-200 font-semibold">${batch.slurryBatch}</td> 
+                    <td class="py-3 px-3 border-b border-gray-200">${batch.productName}</td> 
+                    <td class="py-3 px-3 border-b border-gray-200">${batch.line}</td> 
+                    <td class="py-3 px-3 border-b border-gray-200">${batch.timeSaved}</td>
+                `;
+                
+                const detailsRow = document.createElement('tr'); 
+                detailsRow.className = 'details-row'; 
+                detailsRow.dataset.detailsFor = batch.id;
+                
+                let detailsHtml = `<td colspan="5" class="p-4 bg-orange-50/50"><div class="max-w-4xl mx-auto"><div class="flex flex-col sm:flex-row justify-between items-start mb-3"><div> <h4 class="font-bold mb-1 text-orange-900">Batch Details:</h4> <table class="text-sm"> <tr><td class="font-semibold pr-2">Mix Time:</td><td>${batch.mixTime} mins</td><td class="font-semibold pr-2 pl-4">Brix:</td><td>${batch.brix}</td></tr> <tr><td class="font-semibold pr-2">Color (L):</td><td>${batch.colorL}</td><td class="font-semibold pr-2 pl-4">Color (a/b):</td><td>${batch.colorAB}</td></tr> </table> </div><div class="flex flex-col sm:flex-row gap-2 mt-2 sm:mt-0"> <button data-action="export-png" data-batch-id="${batch.id}" data-type="slurry" class="export-btn bg-white hover:bg-gray-100 text-gray-700 text-sm font-bold py-1 px-3 border rounded-md">Export Image</button> <button data-action="export-pdf" data-batch-id="${batch.id}" data-type="slurry" class="export-btn bg-white hover:bg-gray-100 text-gray-700 text-sm font-bold py-1 px-3 border rounded-md">Export PDF</button> </div></div> <h4 class="font-bold mt-3 mb-1 text-orange-900">Ingredient Details:</h4> <table class="min-w-full text-sm bg-white rounded-md shadow-sm"> <thead class="bg-gray-100"><tr><th class="px-2 py-1 text-left font-semibold">Ingredient</th><th class="px-2 py-1 text-left font-semibold">Batch #</th><th class="px-2 py-1 text-left font-semibold">Details</th></tr></thead><tbody>`;
+                (batch.ingredients || []).forEach(ing => { const details = ing.name.toLowerCase().includes('bulk paste') ? `Ratio: ${ing.ratio}, Qty: ${ing.qty} Kg` : `Qty: ${ing.qty} Kg`; detailsHtml += `<tr class="border-t"><td class="px-2 py-1">${ing.name}</td><td class="px-2 py-1">${ing.batch}</td><td class="px-2 py-1">${details}</td></tr>`; });
                 detailsHtml += '</tbody></table></div></td>';
                 detailsRow.innerHTML = detailsHtml;
                 
-                tableBody.appendChild(summaryRow); tableBody.appendChild(detailsRow);
+                tableBody.appendChild(summaryRow); 
+                tableBody.appendChild(detailsRow);
             });
         }
         
-        // --- 3B. SHITO BATCH ADDITION MODULE ---
+        // --- 7B. SHITO BATCH ADDITION MODULE ---
         
         function buildShitoBatchModal() {
             const form = document.getElementById('form-shito-batch-add');
@@ -665,32 +673,24 @@
             });
         }
         
-        function handleShitoBatchFormSubmit(e) {
+        async function handleShitoBatchFormSubmit(e) {
             e.preventDefault();
             const form = e.target;
-            const now = new Date(); const batchId = Date.now();
+            const now = new Date();
             const variant = form.querySelector('#shito-batch-variant').value;
             const size = form.querySelector('#shito-batch-size').value;
+            
             const newBatch = {
-                id: batchId, date: now.toLocaleDateString('en-CA'), timeSaved: now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
+                date: now.toLocaleDateString('en-CA'), 
+                timeSaved: now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
+                createdAt: serverTimestamp(), // For sorting
                 shift: currentShiftInfo.key,
                 batchNumber: form.querySelector('#shito-batch-batch').value,
                 variant: variant,
                 sku: form.querySelector('#shito-batch-sku').value,
                 batchSize: size,
-                ingredients: [],
-                syncStatus: 'syncing'
+                ingredients: []
             };
-            
-            const rowData = {
-                "Date": newBatch.date, "Time Saved": newBatch.timeSaved, "Shift": newBatch.shift,
-                "Batch Number": newBatch.batchNumber, "Variant": newBatch.variant, "SKU": newBatch.sku,
-                "Batch Size": newBatch.batchSize,
-                "Start of Mixing": "N/A", "End of Mixing": "N/A", "Total Mixing Time (min)": "N/A"
-            };
-            
-            const allShitoIngredients = new Set([...appData.shitoRecipes.MILD.map(i => i.name), ...appData.shitoRecipes.HOT.map(i => i.name)]);
-            allShitoIngredients.forEach(name => rowData[name] = '');
 
             const ingredientInputs = form.querySelectorAll('#shito-batch-ingredients-container input[data-type="batch"]');
             ingredientInputs.forEach(input => {
@@ -698,32 +698,41 @@
                 const qty = input.dataset.ingQty;
                 const batch = input.value;
                 newBatch.ingredients.push({ name, qty, batch });
-                rowData[name] = `Batch: ${batch}, Qty: ${qty} Kg`;
                 updateBatchSuggestions(batch);
             });
             
-            savedShitoBatchLogs.push(newBatch);
-            saveState();
-            renderShitoBatchTable();
-            document.getElementById('modal-shito-batch-add').classList.add('hidden', 'opacity-0', 'pointer-events-none');
-            
-            submitDataToGoogle(GOOGLE_SCRIPT_URL_SHITO_BATCH, MODULE_PASSWORDS.shitoMenu, batchId, rowData, savedShitoBatchLogs, renderShitoBatchTable);
+            const submitBtn = form.closest('.modal').querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Saving...';
+
+            try {
+                const docRef = await addDoc(collection(db, "shitoBatchLogs"), newBatch);
+                console.log("Shito batch log saved with ID: ", docRef.id);
+                document.getElementById('modal-shito-batch-add').classList.add('hidden', 'opacity-0', 'pointer-events-none');
+            } catch (err) {
+                console.error("Error saving shito batch: ", err);
+                showAlert("Save Failed", "Could not save data. Please check your connection and try again.");
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Save';
+            }
         }
         
         function renderShitoBatchTable() {
             const tableBody = document.getElementById('log-table-body-shito-batch');
             if (!tableBody) return;
             tableBody.innerHTML = '';
-            if (savedShitoBatchLogs.length === 0) { tableBody.innerHTML = `<tr class="text-center no-data-row"><td colspan="6" class="py-10 text-gray-500">No data saved locally.</td></tr>`; return; }
             
-            savedShitoBatchLogs.slice().reverse().forEach(batch => {
+            if (savedShitoBatchLogs.length === 0) { 
+                tableBody.innerHTML = `<tr class="text-center no-data-row"><td colspan="5" class="py-10 text-gray-500">No data saved. Add a new batch to get started.</td></tr>`; 
+                return; 
+            }
+            
+            // `onSnapshot` provides data newest-first
+            savedShitoBatchLogs.forEach(batch => {
                 const summaryRow = document.createElement('tr');
                 summaryRow.className = 'summary-row shito';
                 summaryRow.dataset.batchId = batch.id;
-                let statusHtml;
-                if(batch.syncStatus === 'syncing') statusHtml = '<div class="flex justify-center items-center"><div class="loader"></div></div>';
-                else if(batch.syncStatus === 'success') statusHtml = '<span class="font-bold text-green-600">Synced</span>';
-                else if(batch.syncStatus === 'error') statusHtml = '<span class="font-bold text-red-600">Failed</span>';
                 
                 summaryRow.innerHTML = `
                     <td class="py-3 px-3 border-b border-gray-200 text-red-700 font-bold expand-icon">+</td>
@@ -731,7 +740,6 @@
                     <td class="py-3 px-3 border-b border-gray-200">${batch.variant}</td>
                     <td class="py-3 px-3 border-b border-gray-200">${batch.sku}</td>
                     <td class="py-3 px-3 border-b border-gray-200">${batch.timeSaved}</td>
-                    <td class="py-3 px-3 border-b border-gray-200 text-center">${statusHtml}</td>
                 `;
                 
                 const detailsRow = document.createElement('tr');
@@ -739,11 +747,11 @@
                 detailsRow.dataset.detailsFor = batch.id;
                 
                 let ingredientsTable = '';
-                batch.ingredients.forEach(ing => {
+                (batch.ingredients || []).forEach(ing => {
                     ingredientsTable += `<tr class="border-t"><td class="px-2 py-1">${ing.name}</td><td class="px-2 py-1">${ing.batch}</td><td class="px-2 py-1">Qty: ${ing.qty} Kg</td></tr>`;
                 });
                 
-                detailsRow.innerHTML = `<td colspan="6" class="p-4 bg-red-50/50"><div class="max-w-4xl mx-auto">
+                detailsRow.innerHTML = `<td colspan="5" class="p-4 bg-red-50/50"><div class="max-w-4xl mx-auto">
                     <div class="flex flex-col sm:flex-row justify-between items-start mb-3">
                         <div>
                             <h4 class="font-bold mb-1 text-red-900">Batch Details:</h4>
@@ -768,7 +776,7 @@
             });
         }
 
-        // --- 3C. SHITO COOKING CONTROL MODULE ---
+        // --- 7C. SHITO COOKING CONTROL MODULE ---
 
         function buildShitoCookingModal() {
             const form = document.getElementById('form-shito-cooking');
@@ -915,15 +923,15 @@
             modalSubmitBtn.className = `${s.modalSubmit} text-white font-bold py-2 px-4 rounded-lg`;
         }
         
-        function handleShitoCookingFormSubmit(e) {
+        async function handleShitoCookingFormSubmit(e) {
             e.preventDefault();
             const form = e.target;
-            const now = new Date(); const batchId = Date.now();
+            const now = new Date();
             
             const newLog = {
-                id: batchId,
                 date: now.toLocaleDateString('en-CA'),
                 timeSaved: now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
+                createdAt: serverTimestamp(), // For sorting
                 shift: currentShiftInfo.key,
                 batchId: form.querySelector('#cooking-batch-id').value,
                 variant: form.querySelector('#cooking-variant').value,
@@ -943,8 +951,7 @@
                 tempInitial: form.querySelector('#cooking-temp-initial').value,
                 pressureInitial: form.querySelector('#cooking-pressure-initial').value,
                 comments: form.querySelector('#cooking-comments').value,
-                hourlyRecords: [],
-                syncStatus: 'syncing'
+                hourlyRecords: []
             };
             
             const recordRows = form.querySelectorAll('#cooking-hourly-records-container > div');
@@ -957,27 +964,21 @@
                 });
             });
             
-            const rowData = {
-                "Date": newLog.date, "Time Saved": newLog.timeSaved, "Shift": newLog.shift,
-                "Batch ID": newLog.batchId, "Variant": newLog.variant, "SKU": newLog.sku,
-                "Cooking Cycle": newLog.cookingCycle, "Boule ID": newLog.bouleId,
-                "Start of GOG Transfer": newLog.gogStart, "End of GOG Transfer": newLog.gogEnd, "Total GOG Time": newLog.gogTotal,
-                "Batch Size": newLog.batchSize,
-                "Cooking Start Time": newLog.cookStart, "Cooking End Time": newLog.cookEnd, "Total Cooking Time": newLog.cookTotal,
-                "Initial pH": newLog.phInitial, "Final pH": newLog.phFinal,
-                "Initial Moisture (%M)": newLog.moistureInitial,
-                "Initial Cooking Temp (°C)": newLog.tempInitial,
-                "Initial Cooking Pressure (Bar)": newLog.pressureInitial,
-                "Hourly Records (JSON)": JSON.stringify(newLog.hourlyRecords),
-                "Comments/Issues": newLog.comments
-            };
+            const submitBtn = form.closest('.modal').querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Saving...';
             
-            savedShitoCookingLogs.push(newLog);
-            saveState();
-            renderShitoCookingTable();
-            document.getElementById('modal-shito-cooking').classList.add('hidden', 'opacity-0', 'pointer-events-none');
-            
-            submitDataToGoogle(GOOGLE_SCRIPT_URL_SHITO_COOKING, MODULE_PASSWORDS.shitoCooking, batchId, rowData, savedShitoCookingLogs, renderShitoCookingTable);
+            try {
+                const docRef = await addDoc(collection(db, "shitoCookingLogs"), newLog);
+                console.log("Shito cooking log saved with ID: ", docRef.id);
+                document.getElementById('modal-shito-cooking').classList.add('hidden', 'opacity-0', 'pointer-events-none');
+            } catch (err) {
+                console.error("Error saving shito cooking log: ", err);
+                showAlert("Save Failed", "Could not save data. Please check your connection and try again.");
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Save';
+            }
         }
         
         function renderShitoCookingTable() {
@@ -988,16 +989,16 @@
             chartInstances = {};
 
             tableBody.innerHTML = '';
-            if (savedShitoCookingLogs.length === 0) { tableBody.innerHTML = `<tr class="text-center no-data-row"><td colspan="6" class="py-10 text-gray-500">No data saved locally.</td></tr>`; return; }
+            if (savedShitoCookingLogs.length === 0) { 
+                tableBody.innerHTML = `<tr class="text-center no-data-row"><td colspan="5" class="py-10 text-gray-500">No data saved. Add a new log to get started.</td></tr>`; 
+                return; 
+            }
             
-            savedShitoCookingLogs.slice().reverse().forEach(log => {
+            // `onSnapshot` provides data newest-first
+            savedShitoCookingLogs.forEach(log => {
                 const summaryRow = document.createElement('tr');
                 summaryRow.className = 'summary-row shito';
                 summaryRow.dataset.batchId = log.id;
-                let statusHtml;
-                if(log.syncStatus === 'syncing') statusHtml = '<div class="flex justify-center items-center"><div class="loader"></div></div>';
-                else if(log.syncStatus === 'success') statusHtml = '<span class="font-bold text-green-600">Synced</span>';
-                else if(log.syncStatus === 'error') statusHtml = '<span class="font-bold text-red-600">Failed</span>';
                 
                 let variantColor = log.variant === 'HOT' ? 'text-red-700' : 'text-yellow-700';
                 
@@ -1007,7 +1008,6 @@
                     <td class="py-3 px-3 border-b border-gray-200">${log.variant}</td>
                     <td class="py-3 px-3 border-b border-gray-200">${log.bouleId}</td>
                     <td class="py-3 px-3 border-b border-gray-200">${log.timeSaved}</td>
-                    <td class="py-3 px-3 border-b border-gray-200 text-center">${statusHtml}</td>
                 `;
                 
                 const detailsRow = document.createElement('tr');
@@ -1015,14 +1015,14 @@
                 detailsRow.dataset.detailsFor = log.id;
                 
                 let hourlyTable = '';
-                log.hourlyRecords.forEach(r => {
+                (log.hourlyRecords || []).forEach(r => {
                     hourlyTable += `<tr class="border-t"><td class="px-2 py-1">${r.time}</td><td class="px-2 py-1">${r.temp}</td><td class="px-2 py-1">${r.pressure}</td><td class="px-2 py-1">${r.moisture}</td></tr>`;
                 });
-                if(log.hourlyRecords.length === 0) hourlyTable = '<tr><td colspan="4" class="px-2 py-1 text-gray-500">No hourly records added.</td></tr>';
+                if(!log.hourlyRecords || log.hourlyRecords.length === 0) hourlyTable = '<tr><td colspan="4" class="px-2 py-1 text-gray-500">No hourly records added.</td></tr>';
 
                 const themeColor = log.variant === 'HOT' ? 'red' : 'yellow';
                 
-                detailsRow.innerHTML = `<td colspan="6" class="p-4 bg-${themeColor}-50/50"><div class="max-w-4xl mx-auto">
+                detailsRow.innerHTML = `<td colspan="5" class="p-4 bg-${themeColor}-50/50"><div class="max-w-4xl mx-auto">
                     <div class="flex flex-col sm:flex-row justify-between items-start mb-3">
                         <div>
                             <h4 class="font-bold mb-1 text-${themeColor}-900">Cooking Log Details:</h4>
@@ -1106,7 +1106,7 @@
             }
         }
 
-        // --- 4. EXPORT FUNCTIONS (VERSION 14.3 - PDF FIX) ---
+        // --- 8. EXPORT FUNCTIONS (No changes from v14.3) ---
         async function exportBatch(batchId, format, type, buttonEl) {
             const batch = (type === 'slurry') ? savedSlurryBatches.find(b => b.id == batchId) :
                           (type === 'shito-batch') ? savedShitoBatchLogs.find(b => b.id == batchId) :
@@ -1123,23 +1123,22 @@
             let cardHTML = '';
             let filename = '';
 
-            // --- Card HTML Generation (Same as v14.2) ---
             if (type === 'slurry') {
                 let ingredientsTable = '';
-                batch.ingredients.forEach(ing => { const details = ing.name.toLowerCase().includes('bulk paste') ? `Ratio: ${ing.ratio}, Qty: ${ing.qty} Kg` : `Qty: ${ing.qty} Kg`; ingredientsTable += `<tr style="border-top: 1px solid #eee;"><td style="padding: 4px;">${ing.name}</td><td style="padding: 4px;">${ing.batch}</td><td style="padding: 4px;">${details}</td></tr>`; });
+                (batch.ingredients || []).forEach(ing => { const details = ing.name.toLowerCase().includes('bulk paste') ? `Ratio: ${ing.ratio}, Qty: ${ing.qty} Kg` : `Qty: ${ing.qty} Kg`; ingredientsTable += `<tr style="border-top: 1px solid #eee;"><td style="padding: 4px;">${ing.name}</td><td style="padding: 4px;">${ing.batch}</td><td style="padding: 4px;">${details}</td></tr>`; });
                 cardHTML = `<div style="border-bottom: 2px solid #F97316; padding-bottom: 0.5rem; margin-bottom: 1rem;"><h2 style="font-size: 1.5rem; font-weight: 700; color: #7C2D12;">Slurry Summary: ${batch.slurryBatch}</h2><p style="color: #666;">${batch.productName} - ${batch.line}</p></div><table style="width: 100%; font-size: 0.9rem; margin-bottom: 1rem;"><tr><td><strong>Date:</strong> ${batch.date}</td><td><strong>Time:</strong> ${batch.timeSaved}</td></tr><tr><td><strong>Shift:</strong> ${currentShiftInfo.shift} (${batch.shift})</td><td><strong>Mix Time:</strong> ${batch.mixTime} mins</td></tr><tr><td><strong>Brix:</strong> ${batch.brix}</td><td><strong>Color (L/ab):</strong> ${batch.colorL} / ${batch.colorAB}</td></tr></table><h3 style="font-size: 1.1rem; font-weight: 600; color: #7C2D12; border-top: 1px solid #ddd; padding-top: 1rem;">Ingredients</h3><table style="width: 100%; font-size: 0.85rem; border-collapse: collapse;"><thead style="text-align: left; background-color: #f4f4f4;"><tr><th style="padding: 4px;">Ingredient</th><th style="padding: 4px;">Batch #</th><th style="padding: 4px;">Details</th></tr></thead><tbody>${ingredientsTable}</tbody></table>`;
                 filename = `Slurry_${batch.slurryBatch}_Summary`;
             
             } else if (type === 'shito-batch') {
                 let ingredientsTable = '';
-                batch.ingredients.forEach(ing => { ingredientsTable += `<tr style="border-top: 1px solid #eee;"><td style="padding: 4px;">${ing.name}</td><td style="padding: 4px;">${ing.batch}</td><td style="padding: 4px;">Qty: ${ing.qty} Kg</td></tr>`; });
+                (batch.ingredients || []).forEach(ing => { ingredientsTable += `<tr style="border-top: 1px solid #eee;"><td style="padding: 4px;">${ing.name}</td><td style="padding: 4px;">${ing.batch}</td><td style="padding: 4px;">Qty: ${ing.qty} Kg</td></tr>`; });
                 cardHTML = `<div style="border-bottom: 2px solid #B71C1C; padding-bottom: 0.5rem; margin-bottom: 1rem;"><h2 style="font-size: 1.5rem; font-weight: 700; color: #B71C1C;">Shito Batch Summary: ${batch.batchNumber}</h2><p style="color: #666;">${batch.variant} - ${batch.sku}</p></div><table style="width: 100%; font-size: 0.9rem; margin-bottom: 1rem;"><tr><td><strong>Date:</strong> ${batch.date}</td><td><strong>Time:</strong> ${batch.timeSaved}</td></tr><tr><td><strong>Shift:</strong> ${currentShiftInfo.shift} (${batch.shift})</td><td><strong>Batch Size:</strong> ${batch.batchSize} Ton</td></tr></table><h3 style="font-size: 1.1rem; font-weight: 600; color: #B71C1C; border-top: 1px solid #ddd; padding-top: 1rem;">Ingredients</h3><table style="width: 100%; font-size: 0.85rem; border-collapse: collapse;"><thead style="text-align: left; background-color: #f4f4f4;"><tr><th style="padding: 4px;">Ingredient</th><th style="padding: 4px;">Batch #</th><th style="padding: 4px;">Details</th></tr></thead><tbody>${ingredientsTable}</tbody></table>`;
                 filename = `ShitoBatch_${batch.batchNumber}_Summary`;
             
             } else if (type === 'shito-cooking') {
                 let hourlyTable = '';
-                batch.hourlyRecords.forEach(r => { hourlyTable += `<tr style="border-top: 1px solid #eee;"><td style="padding: 4px;">${r.time}</td><td style="padding: 4px;">${r.temp}</td><td style="padding: 4px;">${r.pressure}</td><td style="padding: 4px;">${r.moisture}</td></tr>`; });
-                if(batch.hourlyRecords.length === 0) hourlyTable = '<tr><td colspan="4" style="padding: 4px; color: #888;">No hourly records added.</td></tr>';
+                (batch.hourlyRecords || []).forEach(r => { hourlyTable += `<tr style="border-top: 1px solid #eee;"><td style="padding: 4px;">${r.time}</td><td style="padding: 4px;">${r.temp}</td><td style="padding: 4px;">${r.pressure}</td><td style="padding: 4px;">${r.moisture}</td></tr>`; });
+                if(!batch.hourlyRecords || batch.hourlyRecords.length === 0) hourlyTable = '<tr><td colspan="4" style="padding: 4px; color: #888;">No hourly records added.</td></tr>';
                 const themeColor = batch.variant === 'HOT' ? '#B71C1C' : '#E65100';
                 
                 cardHTML = `<div style="border-bottom: 2px solid ${themeColor}; padding-bottom: 0.5rem; margin-bottom: 1rem;"><h2 style="font-size: 1.5rem; font-weight: 700; color: ${themeColor};">Shito Cooking Summary: ${batch.batchId}</h2><p style="color: #666;">${batch.variant} - ${batch.sku}</p></div>
@@ -1170,7 +1169,7 @@
             card.innerHTML = cardHTML;
             exportContainer.appendChild(card);
             
-            if (type === 'shito-cooking' && batch.hourlyRecords.length > 0) {
+            if (type === 'shito-cooking' && batch.hourlyRecords && batch.hourlyRecords.length > 0) {
                 const labels = batch.hourlyRecords.map(r => r.time);
                 const chartOptions = (title, color) => ({
                     responsive: true,
@@ -1194,45 +1193,34 @@
                 const canvas = await html2canvas(card, { scale: 2 });
                 const imgData = canvas.toDataURL('image/png');
 
-                // --- *** NEW LOGIC (v14.3) *** ---
                 if (format === 'pdf') {
-                    // PDF LOGIC (for both mobile and desktop)
                     const pdf = new jsPDF({ orientation: 'p', unit: 'px', format: [canvas.width, canvas.height] }); 
                     pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-                    
                     if (isMobile) {
-                        // On mobile, open the PDF in a new tab
                         const pdfBlob = pdf.output('blob');
                         const pdfUrl = URL.createObjectURL(pdfBlob);
                         window.open(pdfUrl, '_blank');
                     } else {
-                        // On desktop, save the file directly
                         pdf.save(`${filename}.pdf`); 
                     }
-
                 } else {
-                    // PNG LOGIC (format === 'png')
                     if (isMobile) {
-                        // On mobile, show the image preview modal
                         const previewModal = document.getElementById('export-preview-modal');
                         const previewImage = document.getElementById('preview-image');
                         previewImage.src = imgData;
                         previewModal.classList.remove('hidden', 'opacity-0', 'pointer-events-none');
                     } else {
-                        // On desktop, save the file directly
                         const link = document.createElement('a'); 
                         link.download = `${filename}.png`; 
                         link.href = imgData; 
                         link.click(); 
                     }
                 }
-                // --- *** END OF NEW LOGIC *** ---
-
             } catch(err) { console.error("Export failed:", err); showAlert("Export Failed", "Sorry, the summary could not be exported."); }
             finally { exportContainer.innerHTML = ''; buttonEl.textContent = originalText; buttonEl.disabled = false; }
         }
         
-        // --- 5. EVENT LISTENERS ---
+        // --- 9. EVENT LISTENERS ---
         function setupEventListeners() {
             // Slurry Listeners
             document.getElementById('add-entry-btn-slurry').addEventListener('click', buildSlurryModal);
@@ -1289,8 +1277,9 @@
                     if(icon) icon.textContent = isExpanding ? '−' : '+';
 
                     if (isExpanding) {
+                        // Find the log data from our live global array
                         const log = savedShitoCookingLogs.find(l => l.id == batchId);
-                        createShitoCookingCharts(log);
+                        if(log) createShitoCookingCharts(log);
                     }
                 }
             });
@@ -1308,19 +1297,62 @@
             document.getElementById('alert-ok-btn').addEventListener('click', () => { document.getElementById('alert-modal').classList.add('hidden', 'opacity-0', 'pointer-events-none'); });
         }
         
-        // --- 6. INITIALIZE THE APP ---
+        // --- 10. INITIALIZE THE APP ---
         function initializeApp() {
-            loadState(); // Load 24-hour persistent data
+            if (!db) { return; } // Stop if Firebase failed to init
+            
+            loadBatchNumbers(); // Load non-critical batch numbers from localStorage
             updateDateTime();
             setInterval(updateDateTime, 60000);
             setupEventListeners();
-            const iframe = document.createElement('iframe');
-            iframe.name = 'hidden-iframe';
-            iframe.style.display = 'none';
-            document.body.appendChild(iframe);
-            renderSlurryTable(); 
-            renderShitoBatchTable();
-            renderShitoCookingTable();
+            
+            // --- SET UP ALL REAL-TIME LISTENERS ---
+            
+            // Slurry Listener
+            const slurryQuery = query(collection(db, "slurryBatches"), orderBy("createdAt", "desc"));
+            onSnapshot(slurryQuery, (snapshot) => {
+                const batches = [];
+                snapshot.forEach((doc) => {
+                    batches.push({ id: doc.id, ...doc.data() });
+                });
+                savedSlurryBatches = batches; // Update global state
+                renderSlurryTable();          // Re-render the table
+                console.log("Live Slurry Batches Updated:", batches);
+            }, (error) => {
+                console.error("Error listening to slurry batches:", error);
+                showAlert("Connection Error", "Could not load slurry data. Please check your connection.");
+            });
+
+            // Shito Batch Listener
+            const shitoBatchQuery = query(collection(db, "shitoBatchLogs"), orderBy("createdAt", "desc"));
+            onSnapshot(shitoBatchQuery, (snapshot) => {
+                const logs = [];
+                snapshot.forEach((doc) => {
+                    logs.push({ id: doc.id, ...doc.data() });
+                });
+                savedShitoBatchLogs = logs;
+                renderShitoBatchTable();
+                console.log("Live Shito Batches Updated:", logs);
+            }, (error) => {
+                console.error("Error listening to shito batches:", error);
+                showAlert("Connection Error", "Could not load shito batch data. Please check your connection.");
+            });
+
+            // Shito Cooking Listener
+            const shitoCookingQuery = query(collection(db, "shitoCookingLogs"), orderBy("createdAt", "desc"));
+            onSnapshot(shitoCookingQuery, (snapshot) => {
+                const logs = [];
+                snapshot.forEach((doc) => {
+                    logs.push({ id: doc.id, ...doc.data() });
+                });
+                savedShitoCookingLogs = logs;
+                renderShitoCookingTable();
+                console.log("Live Shito Cooking Logs Updated:", logs);
+            }, (error) => {
+                console.error("Error listening to shito cooking logs:", error);
+                showAlert("Connection Error", "Could not load shito cooking data. Please check your connection.");
+            });
+            
             showPage('page-home');
         }
 
