@@ -3,18 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Production Log v14.0</title>
+    <title>Production Log v14.1</title>
     
     <!-- PWA / Full-Screen Tags -->
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#F97316">
-    
+    <link rel="apple-touch-icon" href="icon-192.png">
+
     <!-- Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- NEW: Added Chart.js for graphs -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
@@ -24,7 +27,6 @@
         .summary-row { cursor: pointer; transition: background-color 0.2s; }
         .summary-row:hover { background-color: #FFFAF0; }
         .summary-row.expanded { background-color: #FFEAD9; }
-        /* Shito details row */
         .summary-row.shito:hover { background-color: #FFF5F5; }
         .summary-row.shito.expanded { background-color: #FFEBEE; }
         
@@ -271,6 +273,7 @@
         let savedShitoBatchLogs = [];
         let savedShitoCookingLogs = [];
         let enteredBatchNumbers = new Set();
+        let chartInstances = {}; // To store and destroy chart instances
         
         const isMobile = /MOBI/i.test(window.navigator.userAgent);
         
@@ -684,7 +687,6 @@
                 "Date": newBatch.date, "Time Saved": newBatch.timeSaved, "Shift": newBatch.shift,
                 "Batch Number": newBatch.batchNumber, "Variant": newBatch.variant, "SKU": newBatch.sku,
                 "Batch Size": newBatch.batchSize,
-                // Placeholders for headers that exist in the cooking log, but not here
                 "Start of Mixing": "N/A", "End of Mixing": "N/A", "Total Mixing Time (min)": "N/A"
             };
             
@@ -831,11 +833,9 @@
                 </div>
             `;
             
-            // --- Add Listeners ---
             const variantSelect = form.querySelector('#cooking-variant');
             variantSelect.addEventListener('change', () => updateShitoCookingAesthetics(variantSelect.value));
             
-            // Time calculation listeners
             ['cooking-gog-start', 'cooking-gog-end'].forEach(id => {
                 form.querySelector(`#${id}`).addEventListener('input', () => {
                     form.querySelector('#cooking-gog-total').value = formatTimeDiff(form.querySelector('#cooking-gog-start').value, form.querySelector('#cooking-gog-end').value);
@@ -847,9 +847,7 @@
                 });
             });
 
-            // Hourly record listener
             form.querySelector('#add-hourly-record-btn').addEventListener('click', addHourlyRecordRow);
-
             updateShitoCookingAesthetics('');
             document.getElementById('modal-shito-cooking').classList.remove('hidden', 'opacity-0', 'pointer-events-none');
         }
@@ -878,57 +876,44 @@
             const pageHeader = document.getElementById('header-shito-cooking');
             const pageTableHead = document.getElementById('thead-shito-cooking');
             const addBtn = document.getElementById('add-entry-btn-shito-cooking');
-            
             if (!modalContent || !pageHeader || !pageTableHead || !addBtn) return;
             
             const modalHeader = modalContent.querySelector('.p-5');
             const modalTitle = modalHeader.querySelector('h2');
             const modalSubmitBtn = modalContent.querySelector('button[type="submit"]');
-
             const pageTitle = pageHeader.querySelector('h1');
             const pageShift = pageHeader.querySelector('span');
             const pageBackBtn = pageHeader.querySelector('button');
-
-            if (variant === 'MILD') {
-                // Page
-                pageHeader.className = "bg-white shadow-lg rounded-xl p-4 mb-6 border-t-4 border-yellow-600 transition-all duration-500";
-                pageTitle.className = "text-3xl font-bold text-yellow-800 transition-all duration-500";
-                pageShift.className = "font-bold px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full transition-all duration-500";
-                pageBackBtn.className = "mt-2 text-sm text-yellow-700 hover:underline transition-all duration-500";
-                addBtn.className = "bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-5 rounded-lg shadow-md transition-transform transform hover:scale-105";
-                pageTableHead.className = "bg-yellow-50 transition-all duration-500";
-                pageTableHead.querySelectorAll('th').forEach(th => th.className = "py-3 px-3 border-b-2 border-yellow-200 text-left text-sm font-semibold text-yellow-900");
-                // Modal
-                modalContent.style.background = 'linear-gradient(to top right, #FFF8E1, #FFECB3)';
-                modalHeader.style.background = '#FFF3E0'; modalHeader.style.color = '#E65100'; modalTitle.style.color = '#E65100';
-                modalSubmitBtn.className = "bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded-lg";
-            } else if (variant === 'HOT') {
-                // Page
-                pageHeader.className = "bg-white shadow-lg rounded-xl p-4 mb-6 border-t-4 border-red-700 transition-all duration-500";
-                pageTitle.className = "text-3xl font-bold text-red-800 transition-all duration-500";
-                pageShift.className = "font-bold px-3 py-1 bg-red-100 text-red-800 rounded-full transition-all duration-500";
-                pageBackBtn.className = "mt-2 text-sm text-red-700 hover:underline transition-all duration-500";
-                addBtn.className = "bg-red-700 hover:bg-red-800 text-white font-bold py-2 px-5 rounded-lg shadow-md transition-transform transform hover:scale-105";
-                pageTableHead.className = "bg-red-50 transition-all duration-500";
-                pageTableHead.querySelectorAll('th').forEach(th => th.className = "py-3 px-3 border-b-2 border-red-200 text-left text-sm font-semibold text-red-900");
-                // Modal
-                modalContent.style.background = 'linear-gradient(to top right, #FFEBEE, #EF9A9A)';
-                modalHeader.style.background = '#FFCDD2'; modalHeader.style.color = '#B71C1C'; modalTitle.style.color = '#B71C1C';
-                modalSubmitBtn.className = "bg-red-700 hover:bg-red-800 text-white font-bold py-2 px-4 rounded-lg";
-            } else {
-                // Page
-                pageHeader.className = "bg-white shadow-lg rounded-xl p-4 mb-6 border-t-4 border-gray-700 transition-all duration-500";
-                pageTitle.className = "text-3xl font-bold text-gray-800 transition-all duration-500";
-                pageShift.className = "font-bold px-3 py-1 bg-gray-100 text-gray-800 rounded-full transition-all duration-500";
-                pageBackBtn.className = "mt-2 text-sm text-gray-700 hover:underline transition-all duration-500";
-                addBtn.className = "bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-5 rounded-lg shadow-md transition-transform transform hover:scale-105";
-                pageTableHead.className = "bg-gray-50 transition-all duration-500";
-                pageTableHead.querySelectorAll('th').forEach(th => th.className = "py-3 px-3 border-b-2 border-gray-200 text-left text-sm font-semibold text-gray-900");
-                // Modal
-                modalContent.style.background = 'white';
-                modalHeader.style.background = '#F9FAFB'; modalHeader.style.color = '#374151'; modalTitle.style.color = '#374151';
-                modalSubmitBtn.className = "bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded-lg";
-            }
+            
+            const theme = {
+                MILD: {
+                    pageBorder: 'border-yellow-600', pageTitle: 'text-yellow-800', pageShiftBG: 'bg-yellow-100', pageShiftText: 'text-yellow-800',
+                    pageBack: 'text-yellow-700', addBtn: 'bg-yellow-600 hover:bg-yellow-700', tableHead: 'bg-yellow-50', tableHeadBorder: 'border-yellow-200', tableHeadText: 'text-yellow-900',
+                    modalBG: 'linear-gradient(to top right, #FFF8E1, #FFECB3)', modalHeaderBG: '#FFF3E0', modalHeaderText: '#E65100', modalSubmit: 'bg-yellow-600 hover:bg-yellow-700'
+                },
+                HOT: {
+                    pageBorder: 'border-red-700', pageTitle: 'text-red-800', pageShiftBG: 'bg-red-100', pageShiftText: 'text-red-800',
+                    pageBack: 'text-red-700', addBtn: 'bg-red-700 hover:bg-red-800', tableHead: 'bg-red-50', tableHeadBorder: 'border-red-200', tableHeadText: 'text-red-900',
+                    modalBG: 'linear-gradient(to top right, #FFEBEE, #EF9A9A)', modalHeaderBG: '#FFCDD2', modalHeaderText: '#B71C1C', modalSubmit: 'bg-red-700 hover:bg-red-800'
+                },
+                DEFAULT: {
+                    pageBorder: 'border-gray-700', pageTitle: 'text-gray-800', pageShiftBG: 'bg-gray-100', pageShiftText: 'text-gray-800',
+                    pageBack: 'text-gray-700', addBtn: 'bg-gray-700 hover:bg-gray-800', tableHead: 'bg-gray-50', tableHeadBorder: 'border-gray-200', tableHeadText: 'text-gray-900',
+                    modalBG: 'white', modalHeaderBG: '#F9FAFB', modalHeaderText: '#374151', modalSubmit: 'bg-gray-700 hover:bg-gray-800'
+                }
+            };
+            const s = theme[variant] || theme.DEFAULT;
+            
+            pageHeader.className = `bg-white shadow-lg rounded-xl p-4 mb-6 border-t-4 ${s.pageBorder} transition-all duration-500`;
+            pageTitle.className = `text-3xl font-bold ${s.pageTitle} transition-all duration-500`;
+            pageShift.className = `font-bold px-3 py-1 ${s.pageShiftBG} ${s.pageShiftText} rounded-full transition-all duration-500`;
+            pageBackBtn.className = `mt-2 text-sm ${s.pageBack} hover:underline transition-all duration-500`;
+            addBtn.className = `${s.addBtn} text-white font-bold py-2 px-5 rounded-lg shadow-md transition-transform transform hover:scale-105`;
+            pageTableHead.className = `${s.tableHead} transition-all duration-500`;
+            pageTableHead.querySelectorAll('th').forEach(th => th.className = `py-3 px-3 border-b-2 ${s.tableHeadBorder} text-left text-sm font-semibold ${s.tableHeadText}`);
+            modalContent.style.background = s.modalBG;
+            modalHeader.style.background = s.modalHeaderBG; modalHeader.style.color = s.modalHeaderText; modalTitle.style.color = s.modalHeaderText;
+            modalSubmitBtn.className = `${s.modalSubmit} text-white font-bold py-2 px-4 rounded-lg`;
         }
         
         function handleShitoCookingFormSubmit(e) {
@@ -963,7 +948,6 @@
                 syncStatus: 'syncing'
             };
             
-            // Collect hourly records
             const recordRows = form.querySelectorAll('#cooking-hourly-records-container > div');
             recordRows.forEach(row => {
                 newLog.hourlyRecords.push({
@@ -974,25 +958,14 @@
                 });
             });
             
-            // Prep rowData for Google Sheet
             const rowData = {
-                "Date": newLog.date,
-                "Time Saved": newLog.timeSaved,
-                "Shift": newLog.shift,
-                "Batch ID": newLog.batchId,
-                "Variant": newLog.variant,
-                "SKU": newLog.sku,
-                "Cooking Cycle": newLog.cookingCycle,
-                "Boule ID": newLog.bouleId,
-                "Start of GOG Transfer": newLog.gogStart,
-                "End of GOG Transfer": newLog.gogEnd,
-                "Total GOG Time": newLog.gogTotal,
+                "Date": newLog.date, "Time Saved": newLog.timeSaved, "Shift": newLog.shift,
+                "Batch ID": newLog.batchId, "Variant": newLog.variant, "SKU": newLog.sku,
+                "Cooking Cycle": newLog.cookingCycle, "Boule ID": newLog.bouleId,
+                "Start of GOG Transfer": newLog.gogStart, "End of GOG Transfer": newLog.gogEnd, "Total GOG Time": newLog.gogTotal,
                 "Batch Size": newLog.batchSize,
-                "Cooking Start Time": newLog.cookStart,
-                "Cooking End Time": newLog.cookEnd,
-                "Total Cooking Time": newLog.cookTotal,
-                "Initial pH": newLog.phInitial,
-                "Final pH": newLog.phFinal,
+                "Cooking Start Time": newLog.cookStart, "Cooking End Time": newLog.cookEnd, "Total Cooking Time": newLog.cookTotal,
+                "Initial pH": newLog.phInitial, "Final pH": newLog.phFinal,
                 "Initial Moisture (%M)": newLog.moistureInitial,
                 "Initial Cooking Temp (°C)": newLog.tempInitial,
                 "Initial Cooking Pressure (Bar)": newLog.pressureInitial,
@@ -1011,6 +984,11 @@
         function renderShitoCookingTable() {
             const tableBody = document.getElementById('log-table-body-shito-cooking');
             if (!tableBody) return;
+            
+            // Destroy any existing charts before re-rendering
+            Object.values(chartInstances).forEach(chart => chart.destroy());
+            chartInstances = {};
+
             tableBody.innerHTML = '';
             if (savedShitoCookingLogs.length === 0) { tableBody.innerHTML = `<tr class="text-center no-data-row"><td colspan="6" class="py-10 text-gray-500">No data saved locally.</td></tr>`; return; }
             
@@ -1069,6 +1047,16 @@
                     <h4 class="font-bold mt-3 mb-1 text-${themeColor}-900">Comments / Issues:</h4>
                     <p class="text-sm p-2 bg-white rounded-md shadow-sm border">${log.comments || 'N/A'}</p>
 
+                    <!-- NEW: Graph Section -->
+                    <h4 class="font-bold mt-3 mb-1 text-${themeColor}-900">Hourly Trends:</h4>
+                    <div class="p-2 bg-white rounded-md shadow-sm border">
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                            <div><canvas id="chart-temp-${log.id}"></canvas></div>
+                            <div><canvas id="chart-pressure-${log.id}"></canvas></div>
+                            <div><canvas id="chart-moisture-${log.id}"></canvas></div>
+                        </div>
+                    </div>
+
                     <h4 class="font-bold mt-3 mb-1 text-${themeColor}-900">Hourly Records:</h4>
                     <table class="min-w-full text-sm bg-white rounded-md shadow-sm">
                         <thead class="bg-gray-100"><tr>
@@ -1084,6 +1072,43 @@
                 tableBody.appendChild(summaryRow);
                 tableBody.appendChild(detailsRow);
             });
+        }
+        
+        // --- NEW: Chart Rendering Function ---
+        function createShitoCookingCharts(log) {
+            if (!log || !log.hourlyRecords || log.hourlyRecords.length === 0) return;
+
+            const labels = log.hourlyRecords.map(r => r.time);
+            const tempData = log.hourlyRecords.map(r => r.temp);
+            const pressureData = log.hourlyRecords.map(r => r.pressure);
+            const moistureData = log.hourlyRecords.map(r => r.moisture);
+
+            const chartOptions = (title, color) => ({
+                responsive: true,
+                plugins: { legend: { display: false }, title: { display: true, text: title } },
+                scales: { y: { beginAtZero: true } },
+                elements: { line: { tension: 0.1, borderColor: color, backgroundColor: `${color}33`, fill: true } }
+            });
+
+            // Destroy existing charts for this log ID if they exist
+            ['temp', 'pressure', 'moisture'].forEach(type => {
+                if (chartInstances[`${type}-${log.id}`]) {
+                    chartInstances[`${type}-${log.id}`].destroy();
+                }
+            });
+
+            try {
+                const tempCtx = document.getElementById(`chart-temp-${log.id}`);
+                if (tempCtx) chartInstances[`temp-${log.id}`] = new Chart(tempCtx, { type: 'line', data: { labels, datasets: [{ data: tempData }] }, options: chartOptions('Temperature (°C)', '#F97316') });
+                
+                const pressureCtx = document.getElementById(`chart-pressure-${log.id}`);
+                if (pressureCtx) chartInstances[`pressure-${log.id}`] = new Chart(pressureCtx, { type: 'line', data: { labels, datasets: [{ data: pressureData }] }, options: chartOptions('Pressure (Bar)', '#3B82F6') });
+
+                const moistureCtx = document.getElementById(`chart-moisture-${log.id}`);
+                if (moistureCtx) chartInstances[`moisture-${log.id}`] = new Chart(moistureCtx, { type: 'line', data: { labels, datasets: [{ data: moistureData }] }, options: chartOptions('Moisture (%M)', '#10B981') });
+            } catch (e) {
+                console.error("Chart rendering failed:", e);
+            }
         }
 
         // --- 4. EXPORT FUNCTIONS ---
@@ -1119,9 +1144,7 @@
                 let hourlyTable = '';
                 batch.hourlyRecords.forEach(r => { hourlyTable += `<tr style="border-top: 1px solid #eee;"><td style="padding: 4px;">${r.time}</td><td style="padding: 4px;">${r.temp}</td><td style="padding: 4px;">${r.pressure}</td><td style="padding: 4px;">${r.moisture}</td></tr>`; });
                 if(batch.hourlyRecords.length === 0) hourlyTable = '<tr><td colspan="4" style="padding: 4px; color: #888;">No hourly records added.</td></tr>';
-                
                 const themeColor = batch.variant === 'HOT' ? '#B71C1C' : '#E65100';
-                
                 cardHTML = `<div style="border-bottom: 2px solid ${themeColor}; padding-bottom: 0.5rem; margin-bottom: 1rem;"><h2 style="font-size: 1.5rem; font-weight: 700; color: ${themeColor};">Shito Cooking Summary: ${batch.batchId}</h2><p style="color: #666;">${batch.variant} - ${batch.sku}</p></div>
                     <table style="width: 100%; font-size: 0.9rem; margin-bottom: 1rem;">
                         <tr><td><strong>Date:</strong> ${batch.date}</td><td><strong>Time:</strong> ${batch.timeSaved}</td></tr>
@@ -1209,10 +1232,18 @@
                     const batchId = summaryRow.dataset.batchId; 
                     const detailsRow = document.querySelector(`#page-shito-cooking .details-row[data-details-for="${batchId}"]`);
                     if (!detailsRow) return;
+                    
+                    const isExpanding = !summaryRow.classList.contains('expanded');
                     summaryRow.classList.toggle('expanded');
-                    detailsRow.style.display = detailsRow.style.display === 'table-row' ? 'none' : 'table-row';
+                    detailsRow.style.display = isExpanding ? 'table-row' : 'none';
                     const icon = summaryRow.querySelector('.expand-icon');
-                    if(icon) icon.textContent = summaryRow.classList.contains('expanded') ? '−' : '+';
+                    if(icon) icon.textContent = isExpanding ? '−' : '+';
+
+                    // --- NEW: Render charts on expand ---
+                    if (isExpanding) {
+                        const log = savedShitoCookingLogs.find(l => l.id == batchId);
+                        createShitoCookingCharts(log);
+                    }
                 }
             });
 
