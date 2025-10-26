@@ -10,13 +10,13 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#F97316">
-    <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="apple-touch-icon" href="icon-192.png"> <!-- Important for iOS icon -->
 
     <!-- Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <!-- NEW: Added Chart.js for graphs -->
+    <!-- Added Chart.js for graphs -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
@@ -893,7 +893,7 @@
                 },
                 HOT: {
                     pageBorder: 'border-red-700', pageTitle: 'text-red-800', pageShiftBG: 'bg-red-100', pageShiftText: 'text-red-800',
-                    pageBack: 'text-red-700', addBtn: 'bg-red-700 hover:bg-red-800', tableHead: 'bg-red-50', tableHeadBorder: 'border-red-200', tableHeadText: 'text-red-900',
+                    pageBack: 'text-red-7Z00', addBtn: 'bg-red-700 hover:bg-red-800', tableHead: 'bg-red-50', tableHeadBorder: 'border-red-200', tableHeadText: 'text-red-900',
                     modalBG: 'linear-gradient(to top right, #FFEBEE, #EF9A9A)', modalHeaderBG: '#FFCDD2', modalHeaderText: '#B71C1C', modalSubmit: 'bg-red-700 hover:bg-red-800'
                 },
                 DEFAULT: {
@@ -985,7 +985,6 @@
             const tableBody = document.getElementById('log-table-body-shito-cooking');
             if (!tableBody) return;
             
-            // Destroy any existing charts before re-rendering
             Object.values(chartInstances).forEach(chart => chart.destroy());
             chartInstances = {};
 
@@ -1050,7 +1049,7 @@
                     <!-- NEW: Graph Section -->
                     <h4 class="font-bold mt-3 mb-1 text-${themeColor}-900">Hourly Trends:</h4>
                     <div class="p-2 bg-white rounded-md shadow-sm border">
-                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                        <div class_A="grid grid-cols-1 lg:grid-cols-3 gap-4">
                             <div><canvas id="chart-temp-${log.id}"></canvas></div>
                             <div><canvas id="chart-pressure-${log.id}"></canvas></div>
                             <div><canvas id="chart-moisture-${log.id}"></canvas></div>
@@ -1086,7 +1085,7 @@
             const chartOptions = (title, color) => ({
                 responsive: true,
                 plugins: { legend: { display: false }, title: { display: true, text: title } },
-                scales: { y: { beginAtZero: true } },
+                scales: { y: { beginAtZero: false } }, // Changed to false for better temp/pressure readings
                 elements: { line: { tension: 0.1, borderColor: color, backgroundColor: `${color}33`, fill: true } }
             });
 
