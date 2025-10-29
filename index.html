@@ -3,7 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Production Log v15.0 (Firebase)</title>
+    <!-- 
+      This title reflects the new "Dual-Save" system.
+      The previous file was v15.0.
+    -->
+    <title>Production Log v15.1 (Dual-Save)</title>
     
     <!-- PWA / Full-Screen Tags -->
     <link rel="manifest" href="manifest.json">
@@ -248,11 +252,15 @@
     <!-- Datalist for batch number suggestions -->
     <datalist id="batch-suggestions"></datalist>
 
-    <!-- === COMPLETE JAVASCRIPT (v15.0 - Firebase) === -->
+    <!-- === COMPLETE JAVASCRIPT (v15.1 - Dual-Save) === -->
     <script type="module">
     
     // --- 1. EXTERNAL LIBRARIES ---
     const { jsPDF } = window.jspdf;
+
+    // --- [NEW] ADD YOUR GOOGLE APPS SCRIPT URL HERE ---
+    // This is the URL you copied after deploying your script in Step 2.
+    const SCRIPT_URL = "YOUR_DEPLOYED_APPS_SCRIPT_URL_GOES_HERE";
 
     // --- 2. FIREBASE LIBRARIES ---
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -505,18 +513,19 @@
             });
         }
         
+        // --- [REPLACED] handleSlurryFormSubmit ---
+        // This function now saves to BOTH Firestore and Google Sheets.
         async function handleSlurryFormSubmit(e) {
             e.preventDefault();
             const form = e.target;
             const now = new Date();
             const productSelect = form.querySelector('#slurry-product');
             
-            // 1. Create the data object to save
             const newBatch = {
-                // We no longer need a local 'id', Firebase will provide one
+                logType: "slurry", // <-- Our new "traffic controller" ID
                 date: now.toLocaleDateString('en-CA'), 
                 timeSaved: now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
-                createdAt: serverTimestamp(), // For sorting
+                createdAt: serverTimestamp(), 
                 shift: currentShiftInfo.key, 
                 line: form.querySelector('#slurry-line').value, 
                 productKey: productSelect.value,
@@ -536,19 +545,36 @@
                 newBatch.ingredients.push({ name, qty, batch, ratio });
                 if (!name.toLowerCase().includes('water')) { updateBatchSuggestions(batch); }
             });
-            
-            // 2. Disable button and save to Firebase
+
             const submitBtn = form.closest('.modal').querySelector('button[type="submit"]');
             submitBtn.disabled = true;
             submitBtn.textContent = 'Saving...';
             
             try {
-                const docRef = await addDoc(collection(db, "slurryBatches"), newBatch);
-                console.log("Slurry batch saved with ID: ", docRef.id);
+                // --- Create two save "promises" ---
+                const firestorePromise = addDoc(collection(db, "slurryBatches"), newBatch);
+                
+                const sheetsPromise = fetch(SCRIPT_URL, {
+                  method: "POST",
+                  body: JSON.stringify(newBatch),
+                  headers: { "Content-Type": "application/json" }
+                }).then(res => res.json());
+
+                // --- Wait for BOTH to finish ---
+                const [firestoreResult, sheetsResult] = await Promise.all([firestorePromise, sheetsPromise]);
+
+                console.log("Slurry batch saved to Firestore with ID: ", firestoreResult.id);
+                
+                if (sheetsResult.status !== 'success') {
+                  throw new Error(`Sheets Error: ${sheetsResult.message}`);
+                }
+                console.log("Slurry batch saved to Google Sheets.");
+
                 document.getElementById('modal-slurry').classList.add('hidden', 'opacity-0', 'pointer-events-none');
             } catch (err) {
                 console.error("Error saving slurry batch: ", err);
-                showAlert("Save Failed", "Could not save data. Please check your connection and try again.");
+                // Updated Alert to show detailed error
+                showAlert("Save Failed", `Could not save data. Please check connection. Error: ${err.message}`);
             } finally {
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Save';
@@ -673,6 +699,8 @@
             });
         }
         
+        // --- [REPLACED] handleShitoBatchFormSubmit ---
+        // This function now saves to BOTH Firestore and Google Sheets.
         async function handleShitoBatchFormSubmit(e) {
             e.preventDefault();
             const form = e.target;
@@ -681,9 +709,10 @@
             const size = form.querySelector('#shito-batch-size').value;
             
             const newBatch = {
+                logType: "shitoBatch", // <-- Our new "traffic controller" ID
                 date: now.toLocaleDateString('en-CA'), 
                 timeSaved: now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
-                createdAt: serverTimestamp(), // For sorting
+                createdAt: serverTimestamp(),
                 shift: currentShiftInfo.key,
                 batchNumber: form.querySelector('#shito-batch-batch').value,
                 variant: variant,
@@ -691,7 +720,7 @@
                 batchSize: size,
                 ingredients: []
             };
-
+            
             const ingredientInputs = form.querySelectorAll('#shito-batch-ingredients-container input[data-type="batch"]');
             ingredientInputs.forEach(input => {
                 const name = input.dataset.ingName;
@@ -706,12 +735,30 @@
             submitBtn.textContent = 'Saving...';
 
             try {
-                const docRef = await addDoc(collection(db, "shitoBatchLogs"), newBatch);
-                console.log("Shito batch log saved with ID: ", docRef.id);
+                // --- Create two save "promises" ---
+                const firestorePromise = addDoc(collection(db, "shitoBatchLogs"), newBatch);
+                
+                const sheetsPromise = fetch(SCRIPT_URL, {
+                  method: "POST",
+                  body: JSON.stringify(newBatch),
+                  headers: { "Content-Type": "application/json" }
+                }).then(res => res.json());
+
+                // --- Wait for BOTH to finish ---
+                const [firestoreResult, sheetsResult] = await Promise.all([firestorePromise, sheetsPromise]);
+                
+                console.log("Shito batch log saved to Firestore with ID: ", firestoreResult.id);
+
+                if (sheetsResult.status !== 'success') {
+                  throw new Error(`Sheets Error: ${sheetsResult.message}`);
+                }
+                console.log("Shito batch log saved to Google Sheets.");
+
                 document.getElementById('modal-shito-batch-add').classList.add('hidden', 'opacity-0', 'pointer-events-none');
             } catch (err) {
                 console.error("Error saving shito batch: ", err);
-                showAlert("Save Failed", "Could not save data. Please check your connection and try again.");
+                // Updated Alert to show detailed error
+                showAlert("Save Failed", `Could not save data. Please check connection. Error: ${err.message}`);
             } finally {
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Save';
@@ -923,15 +970,18 @@
             modalSubmitBtn.className = `${s.modalSubmit} text-white font-bold py-2 px-4 rounded-lg`;
         }
         
+        // --- [REPLACED] handleShitoCookingFormSubmit ---
+        // This function now saves to BOTH Firestore and Google Sheets.
         async function handleShitoCookingFormSubmit(e) {
             e.preventDefault();
             const form = e.target;
             const now = new Date();
             
             const newLog = {
+                logType: "shitoCooking", // <-- Our new "traffic controller" ID
                 date: now.toLocaleDateString('en-CA'),
                 timeSaved: now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
-                createdAt: serverTimestamp(), // For sorting
+                createdAt: serverTimestamp(),
                 shift: currentShiftInfo.key,
                 batchId: form.querySelector('#cooking-batch-id').value,
                 variant: form.querySelector('#cooking-variant').value,
@@ -969,12 +1019,30 @@
             submitBtn.textContent = 'Saving...';
             
             try {
-                const docRef = await addDoc(collection(db, "shitoCookingLogs"), newLog);
-                console.log("Shito cooking log saved with ID: ", docRef.id);
+                // --- Create two save "promises" ---
+                const firestorePromise = addDoc(collection(db, "shitoCookingLogs"), newLog);
+                
+                const sheetsPromise = fetch(SCRIPT_URL, {
+                  method: "POST",
+                  body: JSON.stringify(newLog),
+                  headers: { "Content-Type": "application/json" }
+                }).then(res => res.json());
+
+                // --- Wait for BOTH to finish ---
+                const [firestoreResult, sheetsResult] = await Promise.all([firestorePromise, sheetsPromise]);
+                
+                console.log("Shito cooking log saved to Firestore with ID: ", firestoreResult.id);
+
+                if (sheetsResult.status !== 'success') {
+                  throw new Error(`Sheets Error: ${sheetsResult.message}`);
+                }
+                console.log("Shito cooking log saved to Google Sheets.");
+
                 document.getElementById('modal-shito-cooking').classList.add('hidden', 'opacity-0', 'pointer-events-none');
             } catch (err) {
                 console.error("Error saving shito cooking log: ", err);
-                showAlert("Save Failed", "Could not save data. Please check your connection and try again.");
+                // Updated Alert to show detailed error
+                showAlert("Save Failed", `Could not save data. Please check connection. Error: ${err.message}`);
             } finally {
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Save';
@@ -1307,6 +1375,7 @@
             setupEventListeners();
             
             // --- SET UP ALL REAL-TIME LISTENERS ---
+            // (These are unchanged - they still read from Firestore)
             
             // Slurry Listener
             const slurryQuery = query(collection(db, "slurryBatches"), orderBy("createdAt", "desc"));
@@ -1361,5 +1430,4 @@
     </script>
 </body>
 </html>
-
 
