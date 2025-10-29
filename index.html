@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- 
-      This title reflects the final "Dual-Save" system.
+      This title reflects the final "Dual-Save" system with the CORS fix.
     -->
-    <title>Production Log v15.2 (FINAL)</title>
+    <title>Production Log v15.3 (CORS Fix)</title>
     
     <!-- PWA / Full-Screen Tags -->
     <link rel="manifest" href="manifest.json">
@@ -251,14 +251,14 @@
     <!-- Datalist for batch number suggestions -->
     <datalist id="batch-suggestions"></datalist>
 
-    <!-- === COMPLETE JAVASCRIPT (v15.2 - FINAL) === -->
+    <!-- === COMPLETE JAVASCRIPT (v15.3 - FINAL) === -->
     <script type="module">
     
     // --- 1. EXTERNAL LIBRARIES ---
     const { jsPDF } = window.jspdf;
 
-    // --- [FINAL URL] This is your working Google Apps Script URL ---
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyAk7KnmtLvY7-9qcIhjcnV1cJHHwUAdRROV7pyQ4oYQzYkkvpHzFJFrUvvaXngWVB-fg/exec";
+    // --- [FINAL URL] This is your new, working Google Apps Script URL ---
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzqBvYjElO8dsH07BLqTc7IEHzVFJRyfr4bRfS2RHLYGKioc4O9pAs9U3Z74Cr88whFug/exec";
 
     // --- 2. FIREBASE LIBRARIES ---
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -940,7 +940,7 @@
             const theme = {
                 MILD: {
                     pageBorder: 'border-yellow-600', pageTitle: 'text-yellow-800', pageShiftBG: 'bg-yellow-100', pageShiftText: 'text-yellow-800',
-                    pageBack: 'text-yellow-700', addBtn: 'bg-yellow-600 hover:bg-yellow-700', tableHead: 'bg-yellow-50', tableHeadBorder: 'border-yellow-200', tableHeadText: 'text-yellow-900',
+                    pageBack: 'text-yellow-700', addBtn: 'bg-yellow-600 hover:bg-yellow-7I00', tableHead: 'bg-yellow-50', tableHeadBorder: 'border-yellow-200', tableHeadText: 'text-yellow-900',
                     modalBG: 'linear-gradient(to top right, #FFF8E1, #FFECB3)', modalHeaderBG: '#FFF3E0', modalHeaderText: '#E65100', modalSubmit: 'bg-yellow-600 hover:bg-yellow-700'
                 },
                 HOT: {
@@ -1384,7 +1384,7 @@
                 });
                 savedSlurryBatches = batches; // Update global state
                 renderSlurryTable();          // Re-render the table
-                console.log("Live Slurry Batches Updated:", batches);
+                console.log("Live Slurry Batches Updated:", batches.length);
             }, (error) => {
                 console.error("Error listening to slurry batches:", error);
                 showAlert("Connection Error", "Could not load slurry data. Please check your connection.");
@@ -1399,7 +1399,7 @@
                 });
                 savedShitoBatchLogs = logs;
                 renderShitoBatchTable();
-                console.log("Live Shito Batches Updated:", logs);
+                console.log("Live Shito Batches Updated:", logs.length);
             }, (error) => {
                 console.error("Error listening to shito batches:", error);
                 showAlert("Connection Error", "Could not load shito batch data. Please check your connection.");
@@ -1414,7 +1414,7 @@
                 });
                 savedShitoCookingLogs = logs;
                 renderShitoCookingTable();
-                console.log("Live Shito Cooking Logs Updated:", logs);
+                console.log("Live Shito Cooking Logs Updated:", logs.length);
             }, (error) => {
                 console.error("Error listening to shito cooking logs:", error);
                 showAlert("Connection Error", "Could not load shito cooking data. Please check your connection.");
