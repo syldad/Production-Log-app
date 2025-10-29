@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- 
-      This title reflects the final "Dual-Save" system with the CORS fix.
+      This title reflects the redirect fix
     -->
-    <title>Production Log v15.3 (CORS Fix)</title>
+    <title>Production Log v15.4 (Redirect Fix)</title>
     
     <!-- PWA / Full-Screen Tags -->
     <link rel="manifest" href="manifest.json">
@@ -251,7 +251,7 @@
     <!-- Datalist for batch number suggestions -->
     <datalist id="batch-suggestions"></datalist>
 
-    <!-- === COMPLETE JAVASCRIPT (v15.3 - FINAL) === -->
+    <!-- === COMPLETE JAVASCRIPT (v15.4 - FINAL) === -->
     <script type="module">
     
     // --- 1. EXTERNAL LIBRARIES ---
@@ -511,8 +511,7 @@
             });
         }
         
-        // --- [REPLACED] handleSlurryFormSubmit ---
-        // This function now saves to BOTH Firestore and Google Sheets.
+        // --- [UPDATED] handleSlurryFormSubmit ---
         async function handleSlurryFormSubmit(e) {
             e.preventDefault();
             const form = e.target;
@@ -552,8 +551,10 @@
                 // --- Create two save "promises" ---
                 const firestorePromise = addDoc(collection(db, "slurryBatches"), newBatch);
                 
+                // --- [FIX] Added redirect: "follow" ---
                 const sheetsPromise = fetch(SCRIPT_URL, {
                   method: "POST",
+                  redirect: "follow", // <-- This is the fix for "Failed to fetch"
                   body: JSON.stringify(newBatch),
                   headers: { "Content-Type": "application/json" }
                 }).then(res => res.json());
@@ -571,7 +572,6 @@
                 document.getElementById('modal-slurry').classList.add('hidden', 'opacity-0', 'pointer-events-none');
             } catch (err) {
                 console.error("Error saving slurry batch: ", err);
-                // Updated Alert to show detailed error
                 showAlert("Save Failed", `Could not save data. Please check connection. Error: ${err.message}`);
             } finally {
                 submitBtn.disabled = false;
@@ -584,19 +584,16 @@
             if (!tableBody) return;
             tableBody.innerHTML = '';
             
-            // We removed the "Sync Status" column
             if (savedSlurryBatches.length === 0) { 
                 tableBody.innerHTML = `<tr class="text-center no-data-row"><td colspan="5" class="py-10 text-gray-500">No data saved. Add a new batch to get started.</td></tr>`; 
                 return; 
             }
             
-            // The `onSnapshot` listener already sorts by newest first. No .slice().reverse() needed.
             savedSlurryBatches.forEach(batch => {
                 const summaryRow = document.createElement('tr'); 
                 summaryRow.className = 'summary-row'; 
-                summaryRow.dataset.batchId = batch.id; // Use Firebase ID
+                summaryRow.dataset.batchId = batch.id; 
                 
-                // Note: No "Sync Status" column
                 summaryRow.innerHTML = `
                     <td class="py-3 px-3 border-b border-gray-200 text-orange-600 font-bold expand-icon">+</td> 
                     <td class="py-3 px-3 border-b border-gray-200 font-semibold">${batch.slurryBatch}</td> 
@@ -697,8 +694,7 @@
             });
         }
         
-        // --- [REPLACED] handleShitoBatchFormSubmit ---
-        // This function now saves to BOTH Firestore and Google Sheets.
+        // --- [UPDATED] handleShitoBatchFormSubmit ---
         async function handleShitoBatchFormSubmit(e) {
             e.preventDefault();
             const form = e.target;
@@ -736,8 +732,10 @@
                 // --- Create two save "promises" ---
                 const firestorePromise = addDoc(collection(db, "shitoBatchLogs"), newBatch);
                 
+                // --- [FIX] Added redirect: "follow" ---
                 const sheetsPromise = fetch(SCRIPT_URL, {
                   method: "POST",
+                  redirect: "follow", // <-- This is the fix for "Failed to fetch"
                   body: JSON.stringify(newBatch),
                   headers: { "Content-Type": "application/json" }
                 }).then(res => res.json());
@@ -755,7 +753,6 @@
                 document.getElementById('modal-shito-batch-add').classList.add('hidden', 'opacity-0', 'pointer-events-none');
             } catch (err) {
                 console.error("Error saving shito batch: ", err);
-                // Updated Alert to show detailed error
                 showAlert("Save Failed", `Could not save data. Please check connection. Error: ${err.message}`);
             } finally {
                 submitBtn.disabled = false;
@@ -773,7 +770,6 @@
                 return; 
             }
             
-            // `onSnapshot` provides data newest-first
             savedShitoBatchLogs.forEach(batch => {
                 const summaryRow = document.createElement('tr');
                 summaryRow.className = 'summary-row shito';
@@ -940,7 +936,7 @@
             const theme = {
                 MILD: {
                     pageBorder: 'border-yellow-600', pageTitle: 'text-yellow-800', pageShiftBG: 'bg-yellow-100', pageShiftText: 'text-yellow-800',
-                    pageBack: 'text-yellow-700', addBtn: 'bg-yellow-600 hover:bg-yellow-7I00', tableHead: 'bg-yellow-50', tableHeadBorder: 'border-yellow-200', tableHeadText: 'text-yellow-900',
+                    pageBack: 'text-yellow-700', addBtn: 'bg-yellow-600 hover:bg-yellow-700', tableHead: 'bg-yellow-50', tableHeadBorder: 'border-yellow-200', tableHeadText: 'text-yellow-900',
                     modalBG: 'linear-gradient(to top right, #FFF8E1, #FFECB3)', modalHeaderBG: '#FFF3E0', modalHeaderText: '#E65100', modalSubmit: 'bg-yellow-600 hover:bg-yellow-700'
                 },
                 HOT: {
@@ -968,8 +964,7 @@
             modalSubmitBtn.className = `${s.modalSubmit} text-white font-bold py-2 px-4 rounded-lg`;
         }
         
-        // --- [REPLACED] handleShitoCookingFormSubmit ---
-        // This function now saves to BOTH Firestore and Google Sheets.
+        // --- [UPDATED] handleShitoCookingFormSubmit ---
         async function handleShitoCookingFormSubmit(e) {
             e.preventDefault();
             const form = e.target;
@@ -1020,8 +1015,10 @@
                 // --- Create two save "promises" ---
                 const firestorePromise = addDoc(collection(db, "shitoCookingLogs"), newLog);
                 
+                // --- [FIX] Added redirect: "follow" ---
                 const sheetsPromise = fetch(SCRIPT_URL, {
                   method: "POST",
+                  redirect: "follow", // <-- This is the fix for "Failed to fetch"
                   body: JSON.stringify(newLog),
                   headers: { "Content-Type": "application/json" }
                 }).then(res => res.json());
@@ -1039,7 +1036,6 @@
                 document.getElementById('modal-shito-cooking').classList.add('hidden', 'opacity-0', 'pointer-events-none');
             } catch (err) {
                 console.error("Error saving shito cooking log: ", err);
-                // Updated Alert to show detailed error
                 showAlert("Save Failed", `Could not save data. Please check connection. Error: ${err.message}`);
             } finally {
                 submitBtn.disabled = false;
@@ -1060,7 +1056,6 @@
                 return; 
             }
             
-            // `onSnapshot` provides data newest-first
             savedShitoCookingLogs.forEach(log => {
                 const summaryRow = document.createElement('tr');
                 summaryRow.className = 'summary-row shito';
@@ -1172,7 +1167,7 @@
             }
         }
 
-        // --- 8. EXPORT FUNCTIONS (No changes from v14.3) ---
+        // --- 8. EXPORT FUNCTIONS ---
         async function exportBatch(batchId, format, type, buttonEl) {
             const batch = (type === 'slurry') ? savedSlurryBatches.find(b => b.id == batchId) :
                           (type === 'shito-batch') ? savedShitoBatchLogs.find(b => b.id == batchId) :
