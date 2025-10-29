@@ -4,10 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- 
-      This title reflects the new "Dual-Save" system.
-      The previous file was v15.0.
+      This title reflects the final "Dual-Save" system.
     -->
-    <title>Production Log v15.1 (Dual-Save)</title>
+    <title>Production Log v15.2 (FINAL)</title>
     
     <!-- PWA / Full-Screen Tags -->
     <link rel="manifest" href="manifest.json">
@@ -252,15 +251,14 @@
     <!-- Datalist for batch number suggestions -->
     <datalist id="batch-suggestions"></datalist>
 
-    <!-- === COMPLETE JAVASCRIPT (v15.1 - Dual-Save) === -->
+    <!-- === COMPLETE JAVASCRIPT (v15.2 - FINAL) === -->
     <script type="module">
     
     // --- 1. EXTERNAL LIBRARIES ---
     const { jsPDF } = window.jspdf;
 
-    // --- [NEW] ADD YOUR GOOGLE APPS SCRIPT URL HERE ---
-    // This is the URL you copied after deploying your script in Step 2.
-    const SCRIPT_URL = "YOUR_DEPLOYED_APPS_SCRIPT_URL_GOES_HERE";
+    // --- [FINAL URL] This is your working Google Apps Script URL ---
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyAk7KnmtLvY7-9qcIhjcnV1cJHHwUAdRROV7pyQ4oYQzYkkvpHzFJFrUvvaXngWVB-fg/exec";
 
     // --- 2. FIREBASE LIBRARIES ---
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -1430,4 +1428,5 @@
     </script>
 </body>
 </html>
+
 
