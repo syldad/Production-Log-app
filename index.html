@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Production Log v15.9 (FINAL)</title>
+    <title>Production Log v15.10 (FINAL)</title>
     
     <!-- PWA / Full-Screen Tags -->
     <link rel="manifest" href="manifest.json">
@@ -24,16 +24,12 @@
         .modal { transition: opacity 0.3s ease; }
         .tab-button { transition: background-color 0.2s, color 0.2s; }
         .table-cell { padding: 10px; border-bottom: 1px solid #F3E8DB; }
-        /* Prevent layout shift on scrollbar */
         html { overflow-y: scroll; }
-        /* Custom scrollbar */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #FFF8F0; }
         ::-webkit-scrollbar-thumb { background: #FDBA74; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #FB923C; }
-        /* Focus styles for accessibility */
         :focus-visible { outline: 2px solid #F97316; outline-offset: 2px; border-radius: 4px; }
-        /* Base button style */
         .btn {
             display: inline-flex;
             align-items: center;
@@ -53,7 +49,6 @@
         .btn-danger:hover { background-color: #B91C1C; }
         .btn-outline { background-color: white; color: #EA580C; border-color: #FDBA74; }
         .btn-outline:hover { background-color: #FFF8F0; }
-        /* Form input style */
         .form-input {
             width: 100%;
             padding: 10px;
@@ -67,7 +62,6 @@
             box-shadow: 0 0 0 2px #FDBA74;
             outline: none;
         }
-        /* Custom Alert Box */
         #custom-alert {
             position: fixed;
             top: 0;
@@ -109,10 +103,11 @@
 
         <!-- Header -->
         <header class="mb-6 flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
-            <h1 class="text-3xl font-bold text-orange-600">Production Log v15.9</h1>
+            <h1 class="text-3xl font-bold text-orange-600">Production Log v15.10</h1>
             <div class="flex space-x-2">
-                <button onclick="showPage('page-home')" class="btn btn-primary">Home</button>
-                <button onclick="showPage('page-summary')" class="btn btn-secondary">Summary</button>
+                <!-- BUG FIX: Removed onclick, added ID -->
+                <button id="btn-show-home" class="btn btn-primary">Home</button>
+                <button id="btn-show-summary" class="btn btn-secondary">Summary</button>
             </div>
         </header>
 
@@ -123,21 +118,23 @@
             <div id="page-home">
                 <!-- Log Selection -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                    <button onclick="openModal('modal-slurry')" class="btn btn-primary h-24 text-xl">New Slurry Batch</button>
-                    <button onclick="openModal('modal-shito-batch')" class="btn btn-primary h-24 text-xl">New Shito Batch</button>
-                    <button onclick="openModal('modal-shito-cooking')" class="btn btn-primary h-24 text-xl">New Shito Cooking Log</button>
+                    <!-- BUG FIX: Removed onclick, added ID -->
+                    <button id="btn-open-slurry" class="btn btn-primary h-24 text-xl">New Slurry Batch</button>
+                    <button id="btn-open-shito-batch" class="btn btn-primary h-24 text-xl">New Shito Batch</button>
+                    <button id="btn-open-shito-cooking" class="btn btn-primary h-24 text-xl">New Shito Cooking Log</button>
                 </div>
 
                 <!-- Tab Navigation for Logs -->
                 <div class="mb-4 border-b border-orange-200">
                     <nav class="flex -mb-px space-x-6" aria-label="Tabs">
-                        <button onclick="showTab(this, 'tab-slurry')" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 border-orange-500 text-orange-600 font-medium text-lg">
+                        <!-- BUG FIX: Removed onclick, added ID -->
+                        <button id="btn-tab-slurry" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 border-orange-500 text-orange-600 font-medium text-lg">
                             Slurry Logs
                         </button>
-                        <button onclick="showTab(this, 'tab-shito-batch')" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium text-lg">
+                        <button id="btn-tab-shito-batch" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium text-lg">
                             Shito Batch Logs
                         </button>
-                        <button onclick="showTab(this, 'tab-shito-cooking')" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium text-lg">
+                        <button id="btn-tab-shito-cooking" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium text-lg">
                             Shito Cooking Logs
                         </button>
                     </nav>
@@ -228,7 +225,6 @@
                         <canvas id="shito-chart"></canvas>
                     </div>
                 </div>
-                <!-- Summary tables will go here -->
             </div>
 
         </main>
@@ -237,11 +233,13 @@
     <!-- ===== MODALS ===== -->
 
     <!-- Modal: New Slurry Batch -->
-    <div id="modal-slurry" class="modal fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50" onclick="closeModal(event, 'modal-slurry')">
-        <div class="relative top-10 mx-auto p-6 border w-full max-w-3xl shadow-lg rounded-xl bg-white">
+    <!-- BUG FIX: Removed onclick, added backdrop ID -->
+    <div id="modal-slurry" class="modal fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div id="modal-slurry-backdrop" class="fixed inset-0"></div>
+        <div class="relative top-10 mx-auto p-6 border w-full max-w-3xl shadow-lg rounded-xl bg-white z-10">
             <h3 class="text-2xl font-semibold text-orange-600">New Slurry Batch Entry</h3>
             <form id="form-slurry" class="mt-4 space-y-4">
-                <!-- Row 1: Basic Info -->
+                <!-- (Form content is identical to your file) -->
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
                         <label class="block text-sm font-medium mb-1">Date</label>
@@ -266,7 +264,6 @@
                         </select>
                     </div>
                 </div>
-                <!-- Row 2: Product Info -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-medium mb-1">Product Name</label>
@@ -282,7 +279,6 @@
                         <input type="text" name="slurryBatch" class="form-input" placeholder="e.g., C24001" required>
                     </div>
                 </div>
-                <!-- Row 3: Quality Params -->
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
                     <div>
                         <label class="block text-sm font-medium mb-1">Mix Time (mins)</label>
@@ -301,17 +297,17 @@
                         <input type="number" step="0.01" name="colorAB" class="form-input" placeholder="e.g., 2.1">
                     </div>
                 </div>
-                <!-- Row 4: Ingredients -->
                 <fieldset class="border border-orange-200 p-4 rounded-lg">
                     <legend class="text-lg font-medium text-orange-600 px-2">Ingredients</legend>
                     <div id="slurry-ingredients-list" class="space-y-3">
                         <!-- Dynamic ingredient rows here -->
                     </div>
-                    <button type="button" onclick="addSlurryIngredient()" class="btn btn-secondary mt-3">+ Add Ingredient</button>
+                    <!-- BUG FIX: Removed onclick, added ID -->
+                    <button type="button" id="btn-add-slurry-ingredient" class="btn btn-secondary mt-3">+ Add Ingredient</button>
                 </fieldset>
-                <!-- Row 5: Actions -->
                 <div class="flex justify-end space-x-3 pt-4">
-                    <button type="button" onclick="closeModal(null, 'modal-slurry')" class="btn btn-outline">Cancel</button>
+                    <!-- BUG FIX: Removed onclick, added ID -->
+                    <button type="button" id="btn-cancel-slurry" class="btn btn-outline">Cancel</button>
                     <button type="submit" id="btn-save-slurry" class="btn btn-primary">Save Slurry Batch</button>
                 </div>
             </form>
@@ -319,11 +315,13 @@
     </div>
 
     <!-- Modal: New Shito Batch -->
-    <div id="modal-shito-batch" class="modal fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50" onclick="closeModal(event, 'modal-shito-batch')">
-        <div class="relative top-10 mx-auto p-6 border w-full max-w-3xl shadow-lg rounded-xl bg-white">
+    <!-- BUG FIX: Removed onclick, added backdrop ID -->
+    <div id="modal-shito-batch" class="modal fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div id="modal-shito-batch-backdrop" class="fixed inset-0"></div>
+        <div class="relative top-10 mx-auto p-6 border w-full max-w-3xl shadow-lg rounded-xl bg-white z-10">
             <h3 class="text-2xl font-semibold text-orange-600">New Shito Batch Entry (Pre-Cook)</h3>
             <form id="form-shito-batch" class="mt-4 space-y-4">
-                <!-- Row 1: Basic Info -->
+                <!-- (Form content is identical to your file) -->
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
                         <label class="block text-sm font-medium mb-1">Date</label>
@@ -343,7 +341,6 @@
                         <input type="text" name="batchNumber" class="form-input" placeholder="e.g., B1" required>
                     </div>
                 </div>
-                <!-- Row 2: Product Info -->
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
                         <label class="block text-sm font-medium mb-1">Variant</label>
@@ -368,17 +365,17 @@
                         <input type="number" step="0.01" name="batchSize" class="form-input" placeholder="e.g., 1.5">
                     </div>
                 </div>
-                <!-- Row 3: Ingredients -->
                 <fieldset class="border border-orange-200 p-4 rounded-lg">
                     <legend class="text-lg font-medium text-orange-600 px-2">Ingredients</legend>
                     <div id="shito-batch-ingredients-list" class="space-y-3">
                         <!-- Dynamic ingredient rows here -->
                     </div>
-                    <button type="button" onclick="addShitoBatchIngredient()" class="btn btn-secondary mt-3">+ Add Ingredient</button>
+                    <!-- BUG FIX: Removed onclick, added ID -->
+                    <button type="button" id="btn-add-shito-ingredient" class="btn btn-secondary mt-3">+ Add Ingredient</button>
                 </fieldset>
-                <!-- Row 4: Actions -->
                 <div class="flex justify-end space-x-3 pt-4">
-                    <button type="button" onclick="closeModal(null, 'modal-shito-batch')" class="btn btn-outline">Cancel</button>
+                    <!-- BUG FIX: Removed onclick, added ID -->
+                    <button type="button" id="btn-cancel-shito-batch" class="btn btn-outline">Cancel</button>
                     <button type="submit" id="btn-save-shito-batch" class="btn btn-primary">Save Shito Batch</button>
                 </div>
             </form>
@@ -386,11 +383,13 @@
     </div>
 
     <!-- Modal: New Shito Cooking Log -->
-    <div id="modal-shito-cooking" class="modal fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50" onclick="closeModal(event, 'modal-shito-cooking')">
-        <div class="relative top-10 mx-auto p-6 border w-full max-w-4xl shadow-lg rounded-xl bg-white">
+    <!-- BUG FIX: Removed onclick, added backdrop ID -->
+    <div id="modal-shito-cooking" class="modal fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div id="modal-shito-cooking-backdrop" class="fixed inset-0"></div>
+        <div class="relative top-10 mx-auto p-6 border w-full max-w-4xl shadow-lg rounded-xl bg-white z-10">
             <h3 class="text-2xl font-semibold text-orange-600">New Shito Cooking Log</h3>
             <form id="form-shito-cooking" class="mt-4 space-y-4">
-                <!-- Row 1: Basic Info -->
+                <!-- (Form content is identical to your file) -->
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
                         <label class="block text-sm font-medium mb-1">Date</label>
@@ -410,7 +409,6 @@
                         <input type="text" name="batchId" class="form-input" placeholder="e.g., B1-C1" required>
                     </div>
                 </div>
-                <!-- Row 2: Product Info -->
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
                         <label class="block text-sm font-medium mb-1">Variant</label>
@@ -435,7 +433,6 @@
                         <input type="text" name="cookingCycle" class="form-input" placeholder="e.g., Cycle 1" required>
                     </div>
                 </div>
-                <!-- Row 3: Timing -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                     <div>
                         <label class="block text-sm font-medium mb-1">Boule ID</label>
@@ -464,7 +461,6 @@
                         <input type="time" name="cookEnd" class="form-input">
                     </div>
                 </div>
-                <!-- Row 4: Quality Params -->
                 <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
                     <div>
                         <label class="block text-sm font-medium mb-1">Initial pH</label>
@@ -487,22 +483,21 @@
                         <input type="number" step="0.01" name="pressureInitial" class="form-input">
                     </div>
                 </div>
-                <!-- Row 5: Hourly Records -->
                 <fieldset class="border border-orange-200 p-4 rounded-lg">
                     <legend class="text-lg font-medium text-orange-600 px-2">Hourly Cooking Records</legend>
                     <div id="hourly-records-list" class="space-y-3">
                         <!-- Dynamic hourly records here -->
                     </div>
-                    <button type="button" onclick="addHourlyRecord()" class="btn btn-secondary mt-3">+ Add Hourly Record</button>
+                    <!-- BUG FIX: Removed onclick, added ID -->
+                    <button type="button" id="btn-add-hourly-record" class="btn btn-secondary mt-3">+ Add Hourly Record</button>
                 </fieldset>
-                <!-- Row 6: Comments -->
                 <div>
                     <label class="block text-sm font-medium mb-1">Comments</label>
                     <textarea name="comments" rows="3" class="form-input"></textarea>
                 </div>
-                <!-- Row 7: Actions -->
                 <div class="flex justify-end space-x-3 pt-4">
-                    <button type="button" onclick="closeModal(null, 'modal-shito-cooking')" class="btn btn-outline">Cancel</button>
+                    <!-- BUG FIX: Removed onclick, added ID -->
+                    <button type="button" id="btn-cancel-shito-cooking" class="btn btn-outline">Cancel</button>
                     <button type="submit" id="btn-save-shito-cooking" class="btn btn-primary">Save Cooking Log</button>
                 </div>
             </form>
@@ -510,15 +505,18 @@
     </div>
 
     <!-- Modal: View Log Details -->
-    <div id="modal-view-log" class="modal fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50" onclick="closeModal(event, 'modal-view-log')">
-        <div class="relative top-10 mx-auto p-6 border w-full max-w-3xl shadow-lg rounded-xl bg-white">
+    <!-- BUG FIX: Removed onclick, added backdrop ID -->
+    <div id="modal-view-log" class="modal fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div id="modal-view-log-backdrop" class="fixed inset-0"></div>
+        <div class="relative top-10 mx-auto p-6 border w-full max-w-3xl shadow-lg rounded-xl bg-white z-10">
             <h3 id="view-log-title" class="text-2xl font-semibold text-orange-600 mb-4">Log Details</h3>
             <div id="view-log-content" class="space-y-4">
                 <!-- Content injected by JS -->
             </div>
             <div class="flex justify-end space-x-3 pt-6">
                 <button type="button" id="btn-delete-log" class="btn btn-danger">Delete Log</button>
-                <button type="button" onclick="closeModal(null, 'modal-view-log')" class="btn btn-outline">Close</button>
+                <!-- BUG FIX: Removed onclick, added ID -->
+                <button type="button" id="btn-close-view-log" class="btn btn-outline">Close</button>
                 <button type="button" id="btn-export-pdf" class="btn btn-primary">Export as PDF</button>
             </div>
         </div>
@@ -529,13 +527,13 @@
         <div class="alert-box">
             <h4 id="alert-title" class="text-xl font-semibold mb-2">Alert</h4>
             <p id="alert-message" class="text-gray-700 mb-6">This is an alert message.</p>
-            <button id="alert-ok-btn" class="btn btn-primary w-full">OK</Tton>
+            <button id="alert-ok-btn" class="btn btn-primary w-full">OK</button>
         </div>
     </div>
 
 
     <!-- Firebase App (v11.6.1) -->
-    <script type_suppress="module">
+    <script type="module">
         // Import Firebase services
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
@@ -545,9 +543,6 @@
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- PASTE YOUR FIREBASE CONFIG HERE ---
-        // This configuration object connects your app to your specific Firebase project.
-        // Find it in your Firebase project settings:
-        // Project Overview > Project settings > General > Your apps > Web app
         const firebaseConfig = {
             apiKey: "YOUR_API_KEY",
             authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
@@ -559,7 +554,6 @@
         // ---------------------------------------
 
         // --- PASTE YOUR GOOGLE APPS SCRIPT URL HERE ---
-        // This is the deployment URL from your Google Apps Script project.
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyLWIV5qR7e8JYiIfHdQioywXO_csSfjamvy7nvJr1nkf9x53IWHSMuziKBSu3iynSLnw/exec";
         // ---------------------------------------------
 
@@ -572,52 +566,40 @@
         const { jsPDF } = window.jspdf;
 
         // =================================================================
-        // --- APP BUG FIX 2: UI FUNCTIONS MOVED TO GLOBAL SCOPE ---
-        // These functions are now at the top level of the module,
-        // so the onclick="" attributes in the HTML can find them.
+        // --- GLOBAL UI FUNCTIONS ---
+        // These are the functions that the event listeners will call.
         // =================================================================
 
-        window.showPage = (pageId) => {
-            // Hide all main pages
+        const showPage = (pageId) => {
             document.getElementById('page-home').style.display = 'none';
             document.getElementById('page-summary').style.display = 'none';
-            
-            // Show the selected page
             const page = document.getElementById(pageId);
             if (page) {
                 page.style.display = 'block';
             }
-
-            // If showing summary, initialize charts
             if (pageId === 'page-summary') {
                 initSummaryCharts();
             }
         }
 
-        window.showTab = (button, tabId) => {
-            // Hide all tab contents
+        const showTab = (button, tabId) => {
             document.querySelectorAll('.tab-content').forEach(tab => {
                 tab.classList.add('hidden');
             });
-            // Deactivate all tab buttons
             document.querySelectorAll('.tab-button').forEach(btn => {
                 btn.classList.remove('border-orange-500', 'text-orange-600');
                 btn.classList.add('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
             });
-            
-            // Show the selected tab content
             document.getElementById(tabId).classList.remove('hidden');
-            // Activate the selected tab button
             button.classList.add('border-orange-500', 'text-orange-600');
             button.classList.remove('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
         }
 
-        window.openModal = (modalId) => {
+        const openModal = (modalId) => {
             const modal = document.getElementById(modalId);
             if (modal) {
                 modal.classList.remove('hidden');
             }
-            // Pre-fill default dynamic content
             if (modalId === 'modal-slurry') {
                 if (document.getElementById('slurry-ingredients-list').childElementCount === 0) {
                     addSlurryIngredient("36-38% Bulk paste");
@@ -644,28 +626,20 @@
             }
         }
 
-        window.closeModal = (event, modalId) => {
-            // If event is provided, check if it's a click on the backdrop
-            if (event && event.target.id !== modalId) {
-                return;
-            }
-            // Close the modal
+        const closeModal = (modalId) => {
             const modal = document.getElementById(modalId);
             if (modal) {
                 modal.classList.add('hidden');
             }
         }
 
-        window.showAlert = (title, message) => {
+        const showAlert = (title, message) => {
             document.getElementById('alert-title').textContent = title;
             document.getElementById('alert-message').textContent = message;
             document.getElementById('custom-alert').classList.add('show');
         }
 
-        // --- DYNAMIC FORM HELPERS ---
-
-        // Slurry Ingredients
-        window.addSlurryIngredient = (presetName = "") => {
+        const addSlurryIngredient = (presetName = "") => {
             const list = document.getElementById('slurry-ingredients-list');
             const index = list.children.length;
             const row = document.createElement('div');
@@ -675,13 +649,16 @@
                 <input type="number" step="0.01" name="ingredient[${index}][qty]" class="form-input" placeholder="Qty (kg)" required>
                 <input type="text" name="ingredient[${index}][batch]" class="form-input" placeholder="Batch #">
                 <input type="text" name="ingredient[${index}][ratio]" class="form-input" placeholder="Ratio (e.g., 1:1)">
-                <button type="button" onclick="this.closest('div').remove()" class="btn btn-danger h-10 w-10 flex-shrink-0">X</button>
+                <button type="button" class="btn-remove-row btn btn-danger h-10 w-10 flex-shrink-0">X</button>
             `;
+            // Add listener for the new remove button
+            row.querySelector('.btn-remove-row').addEventListener('click', (e) => {
+                e.target.closest('div.grid').remove();
+            });
             list.appendChild(row);
         }
 
-        // Shito Batch Ingredients
-        window.addShitoBatchIngredient = (presetName = "") => {
+        const addShitoBatchIngredient = (presetName = "") => {
             const list = document.getElementById('shito-batch-ingredients-list');
             const index = list.children.length;
             const row = document.createElement('div');
@@ -690,13 +667,16 @@
                 <input type="text" name="ingredient[${index}][name]" class="form-input col-span-2" placeholder="Ingredient Name" value="${presetName}" required>
                 <input type="number" step="0.01" name="ingredient[${index}][qty]" class="form-input" placeholder="Qty (kg)" required>
                 <input type="text" name="ingredient[${index}][batch]" class="form-input" placeholder="Batch #">
-                <button type="button" onclick="this.closest('div').remove()" class="btn btn-danger h-10 w-10 flex-shrink-0">X</button>
+                <button type="button" class="btn-remove-row btn btn-danger h-10 w-10 flex-shrink-0">X</button>
             `;
+            // Add listener for the new remove button
+            row.querySelector('.btn-remove-row').addEventListener('click', (e) => {
+                e.target.closest('div.grid').remove();
+            });
             list.appendChild(row);
         }
 
-        // Shito Hourly Records
-        window.addHourlyRecord = () => {
+        const addHourlyRecord = () => {
             const list = document.getElementById('hourly-records-list');
             const index = list.children.length;
             const row = document.createElement('div');
@@ -706,22 +686,26 @@
                 <input type="number" step="0.01" name="record[${index}][temp]" class="form-input" placeholder="Temp (°C)" required>
                 <input type="number" step="0.01" name="record[${index}][pressure]" class="form-input" placeholder="Pressure (Bar)">
                 <input type="number" step="0.01" name="record[${index}][moisture]" class="form-input" placeholder="Moisture (%)">
-                <button type="button" onclick="this.closest('div').remove()" class="btn btn-danger h-10 w-10 flex-shrink-0">X</button>
+                <button type="button" class="btn-remove-row btn btn-danger h-10 w-10 flex-shrink-0">X</button>
             `;
+            // Add listener for the new remove button
+            row.querySelector('.btn-remove-row').addEventListener('click', (e) => {
+                e.target.closest('div.grid').remove();
+            });
             list.appendChild(row);
         }
 
-        window.renderSlurryTable = (searchTerm = "") => {
+        const renderSlurryTable = (searchTerm = "") => {
             const tableBody = document.getElementById('slurry-table-body');
             if (!tableBody) return;
             tableBody.innerHTML = '';
             const lowerSearch = searchTerm.toLowerCase();
 
             const filteredLogs = savedSlurryLogs.filter(log => {
-                return log.slurryBatch.toLowerCase().includes(lowerSearch) ||
-                        log.productName.toLowerCase().includes(lowerSearch) ||
-                        log.line.toLowerCase().includes(lowerSearch) ||
-                        log.date.includes(lowerSearch);
+                return (log.slurryBatch && log.slurryBatch.toLowerCase().includes(lowerSearch)) ||
+                       (log.productName && log.productName.toLowerCase().includes(lowerSearch)) ||
+                       (log.line && log.line.toLowerCase().includes(lowerSearch)) ||
+                       (log.date && log.date.includes(lowerSearch));
             });
 
             if (filteredLogs.length === 0) {
@@ -741,22 +725,23 @@
                     <td class="table-cell">${log.colorL || 'N/A'}</td>
                     <td class="table-cell"><button class="btn btn-outline text-sm py-1 px-3">View</button></td>
                 `;
+                // Add listener for the row
                 tr.addEventListener('click', () => viewLogDetails('slurry', log.id));
                 tableBody.appendChild(tr);
             });
         }
 
-        window.renderShitoBatchTable = (searchTerm = "") => {
+        const renderShitoBatchTable = (searchTerm = "") => {
             const tableBody = document.getElementById('shito-batch-table-body');
             if (!tableBody) return;
             tableBody.innerHTML = '';
             const lowerSearch = searchTerm.toLowerCase();
 
             const filteredLogs = savedShitoBatchLogs.filter(log => {
-                return log.batchNumber.toLowerCase().includes(lowerSearch) ||
-                        log.variant.toLowerCase().includes(lowerSearch) ||
-                        log.sku.toLowerCase().includes(lowerSearch) ||
-                        log.date.includes(lowerSearch);
+                return (log.batchNumber && log.batchNumber.toLowerCase().includes(lowerSearch)) ||
+                       (log.variant && log.variant.toLowerCase().includes(lowerSearch)) ||
+                       (log.sku && log.sku.toLowerCase().includes(lowerSearch)) ||
+                       (log.date && log.date.includes(lowerSearch));
             });
 
             if (filteredLogs.length === 0) {
@@ -775,23 +760,24 @@
                     <td class="table-cell">${log.batchSize || 'N/A'}</td>
                     <td class="table-cell"><button class="btn btn-outline text-sm py-1 px-3">View</button></td>
                 `;
+                // Add listener for the row
                 tr.addEventListener('click', () => viewLogDetails('shitoBatch', log.id));
                 tableBody.appendChild(tr);
             });
         }
 
-        window.renderShitoCookingTable = (searchTerm = "") => {
+        const renderShitoCookingTable = (searchTerm = "") => {
             const tableBody = document.getElementById('shito-cooking-table-body');
             if (!tableBody) return;
             tableBody.innerHTML = '';
             const lowerSearch = searchTerm.toLowerCase();
 
             const filteredLogs = savedShitoCookingLogs.filter(log => {
-                return log.batchId.toLowerCase().includes(lowerSearch) ||
-                        log.cookingCycle.toLowerCase().includes(lowerSearch) ||
-                        log.variant.toLowerCase().includes(lowerSearch) ||
-                        log.sku.toLowerCase().includes(lowerSearch) ||
-                        log.date.includes(lowerSearch);
+                return (log.batchId && log.batchId.toLowerCase().includes(lowerSearch)) ||
+                       (log.cookingCycle && log.cookingCycle.toLowerCase().includes(lowerSearch)) ||
+                       (log.variant && log.variant.toLowerCase().includes(lowerSearch)) ||
+                       (log.sku && log.sku.toLowerCase().includes(lowerSearch)) ||
+                       (log.date && log.date.includes(lowerSearch));
             });
 
             if (filteredLogs.length === 0) {
@@ -811,26 +797,25 @@
                     <td class="table-cell">${log.cookTotal || 'N/A'}</td>
                     <td class="table-cell"><button class="btn btn-outline text-sm py-1 px-3">View</button></td>
                 `;
+                // Add listener for the row
                 tr.addEventListener('click', () => viewLogDetails('shitoCooking', log.id));
                 tableBody.appendChild(tr);
             });
         }
         
-        window.viewLogDetails = (logType, id) => {
+        const viewLogDetails = (logType, id) => {
             let log, title;
             let contentHtml = '';
             let collectionName = '';
 
-            // Helper to build a detail row
             const detailRow = (label, value) => {
-                if (!value || value === 'N/A') return ''; // Don't show empty rows
+                if (!value || value === 'N/A') return ''; 
                 return `<div class="grid grid-cols-3 gap-4">
                             <span class="font-medium text-gray-600 col-span-1">${label}</span>
                             <span class="text-gray-800 col-span-2">${value}</span>
                         </div>`;
             };
 
-            // Helper to build a table
             const buildTable = (headers, data) => {
                 if (!data || data.length === 0) return '<p>No records found.</p>';
                 let table = '<div class="overflow-x-auto rounded-lg border border-orange-200 mt-2"><table class="min-w-full divide-y divide-orange-200">';
@@ -933,23 +918,18 @@
             document.getElementById('view-log-title').textContent = title;
             document.getElementById('view-log-content').innerHTML = contentHtml;
             
-            // Setup Delete Button
             const deleteBtn = document.getElementById('btn-delete-log');
-            // Clone and replace to remove old listeners
             const newDeleteBtn = deleteBtn.cloneNode(true);
             deleteBtn.parentNode.replaceChild(newDeleteBtn, deleteBtn);
             newDeleteBtn.addEventListener('click', async () => {
-                // This is a placeholder for a real confirmation modal
-                showAlert("Confirm Delete", "This is a placeholder. Click OK to permanently delete. (This will be improved).");
-                // A better approach would be a modal with "Confirm" and "Cancel"
+                showAlert("Confirm Delete", "This is a placeholder. Click OK to permanently delete.");
                 
                 try {
                     newDeleteBtn.textContent = "Deleting...";
                     newDeleteBtn.disabled = true;
                     await deleteDoc(doc(db, collectionName, id));
                     showAlert("Deleted", "Log has been deleted.");
-                    closeModal(null, 'modal-view-log');
-                    // Data will auto-update via onSnapshot listeners
+                    closeModal('modal-view-log');
                 } catch (error) {
                     console.error("Delete failed:", error);
                     showAlert("Error", "Could not delete log. " + error.message);
@@ -958,7 +938,6 @@
                 }
             });
 
-            // Setup PDF Export Button
             const exportBtn = document.getElementById('btn-export-pdf');
             const newExportBtn = exportBtn.cloneNode(true);
             exportBtn.parentNode.replaceChild(newExportBtn, exportBtn);
@@ -979,7 +958,7 @@
 
             try {
                 const canvas = await html2canvas(content, {
-                    scale: 2, // Higher scale for better quality
+                    scale: 2, 
                     useCORS: true,
                     backgroundColor: '#ffffff'
                 });
@@ -996,19 +975,17 @@
                 const imgWidth = canvas.width;
                 const imgHeight = canvas.height;
                 
-                // Calculate aspect ratio
                 const ratio = imgHeight / imgWidth;
-                let newImgWidth = pdfWidth - 20; // A4 width - 10mm margins
+                let newImgWidth = pdfWidth - 20; 
                 let newImgHeight = newImgWidth * ratio;
                 
-                // If height exceeds page, scale by height instead
                 if (newImgHeight > pdfHeight - 20) {
                     newImgHeight = pdfHeight - 20;
                     newImgWidth = newImgHeight / ratio;
                 }
                 
-                const x = (pdfWidth - newImgWidth) / 2; // Center horizontally
-                const y = 10; // 10mm margin from top
+                const x = (pdfWidth - newImgWidth) / 2; 
+                const y = 10; 
 
                 pdf.addImage(imgData, 'PNG', x, y, newImgWidth, newImgHeight);
                 pdf.save(`${fileName.replace(/[\/:]/g, '-')}.pdf`);
@@ -1022,13 +999,10 @@
             }
         }
 
-
         function initSummaryCharts() {
-            // Slurry Chart
             const slurryCtx = document.getElementById('slurry-chart').getContext('2d');
             if (slurryChart) slurryChart.destroy();
             
-            // Aggregate data for Slurry (Brix by Product)
             const slurryData = {
                 labels: [],
                 datasets: [{
@@ -1040,7 +1014,7 @@
                 }]
             };
             
-            const productBrix = {}; // { GINO: [28.5, 28.6], POMO: [28.4] }
+            const productBrix = {}; 
             savedSlurryLogs.forEach(log => {
                 if (log.productName && log.brix) {
                     if (!productBrix[log.productName]) {
@@ -1066,11 +1040,9 @@
                 }
             });
             
-            // Shito Chart
             const shitoCtx = document.getElementById('shito-chart').getContext('2d');
             if (shitoChart) shitoChart.destroy();
             
-            // Aggregate data for Shito (Batch Count by Variant)
             const shitoData = {
                 labels: ['HOT', 'MILD'],
                 datasets: [{
@@ -1098,25 +1070,20 @@
         }
 
         // --- APP INITIALIZATION ---
-        // This is the only thing that needs to wait for the DOM.
         document.addEventListener('DOMContentLoaded', () => {
             
             function initializeApp() {
                 try {
-                    // Initialize Firebase
                     app = initializeApp(firebaseConfig);
                     auth = getAuth(app);
                     db = getFirestore(app);
                     
-                    // Enable extensive logging for Firestore (useful for debugging)
                     setLogLevel('debug'); 
                     console.log("Firebase initialized.");
 
-                    // Sign in user anonymously
                     signInAnonymously(auth)
                         .then(() => {
                             console.log("User signed in anonymously.", auth.currentUser.uid);
-                            // After sign-in, attach live data listeners
                             attachDataListeners();
                         })
                         .catch((error) => {
@@ -1124,11 +1091,8 @@
                             showAlert("Authentication Error", "Could not connect to the database. Please check your internet connection and Firebase rules.");
                         });
 
-                    // Set up event listeners
                     setupEventListeners();
-                    // Set default form values
                     setFormDefaults();
-                    // Show home page by default
                     showPage('page-home');
                     
                 } catch (error) {
@@ -1137,7 +1101,42 @@
                 }
             }
 
+            // ==========================================================
+            // --- BUG FIX: EVENT LISTENERS ARE NOW ADDED HERE ---
+            // ==========================================================
             function setupEventListeners() {
+                // Page Navigation
+                document.getElementById('btn-show-home').addEventListener('click', () => showPage('page-home'));
+                document.getElementById('btn-show-summary').addEventListener('click', () => showPage('page-summary'));
+
+                // Tab Navigation
+                document.getElementById('btn-tab-slurry').addEventListener('click', (e) => showTab(e.target, 'tab-slurry'));
+                document.getElementById('btn-tab-shito-batch').addEventListener('click', (e) => showTab(e.target, 'tab-shito-batch'));
+                document.getElementById('btn-tab-shito-cooking').addEventListener('click', (e) => showTab(e.target, 'tab-shito-cooking'));
+
+                // Open Modals
+                document.getElementById('btn-open-slurry').addEventListener('click', () => openModal('modal-slurry'));
+                document.getElementById('btn-open-shito-batch').addEventListener('click', () => openModal('modal-shito-batch'));
+                document.getElementById('btn-open-shito-cooking').addEventListener('click', () => openModal('modal-shito-cooking'));
+
+                // Close Modals (Cancel buttons and backdrop clicks)
+                document.getElementById('btn-cancel-slurry').addEventListener('click', () => closeModal('modal-slurry'));
+                document.getElementById('modal-slurry-backdrop').addEventListener('click', () => closeModal('modal-slurry'));
+                
+                document.getElementById('btn-cancel-shito-batch').addEventListener('click', () => closeModal('modal-shito-batch'));
+                document.getElementById('modal-shito-batch-backdrop').addEventListener('click', () => closeModal('modal-shito-batch'));
+
+                document.getElementById('btn-cancel-shito-cooking').addEventListener('click', () => closeModal('modal-shito-cooking'));
+                document.getElementById('modal-shito-cooking-backdrop').addEventListener('click', () => closeModal('modal-shito-cooking'));
+                
+                document.getElementById('btn-close-view-log').addEventListener('click', () => closeModal('modal-view-log'));
+                document.getElementById('modal-view-log-backdrop').addEventListener('click', () => closeModal('modal-view-log'));
+
+                // Form "Add" buttons
+                document.getElementById('btn-add-slurry-ingredient').addEventListener('click', () => addSlurryIngredient());
+                document.getElementById('btn-add-shito-ingredient').addEventListener('click', () => addShitoBatchIngredient());
+                document.getElementById('btn-add-hourly-record').addEventListener('click', () => addHourlyRecord());
+
                 // Form submit handlers
                 document.getElementById('form-slurry').addEventListener('submit', handleSlurryFormSubmit);
                 document.getElementById('form-shito-batch').addEventListener('submit', handleShitoBatchFormSubmit);
@@ -1155,14 +1154,11 @@
             }
 
             function setFormDefaults() {
-                // Set default date to today for all forms
                 const today = new Date().toISOString().split('T')[0];
                 document.querySelector('#form-slurry input[name="date"]').value = today;
                 document.querySelector('#form-shito-batch input[name="date"]').value = today;
                 document.querySelector('#form-shito-cooking input[name="date"]').value = today;
             }
-
-            // --- DATA LISTENERS (REAL-TIME) ---
 
             function attachDataListeners() {
                 if (!db) {
@@ -1171,7 +1167,6 @@
                 }
                 console.log("Attaching data listeners...");
 
-                // Slurry Listener
                 const slurryQuery = query(collection(db, "slurryBatches"), orderBy("createdAt", "desc"));
                 onSnapshot(slurryQuery, (snapshot) => {
                     const logs = [];
@@ -1186,7 +1181,6 @@
                     showAlert("Connection Error", "Could not load slurry data. Please check connection and Firestore rules.");
                 });
 
-                // Shito Batch Listener
                 const shitoBatchQuery = query(collection(db, "shitoBatchLogs"), orderBy("createdAt", "desc"));
                 onSnapshot(shitoBatchQuery, (snapshot) => {
                     const logs = [];
@@ -1201,14 +1195,13 @@
                     showAlert("Connection Error", "Could not load shito batch data. Please check your connection.");
                 });
 
-                // Shito Cooking Listener
                 const shitoCookingQuery = query(collection(db, "shitoCookingLogs"), orderBy("createdAt", "desc"));
                 onSnapshot(shitoCookingQuery, (snapshot) => {
                     const logs = [];
                     snapshot.forEach((doc) => {
                         logs.push({ id: doc.id, ...doc.data() });
                     });
-                    savedShitoCookingLogs = logs;
+                    savedSlurryLogs = logs;
                     renderShitoCookingTable();
                     console.log("Live Shito Cooking Logs Updated:", logs.length);
                 }, (error) => {
@@ -1217,20 +1210,17 @@
                 });
             }
 
-            // --- DATA PARSING & SAVING (THE "SAFE" v15.8 LOGIC) ---
+            // --- DATA PARSING & SAVING ---
             
-            // Helper to get current time as HH:MM AM/PM
             function getCurrentTime() {
                 return new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
             }
 
-            // Helper to parse dynamic form fields (ingredients, hourly records)
             function parseDynamicFields(form, fieldPrefix) {
                 const data = new FormData(form);
                 const items = [];
                 const keys = new Set();
                 
-                // Find all keys that match the prefix (e.g., "ingredient[0][name]")
                 data.forEach((value, key) => {
                     if (key.startsWith(fieldPrefix)) {
                         keys.add(key);
@@ -1239,7 +1229,6 @@
 
                 const indices = new Set();
                 keys.forEach(key => {
-                    // Use regex to find the index inside []
                     const match = key.match(new RegExp(`^${fieldPrefix}\\[(\\d+)\\]`));
                     if (match && match[1]) {
                         indices.add(parseInt(match[1], 10));
@@ -1248,11 +1237,9 @@
 
                 indices.forEach(index => {
                     const item = {};
-                    // Find all properties for this index
                     const itemKeys = Array.from(keys).filter(k => k.startsWith(`${fieldPrefix}[${index}]`));
                     
                     itemKeys.forEach(key => {
-                        // Find the property name (e.g., "name", "qty")
                         const propMatch = key.match(new RegExp(`\\[(.*?)\\]$`));
                         if (propMatch && propMatch[1]) {
                             const propName = propMatch[1];
@@ -1260,9 +1247,7 @@
                         }
                     });
                     
-                    // Only add if it's a non-empty object
                     if (Object.keys(item).length > 0) {
-                        // Check for 'name' or 'time' to ensure it's not a completely empty row
                         if ((item.name && item.qty) || (item.time && item.temp)) {
                            items.push(item);
                         }
@@ -1283,7 +1268,7 @@
                 try {
                     const formData = new FormData(form);
                     const newBatch = {
-                        logType: "slurry", // For Google Sheets routing
+                        logType: "slurry", 
                         date: formData.get('date'),
                         timeSaved: getCurrentTime(),
                         shift: formData.get('shift'),
@@ -1295,56 +1280,45 @@
                         colorL: formData.get('colorL') || null,
                         colorAB: formData.get('colorAB') || null,
                         ingredients: parseDynamicFields(form, 'ingredient'),
-                        createdAt: serverTimestamp() // For Firebase ordering
+                        createdAt: serverTimestamp() 
                     };
 
                     console.log("Saving new slurry batch:", newBatch);
 
-                    // ** SAFE SAVE LOGIC (v15.8) **
-                    // We create two "promises": one for Firestore, one for Google Sheets.
-                    // Promise.all ensures BOTH must succeed. If one fails, the whole save stops.
-
-                    // Promise 1: Add to Firestore
                     const firestorePromise = addDoc(collection(db, "slurryBatches"), newBatch);
 
-                    // Promise 2: Send to Google Sheets
                     const sheetsPromise = fetch(SCRIPT_URL, {
                         method: 'POST',
-                        mode: 'cors', // Required for cross-origin requests
+                        mode: 'cors', 
                         headers: {
                             'Content-Type': 'application/json',
                         },
                         body: JSON.stringify(newBatch),
                     }).then(response => {
-                        // Check if the response from Google Sheets is OK
                         if (!response.ok) {
                             throw new Error(`Google Sheets responded with status: ${response.status}`);
                         }
                         return response.text();
                     }).then(text => {
-                        // Check if the script returned "success"
                         if (text !== 'success') {
                             throw new Error(`Google Sheets script returned an error: ${text}`);
                         }
                         return text;
                     });
 
-                    // Wait for BOTH promises to finish
                     await Promise.all([firestorePromise, sheetsPromise]);
 
                     console.log("Successfully saved to both Firestore and Google Sheets.");
                     showAlert("Success", "New slurry batch saved successfully.");
                     form.reset();
-                    setFormDefaults(); // Reset date
-                    document.getElementById('slurry-ingredients-list').innerHTML = ''; // Clear ingredients
-                    closeModal(null, 'modal-slurry');
+                    setFormDefaults(); 
+                    document.getElementById('slurry-ingredients-list').innerHTML = ''; 
+                    closeModal('modal-slurry');
 
                 } catch (error) {
                     console.error("Save Failed:", error);
-                    // This will catch errors from Firebase OR Google Sheets
                     showAlert("Save Failed", "Could not save data. Please check connection and try again. Error: " + error.message);
                 } finally {
-                    // Always re-enable the button
                     submitButton.textContent = 'Save Slurry Batch';
                     submitButton.disabled = false;
                 }
@@ -1360,7 +1334,7 @@
                 try {
                     const formData = new FormData(form);
                     const newBatch = {
-                        logType: "shitoBatch", // For Google Sheets routing
+                        logType: "shitoBatch", 
                         date: formData.get('date'),
                         timeSaved: getCurrentTime(),
                         shift: formData.get('shift'),
@@ -1369,16 +1343,13 @@
                         sku: formData.get('sku'),
                         batchSize: formData.get('batchSize') || null,
                         ingredients: parseDynamicFields(form, 'ingredient'),
-                        createdAt: serverTimestamp() // For Firebase ordering
+                        createdAt: serverTimestamp() 
                     };
 
                     console.log("Saving new shito batch:", newBatch);
                     
-                    // ** SAFE SAVE LOGIC (v15.8) **
-                    // Promise 1: Add to Firestore
                     const firestorePromise = addDoc(collection(db, "shitoBatchLogs"), newBatch);
 
-                    // Promise 2: Send to Google Sheets
                     const sheetsPromise = fetch(SCRIPT_URL, {
                         method: 'POST',
                         mode: 'cors',
@@ -1388,15 +1359,14 @@
                         if (text !== 'success') throw new Error(`Google Sheets script error: ${text}`);
                     });
 
-                    // Wait for BOTH to finish
                     await Promise.all([firestorePromise, sheetsPromise]);
 
                     console.log("Successfully saved to both Firestore and Google Sheets.");
                     showAlert("Success", "New shito batch saved successfully.");
                     form.reset();
-                    setFormDefaults(); // Reset date
-                    document.getElementById('shito-batch-ingredients-list').innerHTML = ''; // Clear ingredients
-                    closeModal(null, 'modal-shito-batch');
+                    setFormDefaults(); 
+                    document.getElementById('shito-batch-ingredients-list').innerHTML = ''; 
+                    closeModal('modal-shito-batch');
 
                 } catch (error) {
                     console.error("Save Failed:", error);
@@ -1417,14 +1387,13 @@
                 try {
                     const formData = new FormData(form);
                     
-                    // Helper to calculate total time
                     const calculateTotalTime = (start, end) => {
                         if (!start || !end) return null;
                         try {
                             const startTime = new Date(`1970-01-01T${start}:00`);
                             const endTime = new Date(`1970-01-01T${end}:00`);
-                            let diff = (endTime.getTime() - startTime.getTime()) / 60000; // diff in minutes
-                            if (diff < 0) diff += 1440; // Handle overnight
+                            let diff = (endTime.getTime() - startTime.getTime()) / 60000; 
+                            if (diff < 0) diff += 1440; 
                             const hours = Math.floor(diff / 60);
                             const minutes = Math.floor(diff % 60);
                             return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
@@ -1439,7 +1408,7 @@
                     const cookEnd = formData.get('cookEnd') || null;
 
                     const newLog = {
-                        logType: "shitoCooking", // For Google Sheets routing
+                        logType: "shitoCooking", 
                         date: formData.get('date'),
                         timeSaved: getCurrentTime(),
                         shift: formData.get('shift'),
@@ -1462,16 +1431,13 @@
                         pressureInitial: formData.get('pressureInitial') || null,
                         comments: formData.get('comments') || null,
                         hourlyRecords: parseDynamicFields(form, 'record'),
-                        createdAt: serverTimestamp() // For Firebase ordering
+                        createdAt: serverTimestamp() 
                     };
 
                     console.log("Saving new shito cooking log:", newLog);
 
-                    // ** SAFE SAVE LOGIC (v15.8) **
-                    // Promise 1: Add to Firestore
                     const firestorePromise = addDoc(collection(db, "shitoCookingLogs"), newLog);
 
-                    // Promise 2: Send to Google Sheets
                     const sheetsPromise = fetch(SCRIPT_URL, {
                         method: 'POST',
                         mode: 'cors',
@@ -1481,15 +1447,14 @@
                         if (text !== 'success') throw new Error(`Google Sheets script error: ${text}`);
                     });
 
-                    // Wait for BOTH to finish
                     await Promise.all([firestorePromise, sheetsPromise]);
 
                     console.log("Successfully saved to both Firestore and Google Sheets.");
                     showAlert("Success", "New shito cooking log saved successfully.");
                     form.reset();
-                    setFormDefaults(); // Reset date
-                    document.getElementById('hourly-records-list').innerHTML = ''; // Clear records
-                    closeModal(null, 'modal-shito-cooking');
+                    setFormDefaults(); 
+                    document.getElementById('hourly-records-list').innerHTML = ''; 
+                    closeModal('modal-shito-cooking');
 
                 } catch (error) {
                     console.error("Save Failed:", error);
