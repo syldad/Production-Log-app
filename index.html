@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- 
-      This title reflects the redirect fix
+      This title reflects the final URL and all text-based fixes
     -->
-    <title>Production Log v15.4 (Redirect Fix)</title>
+    <title>Production Log v15.6 (FINAL)</title>
     
     <!-- PWA / Full-Screen Tags -->
     <link rel="manifest" href="manifest.json">
@@ -251,14 +251,14 @@
     <!-- Datalist for batch number suggestions -->
     <datalist id="batch-suggestions"></datalist>
 
-    <!-- === COMPLETE JAVASCRIPT (v15.4 - FINAL) === -->
+    <!-- === COMPLETE JAVASCRIPT (v15.6 - FINAL) === -->
     <script type="module">
     
     // --- 1. EXTERNAL LIBRARIES ---
     const { jsPDF } = window.jspdf;
 
     // --- [FINAL URL] This is your new, working Google Apps Script URL ---
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzqBvYjElO8dsH07BLqTc7IEHzVFJRyfr4bRfS2RHLYGKioc4O9pAs9U3Z74Cr88whFug/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxDip5tCXePt84Nm-ei25Ff-WIZq-IdcR4one3UxsEnEzWlLT1GgwqLoqkRMkQL82wf0A/exec";
 
     // --- 2. FIREBASE LIBRARIES ---
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -551,27 +551,30 @@
                 // --- Create two save "promises" ---
                 const firestorePromise = addDoc(collection(db, "slurryBatches"), newBatch);
                 
-                // --- [FIX] Added redirect: "follow" ---
+                // --- [FIX] Switched to .text() and added redirect ---
                 const sheetsPromise = fetch(SCRIPT_URL, {
                   method: "POST",
-                  redirect: "follow", // <-- This is the fix for "Failed to fetch"
+                  redirect: "follow", 
                   body: JSON.stringify(newBatch),
                   headers: { "Content-Type": "application/json" }
-                }).then(res => res.json());
+                }).then(res => res.text()); // <-- Expect plain text
 
                 // --- Wait for BOTH to finish ---
                 const [firestoreResult, sheetsResult] = await Promise.all([firestorePromise, sheetsPromise]);
 
                 console.log("Slurry batch saved to Firestore with ID: ", firestoreResult.id);
                 
-                if (sheetsResult.status !== 'success') {
-                  throw new Error(`Sheets Error: ${sheetsResult.message}`);
+                // --- [FIX] Check for the exact word "success" ---
+                if (sheetsResult.trim() !== 'success') {
+                  // If it's not "success", it's an error message from the script
+                  throw new Error(`Sheets Error: ${sheetsResult}`);
                 }
                 console.log("Slurry batch saved to Google Sheets.");
 
                 document.getElementById('modal-slurry').classList.add('hidden', 'opacity-0', 'pointer-events-none');
             } catch (err) {
                 console.error("Error saving slurry batch: ", err);
+                // This alert will now show the REAL error message!
                 showAlert("Save Failed", `Could not save data. Please check connection. Error: ${err.message}`);
             } finally {
                 submitBtn.disabled = false;
@@ -732,27 +735,30 @@
                 // --- Create two save "promises" ---
                 const firestorePromise = addDoc(collection(db, "shitoBatchLogs"), newBatch);
                 
-                // --- [FIX] Added redirect: "follow" ---
+                // --- [FIX] Switched to .text() and added redirect ---
                 const sheetsPromise = fetch(SCRIPT_URL, {
                   method: "POST",
-                  redirect: "follow", // <-- This is the fix for "Failed to fetch"
+                  redirect: "follow",
                   body: JSON.stringify(newBatch),
                   headers: { "Content-Type": "application/json" }
-                }).then(res => res.json());
+                }).then(res => res.text()); // <-- Expect plain text
 
                 // --- Wait for BOTH to finish ---
                 const [firestoreResult, sheetsResult] = await Promise.all([firestorePromise, sheetsPromise]);
                 
                 console.log("Shito batch log saved to Firestore with ID: ", firestoreResult.id);
 
-                if (sheetsResult.status !== 'success') {
-                  throw new Error(`Sheets Error: ${sheetsResult.message}`);
+                // --- [FIX] Check for the exact word "success" ---
+                if (sheetsResult.trim() !== 'success') {
+                  // If it's not "success", it's an error message from the script
+                  throw new Error(`Sheets Error: ${sheetsResult}`);
                 }
                 console.log("Shito batch log saved to Google Sheets.");
 
                 document.getElementById('modal-shito-batch-add').classList.add('hidden', 'opacity-0', 'pointer-events-none');
             } catch (err) {
                 console.error("Error saving shito batch: ", err);
+                // This alert will now show the REAL error message!
                 showAlert("Save Failed", `Could not save data. Please check connection. Error: ${err.message}`);
             } finally {
                 submitBtn.disabled = false;
@@ -893,7 +899,7 @@
                 form.querySelector(`#${id}`).addEventListener('input', () => {
                     form.querySelector('#cooking-cook-total').value = formatTimeDiff(form.querySelector('#cooking-cook-start').value, form.querySelector('#cooking-cook-end').value);
                 });
-            });
+D            });
 
             form.querySelector('#add-hourly-record-btn').addEventListener('click', addHourlyRecordRow);
             updateShitoCookingAesthetics('');
@@ -1015,27 +1021,30 @@
                 // --- Create two save "promises" ---
                 const firestorePromise = addDoc(collection(db, "shitoCookingLogs"), newLog);
                 
-                // --- [FIX] Added redirect: "follow" ---
+                // --- [FIX] Switched to .text() and added redirect ---
                 const sheetsPromise = fetch(SCRIPT_URL, {
                   method: "POST",
-                  redirect: "follow", // <-- This is the fix for "Failed to fetch"
+                  redirect: "follow",
                   body: JSON.stringify(newLog),
                   headers: { "Content-Type": "application/json" }
-                }).then(res => res.json());
+                }).then(res => res.text()); // <-- Expect plain text
 
                 // --- Wait for BOTH to finish ---
                 const [firestoreResult, sheetsResult] = await Promise.all([firestorePromise, sheetsPromise]);
                 
                 console.log("Shito cooking log saved to Firestore with ID: ", firestoreResult.id);
 
-                if (sheetsResult.status !== 'success') {
-                  throw new Error(`Sheets Error: ${sheetsResult.message}`);
+                // --- [FIX] Check for the exact word "success" ---
+                if (sheetsResult.trim() !== 'success') {
+                  // If it's not "success", it's an error message from the script
+                  throw new Error(`Sheets Error: ${sheetsResult}`);
                 }
                 console.log("Shito cooking log saved to Google Sheets.");
 
                 document.getElementById('modal-shito-cooking').classList.add('hidden', 'opacity-0', 'pointer-events-none');
             } catch (err) {
                 console.error("Error saving shito cooking log: ", err);
+                // This alert will now show the REAL error message!
                 showAlert("Save Failed", `Could not save data. Please check connection. Error: ${err.message}`);
             } finally {
                 submitBtn.disabled = false;
@@ -1066,7 +1075,7 @@
                 summaryRow.innerHTML = `
                     <td class="py-3 px-3 border-b border-gray-200 ${variantColor} font-bold expand-icon">+</td>
                     <td class="py-3 px-3 border-b border-gray-200 font-semibold">${log.batchId}</td>
-                    <td class="py-3 px-3 border-b border-gray-200">${log.variant}</td>
+                    <td classs="py-3 px-3 border-b border-gray-200">${log.variant}</td>
                     <td class="py-3 px-3 border-b border-gray-200">${log.bouleId}</td>
                     <td class="py-3 px-3 border-b border-gray-200">${log.timeSaved}</td>
                 `;
