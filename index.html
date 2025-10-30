@@ -1261,7 +1261,7 @@
                 const imgData = canvas.toDataURL('image/png');
 
                 if (format === 'pdf') {
-                    const pdf = new jsPDF({ orientation: 'p', unit: 'px', format: [canvas.width, canvas.height] }); 
+                    const pdf = new jsPDF({ orientation: 'p', unit: 'px', format: [canvas.width, canvas.H] }); 
                     pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
                     if (isMobile) {
                         const pdfBlob = pdf.output('blob');
@@ -1428,4 +1428,5 @@
     </script>
 </body>
 </html>
+
 
