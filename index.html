@@ -255,7 +255,7 @@
     const { jsPDF } = window.jspdf;
 
     // --- [CRITICAL] This is YOUR NEW URL from the latest deployment ---
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby0FI5Xzq6Rhf0mrT9OXaIP_52zlISGtY_vedDOF44tpznmpjnCoUvBLbS0tn0Zn4aPAQ/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyLWIV5qR7e8JYiIfHdQioywXO_csSfjamvy7nvJr1nkf9x53IWHSMuziKBSu3iynSLnw/exec";
 
     // --- 2. FIREBASE LIBRARIES ---
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -1374,7 +1374,6 @@
             setupEventListeners();
             
             // --- SET UP ALL REAL-TIME LISTENERS ---
-            // (These are unchanged - they still read from Firestore)
             
             // Slurry Listener
             const slurryQuery = query(collection(db, "slurryBatches"), orderBy("createdAt", "desc"));
@@ -1429,5 +1428,4 @@
     </script>
 </body>
 </html>
-
 
