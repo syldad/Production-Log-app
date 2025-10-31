@@ -28,12 +28,11 @@
         </header>
         <div class="grid grid-cols-1 gap-6">
       
-           <button onclick="requestAccess('slurry')" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-6 px-8 rounded-lg shadow-md transition-transform transform hover:scale-105">
+           <button id="nav-slurry" data-module="slurry" class="nav-button bg-orange-500 hover:bg-orange-600 text-white font-bold py-6 px-8 rounded-lg shadow-md transition-transform transform hover:scale-105">
                 <span class="text-2xl">Add New Slurry Batch</span>
             </button>
-            <button onclick="requestAccess('shitoMenu')" class="bg-red-700 hover:bg-red-800 text-white font-bold py-6 px-8 rounded-lg shadow-md transition-transform transform hover:scale-105">
+            <button id="nav-shitoMenu" data-module="shitoMenu" class="nav-button bg-red-700 hover:bg-red-800 text-white font-bold py-6 px-8 rounded-lg shadow-md transition-transform transform hover:scale-105">
                 <span class="text-2xl">Shito Production Mgt.</span>
-       
            </button>
         </div>
     </div>
@@ -43,17 +42,15 @@
             <div class="flex justify-between items-center mb-4">
                 <h1 class="text-3xl font-bold text-red-800">Shito Management</h1>
            
-           <button onclick="showPage('page-home')" class="text-sm text-red-700 hover:underline">&larr;
-           Back to Home</button>
+           <button onclick="showPage('page-home')" class="text-sm text-red-700 hover:underline">&larr; Back to Home</button>
             </div>
             <p class="text-gray-500">Select a Shito process to log</p>
         </header>
         <div class="grid grid-cols-1 gap-6">
             <button onclick="showPage('page-shito-batch-add')" class="bg-red-600 hover:bg-red-700 text-white font-bold py-6 px-8 rounded-lg shadow-md transition-transform transform hover:scale-105">
                 <span class="text-2xl">Batch Addition</span>
-       
            </button>
-            <button onclick="requestAccess('shitoCooking')" class="bg-gray-700 hover:bg-gray-800 text-white font-bold py-6 px-8 rounded-lg shadow-md transition-transform transform hover:scale-105">
+           <button id="nav-shitoCooking" data-module="shitoCooking" class="nav-button bg-gray-700 hover:bg-gray-800 text-white font-bold py-6 px-8 rounded-lg shadow-md transition-transform transform hover:scale-105">
                 <span class="text-2xl">Cooking Process Control</span>
             </button>
         </div>
@@ -69,8 +66,7 @@
            </div>
                 <div class="text-right">
                     <p class="text-md text-gray-600">Shift: <span id="current-shift-slurry" class="font-bold px-3 py-1 bg-orange-100 text-orange-800 rounded-full">--</span></p>
-                    <button onclick="showPage('page-home')" class="mt-2 text-sm text-orange-600 hover:underline">&larr;
-           Back to Home</button>
+                    <button onclick="showPage('page-home')" class="mt-2 text-sm text-orange-600 hover:underline">&larr; Back to Home</button>
                 </div>
             </div>
         </header>
@@ -112,8 +108,7 @@
          
                <div class="text-right">
                     <p class="text-md text-gray-600">Shift: <span id="current-shift-shito-batch" class="font-bold px-3 py-1 bg-red-100 text-red-800 rounded-full">--</span></p>
-                    <button onclick="showPage('page-shito-menu')" class="mt-2 text-sm text-red-700 hover:underline">&larr;
-           Back to Shito Menu</button>
+                    <button onclick="showPage('page-shito-menu')" class="mt-2 text-sm text-red-700 hover:underline">&larr; Back to Shito Menu</button>
                 </div>
             </div>
         </header>
@@ -157,8 +152,7 @@
        
                  <div class="text-right">
                     <p class="text-md text-gray-600">Shift: <span id="current-shift-shito-cooking" class="font-bold px-3 py-1 bg-gray-100 text-gray-800 rounded-full transition-all duration-500">--</span></p>
-                    <button onclick="showPage('page-shito-menu')" class="mt-2 text-sm text-gray-700 hover:underline transition-all duration-500">&larr;
-           Back to Shito Menu</button>
+                    <button onclick="showPage('page-shito-menu')" class="mt-2 text-sm text-gray-700 hover:underline transition-all duration-500">&larr; Back to Shito Menu</button>
                 </div>
             </div>
         </header>
