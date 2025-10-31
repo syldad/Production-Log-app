@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Production Log v15.10 (FINAL)</title>
+    <title>Production Log v15.11 (FINAL)</title>
     
     <!-- PWA / Full-Screen Tags -->
     <link rel="manifest" href="manifest.json">
@@ -103,9 +103,8 @@
 
         <!-- Header -->
         <header class="mb-6 flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
-            <h1 class="text-3xl font-bold text-orange-600">Production Log v15.10</h1>
+            <h1 class="text-3xl font-bold text-orange-600">Production Log v15.11</h1>
             <div class="flex space-x-2">
-                <!-- BUG FIX: Removed onclick, added ID -->
                 <button id="btn-show-home" class="btn btn-primary">Home</button>
                 <button id="btn-show-summary" class="btn btn-secondary">Summary</button>
             </div>
@@ -118,7 +117,6 @@
             <div id="page-home">
                 <!-- Log Selection -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                    <!-- BUG FIX: Removed onclick, added ID -->
                     <button id="btn-open-slurry" class="btn btn-primary h-24 text-xl">New Slurry Batch</button>
                     <button id="btn-open-shito-batch" class="btn btn-primary h-24 text-xl">New Shito Batch</button>
                     <button id="btn-open-shito-cooking" class="btn btn-primary h-24 text-xl">New Shito Cooking Log</button>
@@ -127,7 +125,6 @@
                 <!-- Tab Navigation for Logs -->
                 <div class="mb-4 border-b border-orange-200">
                     <nav class="flex -mb-px space-x-6" aria-label="Tabs">
-                        <!-- BUG FIX: Removed onclick, added ID -->
                         <button id="btn-tab-slurry" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 border-orange-500 text-orange-600 font-medium text-lg">
                             Slurry Logs
                         </button>
@@ -233,13 +230,11 @@
     <!-- ===== MODALS ===== -->
 
     <!-- Modal: New Slurry Batch -->
-    <!-- BUG FIX: Removed onclick, added backdrop ID -->
     <div id="modal-slurry" class="modal fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
         <div id="modal-slurry-backdrop" class="fixed inset-0"></div>
         <div class="relative top-10 mx-auto p-6 border w-full max-w-3xl shadow-lg rounded-xl bg-white z-10">
             <h3 class="text-2xl font-semibold text-orange-600">New Slurry Batch Entry</h3>
             <form id="form-slurry" class="mt-4 space-y-4">
-                <!-- (Form content is identical to your file) -->
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
                         <label class="block text-sm font-medium mb-1">Date</label>
@@ -302,11 +297,9 @@
                     <div id="slurry-ingredients-list" class="space-y-3">
                         <!-- Dynamic ingredient rows here -->
                     </div>
-                    <!-- BUG FIX: Removed onclick, added ID -->
                     <button type="button" id="btn-add-slurry-ingredient" class="btn btn-secondary mt-3">+ Add Ingredient</button>
                 </fieldset>
                 <div class="flex justify-end space-x-3 pt-4">
-                    <!-- BUG FIX: Removed onclick, added ID -->
                     <button type="button" id="btn-cancel-slurry" class="btn btn-outline">Cancel</button>
                     <button type="submit" id="btn-save-slurry" class="btn btn-primary">Save Slurry Batch</button>
                 </div>
@@ -315,13 +308,11 @@
     </div>
 
     <!-- Modal: New Shito Batch -->
-    <!-- BUG FIX: Removed onclick, added backdrop ID -->
     <div id="modal-shito-batch" class="modal fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
         <div id="modal-shito-batch-backdrop" class="fixed inset-0"></div>
         <div class="relative top-10 mx-auto p-6 border w-full max-w-3xl shadow-lg rounded-xl bg-white z-10">
             <h3 class="text-2xl font-semibold text-orange-600">New Shito Batch Entry (Pre-Cook)</h3>
             <form id="form-shito-batch" class="mt-4 space-y-4">
-                <!-- (Form content is identical to your file) -->
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
                         <label class="block text-sm font-medium mb-1">Date</label>
@@ -370,11 +361,9 @@
                     <div id="shito-batch-ingredients-list" class="space-y-3">
                         <!-- Dynamic ingredient rows here -->
                     </div>
-                    <!-- BUG FIX: Removed onclick, added ID -->
                     <button type="button" id="btn-add-shito-ingredient" class="btn btn-secondary mt-3">+ Add Ingredient</button>
                 </fieldset>
                 <div class="flex justify-end space-x-3 pt-4">
-                    <!-- BUG FIX: Removed onclick, added ID -->
                     <button type="button" id="btn-cancel-shito-batch" class="btn btn-outline">Cancel</button>
                     <button type="submit" id="btn-save-shito-batch" class="btn btn-primary">Save Shito Batch</button>
                 </div>
@@ -383,13 +372,11 @@
     </div>
 
     <!-- Modal: New Shito Cooking Log -->
-    <!-- BUG FIX: Removed onclick, added backdrop ID -->
     <div id="modal-shito-cooking" class="modal fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
         <div id="modal-shito-cooking-backdrop" class="fixed inset-0"></div>
         <div class="relative top-10 mx-auto p-6 border w-full max-w-4xl shadow-lg rounded-xl bg-white z-10">
             <h3 class="text-2xl font-semibold text-orange-600">New Shito Cooking Log</h3>
             <form id="form-shito-cooking" class="mt-4 space-y-4">
-                <!-- (Form content is identical to your file) -->
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
                         <label class="block text-sm font-medium mb-1">Date</label>
@@ -488,7 +475,6 @@
                     <div id="hourly-records-list" class="space-y-3">
                         <!-- Dynamic hourly records here -->
                     </div>
-                    <!-- BUG FIX: Removed onclick, added ID -->
                     <button type="button" id="btn-add-hourly-record" class="btn btn-secondary mt-3">+ Add Hourly Record</button>
                 </fieldset>
                 <div>
@@ -496,7 +482,6 @@
                     <textarea name="comments" rows="3" class="form-input"></textarea>
                 </div>
                 <div class="flex justify-end space-x-3 pt-4">
-                    <!-- BUG FIX: Removed onclick, added ID -->
                     <button type="button" id="btn-cancel-shito-cooking" class="btn btn-outline">Cancel</button>
                     <button type="submit" id="btn-save-shito-cooking" class="btn btn-primary">Save Cooking Log</button>
                 </div>
@@ -505,7 +490,6 @@
     </div>
 
     <!-- Modal: View Log Details -->
-    <!-- BUG FIX: Removed onclick, added backdrop ID -->
     <div id="modal-view-log" class="modal fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
         <div id="modal-view-log-backdrop" class="fixed inset-0"></div>
         <div class="relative top-10 mx-auto p-6 border w-full max-w-3xl shadow-lg rounded-xl bg-white z-10">
@@ -515,7 +499,6 @@
             </div>
             <div class="flex justify-end space-x-3 pt-6">
                 <button type="button" id="btn-delete-log" class="btn btn-danger">Delete Log</button>
-                <!-- BUG FIX: Removed onclick, added ID -->
                 <button type="button" id="btn-close-view-log" class="btn btn-outline">Close</button>
                 <button type="button" id="btn-export-pdf" class="btn btn-primary">Export as PDF</button>
             </div>
@@ -542,20 +525,24 @@
             query, orderBy, doc, getDoc, deleteDoc, setDoc, serverTimestamp, setLogLevel
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // --- PASTE YOUR FIREBASE CONFIG HERE ---
+        // ==========================================================
+        // --- 1. PASTE YOUR FIREBASE CONFIG HERE ---
+        // ==========================================================
+        // Get this from Project settings > Your apps > Web app
         const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_PROJECT_ID.appspot.com",
-            messagingSenderId: "YOUR_SENDER_ID",
-            appId: "YOUR_APP_ID"
+          apiKey: "AIzaSyB2jsnwvaQIJvUPLIvdWx7yS4o0xU0QOis",
+          authDomain: "production-log-16c82.firebaseapp.com",
+          projectId: "production-log-16c82",
+          storageBucket: "production-log-16c82.firebasestorage.app",
+          messagingSenderId: "751331602949",
+          appId: "1:751331602949:web:86843596e32483865aa26c",
+          measurementId: "G-29Q2HK3SG4"
         };
-        // ---------------------------------------
-
-        // --- PASTE YOUR GOOGLE APPS SCRIPT URL HERE ---
+        // ==========================================================
+        
+        // --- 2. YOUR GOOGLE APPS SCRIPT URL ---
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyLWIV5qR7e8JYiIfHdQioywXO_csSfjamvy7nvJr1nkf9x53IWHSMuziKBSu3iynSLnw/exec";
-        // ---------------------------------------------
+        // ==========================================================
 
         // Global variables
         let app, auth, db;
@@ -567,7 +554,6 @@
 
         // =================================================================
         // --- GLOBAL UI FUNCTIONS ---
-        // These are the functions that the event listeners will call.
         // =================================================================
 
         const showPage = (pageId) => {
@@ -651,7 +637,6 @@
                 <input type="text" name="ingredient[${index}][ratio]" class="form-input" placeholder="Ratio (e.g., 1:1)">
                 <button type="button" class="btn-remove-row btn btn-danger h-10 w-10 flex-shrink-0">X</button>
             `;
-            // Add listener for the new remove button
             row.querySelector('.btn-remove-row').addEventListener('click', (e) => {
                 e.target.closest('div.grid').remove();
             });
@@ -669,7 +654,6 @@
                 <input type="text" name="ingredient[${index}][batch]" class="form-input" placeholder="Batch #">
                 <button type="button" class="btn-remove-row btn btn-danger h-10 w-10 flex-shrink-0">X</button>
             `;
-            // Add listener for the new remove button
             row.querySelector('.btn-remove-row').addEventListener('click', (e) => {
                 e.target.closest('div.grid').remove();
             });
@@ -688,7 +672,6 @@
                 <input type="number" step="0.01" name="record[${index}][moisture]" class="form-input" placeholder="Moisture (%)">
                 <button type="button" class="btn-remove-row btn btn-danger h-10 w-10 flex-shrink-0">X</button>
             `;
-            // Add listener for the new remove button
             row.querySelector('.btn-remove-row').addEventListener('click', (e) => {
                 e.target.closest('div.grid').remove();
             });
@@ -725,7 +708,6 @@
                     <td class="table-cell">${log.colorL || 'N/A'}</td>
                     <td class="table-cell"><button class="btn btn-outline text-sm py-1 px-3">View</button></td>
                 `;
-                // Add listener for the row
                 tr.addEventListener('click', () => viewLogDetails('slurry', log.id));
                 tableBody.appendChild(tr);
             });
@@ -760,7 +742,6 @@
                     <td class="table-cell">${log.batchSize || 'N/A'}</td>
                     <td class="table-cell"><button class="btn btn-outline text-sm py-1 px-3">View</button></td>
                 `;
-                // Add listener for the row
                 tr.addEventListener('click', () => viewLogDetails('shitoBatch', log.id));
                 tableBody.appendChild(tr);
             });
@@ -797,7 +778,6 @@
                     <td class="table-cell">${log.cookTotal || 'N/A'}</td>
                     <td class="table-cell"><button class="btn btn-outline text-sm py-1 px-3">View</button></td>
                 `;
-                // Add listener for the row
                 tr.addEventListener('click', () => viewLogDetails('shitoCooking', log.id));
                 tableBody.appendChild(tr);
             });
@@ -1074,6 +1054,8 @@
             
             function initializeApp() {
                 try {
+                    // This is where the "Fatal Error" comes from.
+                    // If firebaseConfig has "YOUR_API_KEY", it will fail.
                     app = initializeApp(firebaseConfig);
                     auth = getAuth(app);
                     db = getFirestore(app);
@@ -1101,9 +1083,6 @@
                 }
             }
 
-            // ==========================================================
-            // --- BUG FIX: EVENT LISTENERS ARE NOW ADDED HERE ---
-            // ==========================================================
             function setupEventListeners() {
                 // Page Navigation
                 document.getElementById('btn-show-home').addEventListener('click', () => showPage('page-home'));
@@ -1201,7 +1180,12 @@
                     snapshot.forEach((doc) => {
                         logs.push({ id: doc.id, ...doc.data() });
                     });
-                    savedSlurryLogs = logs;
+                    
+                    // ===========================================
+                    // --- BUG FIX: This is now correct ---
+                    savedShitoCookingLogs = logs;
+                    // ===========================================
+
                     renderShitoCookingTable();
                     console.log("Live Shito Cooking Logs Updated:", logs.length);
                 }, (error) => {
@@ -1471,5 +1455,4 @@
     </script>
 </body>
 </html>
-
 
