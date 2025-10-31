@@ -1040,6 +1040,21 @@ background-color: #f4f4f4;"><tr><th style="padding: 4px;">Time</th><th style="pa
         
         // --- 5. EVENT LISTENERS ---
         function setupEventListeners() {
+            
+            // === NEW NAVIGATION LISTENER FOR HOME PAGE BUTTONS ===
+            document.querySelectorAll('.nav-button').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const moduleType = e.currentTarget.dataset.module;
+                    if (moduleType) {
+                        requestAccess(moduleType);
+                    }
+                });
+            });
+            // =====================================================
+
+            // Slurry Listeners
+            document.getElementById('add-entry-btn-slurry').addEventListener('click', buildSlurryModal);
+            // ... (rest of your existing event listeners) ...
             // Slurry Listeners
             document.getElementById('add-entry-btn-slurry').addEventListener('click', buildSlurryModal);
             document.getElementById('form-slurry').addEventListener('submit', handleSlurryFormSubmit);
@@ -1138,4 +1153,5 @@ background-color: #f4f4f4;"><tr><th style="padding: 4px;">Time</th><th style="pa
         }
 
         initializeApp();
+
     });
