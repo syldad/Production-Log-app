@@ -5,95 +5,80 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Production Log v14.3</title>
     
-    <!-- PWA / Full-Screen Tags -->
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#F97316">
     <link rel="apple-touch-icon" href="icon-192.png">
 
-    <!-- Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
-    <style>
-        body { font-family: 'Inter', sans-serif; background-color: #FFF8F0; }
-        .modal { transition: opacity 0.3s ease; }
-        .details-row { display: none; }
-        .summary-row { cursor: pointer; transition: background-color 0.2s; }
-        .summary-row:hover { background-color: #FFFAF0; }
-        .summary-row.expanded { background-color: #FFEAD9; }
-        .summary-row.shito:hover { background-color: #FFF5F5; }
-        .summary-row.shito.expanded { background-color: #FFEBEE; }
-        
-        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #FB923C; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .export-card { background-color: white; padding: 1.5rem; border: 1px solid #ddd; font-family: 'Inter', sans-serif; width: 600px; color: #333; }
-        #export-preview-modal img { max-width: 90vw; max-height: 70vh; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
-        input[type="number"]::-webkit-inner-spin-button, 
-        input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: auto; opacity: 1; }
-        .page { display: none; }
-        #alert-modal { transition: opacity 0.2s ease; }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body class="text-gray-800">
 
-    <!-- === HOME PAGE === -->
     <div id="page-home" class="page container mx-auto p-4 max-w-xl text-center" style="display: block;">
         <header class="bg-white shadow-lg rounded-xl p-6 mb-8 border-t-4 border-orange-500">
             <h1 class="text-3xl font-bold text-orange-800">Production Log</h1>
             <p class="text-gray-500">Select a process to begin</p>
         </header>
         <div class="grid grid-cols-1 gap-6">
-            <button onclick="requestAccess('slurry')" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-6 px-8 rounded-lg shadow-md transition-transform transform hover:scale-105">
+      
+           <button onclick="requestAccess('slurry')" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-6 px-8 rounded-lg shadow-md transition-transform transform hover:scale-105">
                 <span class="text-2xl">Add New Slurry Batch</span>
             </button>
             <button onclick="requestAccess('shitoMenu')" class="bg-red-700 hover:bg-red-800 text-white font-bold py-6 px-8 rounded-lg shadow-md transition-transform transform hover:scale-105">
                 <span class="text-2xl">Shito Production Mgt.</span>
-            </button>
+       
+           </button>
         </div>
     </div>
 
-    <!-- === SHITO SUB-MENU PAGE === -->
     <div id="page-shito-menu" class="page container mx-auto p-4 max-w-xl text-center">
         <header class="bg-white shadow-lg rounded-xl p-6 mb-8 border-t-4 border-red-700">
             <div class="flex justify-between items-center mb-4">
                 <h1 class="text-3xl font-bold text-red-800">Shito Management</h1>
-                <button onclick="showPage('page-home')" class="text-sm text-red-700 hover:underline">&larr; Back to Home</button>
+           
+           <button onclick="showPage('page-home')" class="text-sm text-red-700 hover:underline">&larr;
+           Back to Home</button>
             </div>
             <p class="text-gray-500">Select a Shito process to log</p>
         </header>
         <div class="grid grid-cols-1 gap-6">
             <button onclick="showPage('page-shito-batch-add')" class="bg-red-600 hover:bg-red-700 text-white font-bold py-6 px-8 rounded-lg shadow-md transition-transform transform hover:scale-105">
                 <span class="text-2xl">Batch Addition</span>
-            </button>
+       
+           </button>
             <button onclick="requestAccess('shitoCooking')" class="bg-gray-700 hover:bg-gray-800 text-white font-bold py-6 px-8 rounded-lg shadow-md transition-transform transform hover:scale-105">
                 <span class="text-2xl">Cooking Process Control</span>
             </button>
         </div>
     </div>
 
-    <!-- === SLURRY PAGE === -->
     <div id="page-slurry" class="page container mx-auto p-4 max-w-7xl">
         <header class="bg-white shadow-lg rounded-xl p-4 mb-6 border-t-4 border-orange-500">
              <div class="flex flex-col sm:flex-row justify-between items-center">
                 <div class="mb-4 sm:mb-0">
                     <h1 class="text-3xl font-bold text-orange-800">Slurry Process Log</h1>
                     <p class="text-gray-500" id="current-date-slurry">--/--/----</p>
-                </div>
+           
+           </div>
                 <div class="text-right">
                     <p class="text-md text-gray-600">Shift: <span id="current-shift-slurry" class="font-bold px-3 py-1 bg-orange-100 text-orange-800 rounded-full">--</span></p>
-                    <button onclick="showPage('page-home')" class="mt-2 text-sm text-orange-600 hover:underline">&larr; Back to Home</button>
+                    <button onclick="showPage('page-home')" class="mt-2 text-sm text-orange-600 hover:underline">&larr;
+           Back to Home</button>
                 </div>
             </div>
         </header>
         <main class="bg-white shadow-lg rounded-xl p-4">
             <div class="controls flex items-center mb-4">
                 <button id="add-entry-btn-slurry" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-5 rounded-lg shadow-md transition-transform transform hover:scale-105">
-                    + Add New Slurry Batch
+      
+           + Add New Slurry Batch
                 </button>
             </div>
             <div id="table-container-slurry" class="table-container overflow-x-auto">
@@ -102,1230 +87,171 @@
                         <tr>
                             <th class="py-3 px-3 border-b-2 border-orange-200 text-left text-sm font-semibold text-orange-900 w-10"></th>
                             <th class="py-3 px-3 border-b-2 border-orange-200 text-left text-sm font-semibold text-orange-900">Slurry Batch #</th>
-                            <th class="py-3 px-3 border-b-2 border-orange-200 text-left text-sm font-semibold text-orange-900">Product</th>
+ 
+                           <th class="py-3 px-3 border-b-2 border-orange-200 text-left text-sm font-semibold text-orange-900">Product</th>
                             <th class="py-3 px-3 border-b-2 border-orange-200 text-left text-sm font-semibold text-orange-900">Line</th>
                             <th class="py-3 px-3 border-b-2 border-orange-200 text-left text-sm font-semibold text-orange-900">Time Saved</th>
                             <th class="py-3 px-3 border-b-2 border-orange-200 text-left text-sm font-semibold text-orange-900 text-center">Sync Status</th>
                         </tr>
                     </thead>
-                    <tbody id="log-table-body-slurry"></tbody>
+          
+                   <tbody id="log-table-body-slurry"></tbody>
                 </table>
             </div>
         </main>
     </div>
     
-    <!-- === SHITO BATCH ADDITION PAGE === -->
     <div id="page-shito-batch-add" class="page container mx-auto p-4 max-w-7xl">
          <header class="bg-white shadow-lg rounded-xl p-4 mb-6 border-t-4 border-red-700">
-             <div class="flex flex-col sm:flex-row justify-between items-center">
+        
+           <div class="flex flex-col sm:flex-row justify-between items-center">
                 <div class="mb-4 sm:mb-0">
                     <h1 class="text-3xl font-bold text-red-800">Shito Batch Addition</h1>
                     <p class="text-gray-500" id="current-date-shito-batch">--/--/----</p>
                 </div>
-                <div class="text-right">
+         
+               <div class="text-right">
                     <p class="text-md text-gray-600">Shift: <span id="current-shift-shito-batch" class="font-bold px-3 py-1 bg-red-100 text-red-800 rounded-full">--</span></p>
-                    <button onclick="showPage('page-shito-menu')" class="mt-2 text-sm text-red-700 hover:underline">&larr; Back to Shito Menu</button>
+                    <button onclick="showPage('page-shito-menu')" class="mt-2 text-sm text-red-700 hover:underline">&larr;
+           Back to Shito Menu</button>
                 </div>
             </div>
         </header>
         <main class="bg-white shadow-lg rounded-xl p-4">
             <div class="controls flex items-center mb-4">
                 <button id="add-entry-btn-shito-batch" class="bg-red-700 hover:bg-red-800 text-white font-bold py-2 px-5 rounded-lg shadow-md transition-transform transform hover:scale-105">
-                    + Add New Shito Batch
+     
+           + Add New Shito Batch
                 </button>
             </div>
              <div id="table-container-shito-batch" class="table-container overflow-x-auto">
                 <table class="min-w-full bg-white">
-                    <thead class="bg-red-50">
+                   
+            <thead class="bg-red-50">
                         <tr>
                             <th class="py-3 px-3 border-b-2 border-red-200 text-left text-sm font-semibold text-red-900 w-10"></th>
-                            <th class="py-3 px-3 border-b-2 border-red-200 text-left text-sm font-semibold text-red-900">Batch #</th>
+                            <th class="py-3 px-3 border-b-2 border-red-200 text-left text-sm font-semibold text-red-900">Batch 
+           #</th>
                             <th class="py-3 px-3 border-b-2 border-red-200 text-left text-sm font-semibold text-red-900">Variant</th>
                             <th class="py-3 px-3 border-b-2 border-red-200 text-left text-sm font-semibold text-red-900">SKU</th>
-                            <th class="py-3 px-3 border-b-2 border-red-200 text-left text-sm font-semibold text-red-900">Time Saved</th>
+                            
+           <th class="py-3 px-3 border-b-2 border-red-200 text-left text-sm font-semibold text-red-900">Time Saved</th>
                             <th class="py-3 px-3 border-b-2 border-red-200 text-left text-sm font-semibold text-red-900 text-center">Sync Status</th>
                         </tr>
                     </thead>
-                    <tbody id="log-table-body-shito-batch"></tbody>
+         
+                   <tbody id="log-table-body-shito-batch"></tbody>
                 </table>
             </div>
         </main>
     </div>
 
-    <!-- === SHITO COOKING CONTROL PAGE === -->
     <div id="page-shito-cooking" class="page container mx-auto p-4 max-w-7xl">
          <header id="header-shito-cooking" class="bg-white shadow-lg rounded-xl p-4 mb-6 border-t-4 border-gray-700 transition-all duration-500">
-             <div class="flex flex-col sm:flex-row justify-between items-center">
+        
+           <div class="flex flex-col sm:flex-row justify-between items-center">
                 <div class="mb-4 sm:mb-0">
                     <h1 class="text-3xl font-bold text-gray-800 transition-all duration-500">Shito Cooking Control</h1>
                     <p class="text-gray-500" id="current-date-shito-cooking">--/--/----</p>
                 </div>
-                <div class="text-right">
+       
+                 <div class="text-right">
                     <p class="text-md text-gray-600">Shift: <span id="current-shift-shito-cooking" class="font-bold px-3 py-1 bg-gray-100 text-gray-800 rounded-full transition-all duration-500">--</span></p>
-                    <button onclick="showPage('page-shito-menu')" class="mt-2 text-sm text-gray-700 hover:underline transition-all duration-500">&larr; Back to Shito Menu</button>
+                    <button onclick="showPage('page-shito-menu')" class="mt-2 text-sm text-gray-700 hover:underline transition-all duration-500">&larr;
+           Back to Shito Menu</button>
                 </div>
             </div>
         </header>
         <main class="bg-white shadow-lg rounded-xl p-4">
             <div class="controls flex items-center mb-4">
                 <button id="add-entry-btn-shito-cooking" class="bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-5 rounded-lg shadow-md transition-transform transform hover:scale-105">
-                    + Log New Cooking Cycle
+     
+           + Log New Cooking Cycle
                 </button>
             </div>
              <div id="table-container-shito-cooking" class="table-container overflow-x-auto">
                 <table class="min-w-full bg-white">
-                    <thead id="thead-shito-cooking" class="bg-gray-50 transition-all duration-500">
+                   
+            <thead id="thead-shito-cooking" class="bg-gray-50 transition-all duration-500">
                         <tr>
                             <th class="py-3 px-3 border-b-2 border-gray-200 text-left text-sm font-semibold text-gray-900 w-10"></th>
-                            <th class="py-3 px-3 border-b-2 border-gray-200 text-left text-sm font-semibold text-gray-900">Batch ID</th>
+                            <th class="py-3 px-3 border-b-2 border-gray-200 text-left 
+           text-sm font-semibold text-gray-900">Batch ID</th>
                             <th class="py-3 px-3 border-b-2 border-gray-200 text-left text-sm font-semibold text-gray-900">Variant</th>
                             <th class="py-3 px-3 border-b-2 border-gray-200 text-left text-sm font-semibold text-gray-900">Boule ID</th>
-                            <th class="py-3 px-3 border-b-2 border-gray-200 text-left text-sm font-semibold text-gray-900">Time Saved</th>
+                        
+           <th class="py-3 px-3 border-b-2 border-gray-200 text-left text-sm font-semibold text-gray-900">Time Saved</th>
                             <th class="py-3 px-3 border-b-2 border-gray-200 text-left text-sm font-semibold text-gray-900 text-center">Sync Status</th>
                         </tr>
                     </thead>
-                    <tbody id="log-table-body-shito-cooking"></tbody>
+     
+                   <tbody id="log-table-body-shito-cooking"></tbody>
                 </table>
             </div>
         </main>
     </div>
 
-    <!-- === MODALS === -->
-    <!-- Slurry Entry Modal -->
     <div id="modal-slurry" class="modal fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 hidden pointer-events-none opacity-0">
-        <div class="bg-white rounded-lg shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+        <div class="bg-white rounded-lg 
+           shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
             <div class="p-5 border-b bg-orange-50"><h2 class="text-xl font-bold text-orange-800">New Slurry Batch Entry</h2></div>
             <form id="form-slurry" class="flex-grow overflow-y-auto p-6 space-y-4"></form>
             <div class="p-4 bg-gray-50 border-t flex justify-end gap-3">
                 <button type="button" class="cancel-btn bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg" data-modal="modal-slurry">Cancel</button>
-                <button type="submit" form="form-slurry" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded-lg">Save & Sync</button>
+            
+           <button type="submit" form="form-slurry" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded-lg">Save & Sync</button>
             </div>
         </div>
     </div>
     
-    <!-- Shito Batch Entry Modal -->
     <div id="modal-shito-batch-add" class="modal fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 hidden pointer-events-none opacity-0">
         <div id="modal-shito-batch-add-content" class="bg-white rounded-lg shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col transition-all duration-500">
-            <div class="p-5 border-b"><h2 class="text-xl font-bold">New Shito Batch Entry</h2></div>
+           
+           <div class="p-5 border-b"><h2 class="text-xl font-bold">New Shito Batch Entry</h2></div>
             <form id="form-shito-batch-add" class="flex-grow overflow-y-auto p-6 space-y-4"></form>
             <div class="p-4 bg-gray-50 border-t flex justify-end gap-3">
                 <button type="button" class="cancel-btn bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg" data-modal="modal-shito-batch-add">Cancel</button>
                 <button type="submit" form="form-shito-batch-add" class="bg-red-700 hover:bg-red-800 text-white font-bold py-2 px-4 rounded-lg">Save & Sync</button>
-            </div>
+    
+           </div>
         </div>
     </div>
     
-    <!-- Shito Cooking Control Modal -->
     <div id="modal-shito-cooking" class="modal fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 hidden pointer-events-none opacity-0">
         <div id="modal-shito-cooking-content" class="bg-white rounded-lg shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col transition-all duration-500">
             <div class="p-5 border-b"><h2 class="text-xl font-bold">New Shito Cooking Log</h2></div>
-            <form id="form-shito-cooking" class="flex-grow overflow-y-auto p-6 space-y-4"></form>
+           
+           <form id="form-shito-cooking" class="flex-grow overflow-y-auto p-6 space-y-4"></form>
             <div class="p-4 bg-gray-50 border-t flex justify-end gap-3">
                 <button type="button" class="cancel-btn bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg" data-modal="modal-shito-cooking">Cancel</button>
                 <button type="submit" form="form-shito-cooking" id="submit-shito-cooking" class="bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded-lg">Save & Sync</button>
             </div>
         </div>
-    </div>
+  
+       </div>
 
-    <!-- Export Preview Modal (Shared) -->
     <div id="export-preview-modal" class="modal fixed inset-0 bg-black bg-opacity-70 flex flex-col items-center justify-center p-4 hidden pointer-events-none opacity-0">
         <p class="text-white text-lg mb-4">Long-press the image to save</p>
         <img id="preview-image" src="" alt="Batch Summary Preview" />
         <button id="close-preview-btn" class="mt-6 bg-white text-black font-bold py-2 px-6 rounded-lg">Close</button>
     </div>
 
-    <!-- Alert Modal -->
-    <div id="alert-modal" class="modal fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 hidden pointer-events-none opacity-0">
+    <div id="alert-modal" class="modal fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 
+           hidden pointer-events-none opacity-0">
         <div class="bg-white rounded-lg shadow-2xl w-full max-w-sm overflow-hidden flex flex-col">
             <div class="p-5 border-b"><h2 id="alert-title" class="text-xl font-bold text-gray-800">Alert</h2></div>
             <p id="alert-message" class="p-6 text-gray-700">This is an alert message.</p>
             <div class="p-4 bg-gray-50 border-t flex justify-end gap-3">
                 <button type="button" id="alert-ok-btn" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded-lg">OK</button>
-            </div>
+  
+           </div>
         </div>
     </div>
     
-    <!-- Hidden container for generating exports -->
     <div id="export-container" class="fixed top-0 left-0 -z-10 opacity-0 pointer-events-none"></div>
     
-    <!-- Datalist for batch number suggestions -->
     <datalist id="batch-suggestions"></datalist>
 
-    <!-- === COMPLETE JAVASCRIPT === -->
-    <script>
-    const { jsPDF } = window.jspdf;
-
-    document.addEventListener('DOMContentLoaded', () => {
-        // --- 1. CONFIGURATION & STATE ---
-        const GOOGLE_SCRIPT_URL_SLURRY = 'https://script.google.com/macros/s/AKfycbwEz9bz3P2Z5fSYgmQcvuv2j4fDCErygGSBzzpZThmN20iOQWbJInE86aXgohOfg3f1hA/exec';
-        const GOOGLE_SCRIPT_URL_SHITO_BATCH = 'https://script.google.com/macros/s/AKfycbw-ZHeruo5GEdjn96iTCb1Gj8p-SPNRUtSx2LU-HKUxDzUiioJLEcM0HWjBc7rEvsGm/exec'; 
-        const GOOGLE_SCRIPT_URL_SHITO_COOKING = 'https://script.google.com/macros/s/AKfycbykcdMJFjbB3uL05BVqwumwQg-yZ6eubPw5kQqIHjEuG2pgu5xZXenC2RuxIZeJaf6nOw/exec';
-        
-        const MODULE_PASSWORDS = {
-            slurry: "GB",
-            shitoMenu: "DIDI",
-            shitoCooking: "DIDI shito"
-        };
-        
-        let currentShiftInfo = {};
-        let savedSlurryBatches = [];
-        let savedShitoBatchLogs = [];
-        let savedShitoCookingLogs = [];
-        let enteredBatchNumbers = new Set();
-        let chartInstances = {}; // To store and destroy chart instances
-        
-        const isMobile = /MOBI/i.test(window.navigator.userAgent);
-        
-        const appData = {
-            productionLines: ['Can Line', 'SUP Line', 'Sachet Line'],
-            slurryRecipes: {
-                gino_pomo: { name: "GINO / POMO", ingredients: [ { name: '36-38% Bulk paste', qty: 975 }, { name: 'Fibre', qty: 300 }, { name: 'Maltose syrup', qty: 105 }, { name: 'Fructose syrup F42', qty: 170 }, { name: 'Fructose syrup F55', qty: 170 }, { name: 'Molasses', qty: 205 }, { name: 'Resistamyl', qty: 25 }, { name: 'Starch', qty: 65 }, { name: 'Pulpiz', qty: 15 }, { name: 'Salt', qty: 31 }, { name: 'Citric acid', qty: 26 }, { name: 'HIPRAROM 234-HD s/25', qty: 10 }, { name: 'Vitamin A', qty: 1.6 }, { name: 'Potassium iodine', qty: 0.01 }, { name: 'Zinc Oxide', qty: 0.69 }, { name: 'Caramel color 150d', qty: 0.1 }, { name: 'Additive color (E129)', qty: 0.5 }, { name: 'Additive color (E160d)Lycored', qty: 0.35 }, { name: 'Additive color (E110)', qty: 0.30 }, { name: 'D-Sodium isoasorbate', qty: 6 }, { name: 'HIB FLR CLR POWDER NG', qty: 17.5 }, { name: 'Water', qty: 2875.95 } ]},
-                peppe_onion: { name: "Peppe & Onion", ingredients: [ { name: '36-38% Bulk paste', qty: 1280.14 }, { name: 'Fibre', qty: 281.630 }, { name: 'Maltose syrup', qty: 163.860 }, { name: 'Fructose syrup F42', qty: 204.820 }, { name: 'Fructose syrup F55', qty: 204.820 }, { name: 'Modified Corn Starch E1422', qty: 25.600 }, { name: 'Modified Corn Starch E1412', qty: 25.600 }, { name: 'Modified Tapioca starch', qty: 61.450 }, { name: 'Salt', qty: 27.650 }, { name: 'Citric acid', qty: 24.580 }, { name: 'HIPRAROM 234-HD s/25', qty: 15.360 }, { name: 'Vitamin premix', qty: 0.510 }, { name: 'Additive color (E129)', qty: 0.650 }, { name: 'Additive color (E160d)Lycopene', qty: 0.5 }, { name: 'Additive color (E110)', qty: 0.05 }, { name: 'Caramel', qty: 3 }, { name: 'Oleoresin Capsicum', qty: 9.27 }, { name: 'Peppe oil', qty: 5.4 }, { name: 'D- sodium isoasorbate', qty: 5.12 }, { name: 'Water', qty: 2659.730 } ]},
-                brisk_farm: { name: "BRISK FARM", ingredients: [ { name: '36-38% Bulk paste', qty: 750 }, { name: 'Fibre', qty: 350 }, { name: 'Sugar', qty: 370 }, { name: 'Molasses', qty: 270 }, { name: 'Starch', qty: 90 }, { name: 'Pulpiz', qty: 20 }, { name: 'Salt', qty: 30 }, { name: 'Citric acid', qty: 27 }, { name: 'Vitamin A', qty: 1.714 }, { name: 'Potassium iodine', qty: 0.015 }, { name: 'Zinc Oxide', qty: 0.737 }, { name: 'Caramel color 150d', qty: 0.025 }, { name: 'Additive color (E129)', qty: 0.5 }, { name: 'Additive color (E160d)Lycored', qty: 0.35 }, { name: 'Additive color (E110)', qty: 0.15 }, { name: 'D-Sodium isoasorbate', qty: 6 }, { name: 'HIB FLR CLR POWDER NG', qty: 25 }, { name: 'Water', qty: 3058.509 } ]},
-                jollof_mix: { name: "Jollof Mix", ingredients: [ { name: '36-38% Bulk paste', qty: 1125 }, { name: 'Fibre', qty: 300 }, { name: 'Maltose syrup', qty: 205 }, { name: 'Fructose syrup F42', qty: 135 }, { name: 'Fructose syrup F55', qty: 135 }, { name: 'Modified Corn Starch E1422', qty: 50 }, { name: 'Modified Tapioca starch', qty: 75 }, { name: 'Salt', qty: 25 }, { name: 'Citric acid', qty: 25 }, { name: 'Vitamin premix', qty: 0.5 }, { name: 'Caramel color 150d', qty: 5 }, { name: 'Additive color (E129)', qty: 0.5 }, { name: 'Additive color (E110)', qty: 0.01 }, { name: 'Oleoresin Capsicum', qty: 5 }, { name: 'Peppe oil', qty: 3 }, { name: 'D- sodium isoasorbate', qty: 5 }, { name: 'Boiled chicken flavor Halal 106691', qty: 15 }, { name: 'Smoky jollof flavor(local)', qty: 17.5 }, { name: 'Tastykan jollof spice', qty: 10.5 }, { name: 'Onion powder', qty: 17.5 }, { name: 'Bulk curry powder', qty: 20 }, { name: 'Garlic powder', qty: 17.5 }, { name: 'Bulk monosodium Glutamate', qty: 55 }, { name: 'Ginger powder', qty: 10 }, { name: 'Water', qty: 2742.69 } ]}
-            },
-            shitoRecipes: {
-                MILD: [
-                    { name: 'Peeled ginger', qty: 40 }, { name: 'Peeled onion', qty: 436 }, { name: 'Peeled garlic', qty: 28 },
-                    { name: 'Olein/Soyabean oil', qty: 400 }, { name: 'Fine salt', qty: 9 }, { name: 'African nutmeg', qty: 1 },
-                    { name: 'Coriander Powder', qty: 1.5 }, { name: 'Anise seed powder', qty: 1.5 }, { name: 'Star anise seed powder', qty: 1.5 },
-                    { name: 'Rosemary powder', qty: 1.5 }, { name: 'Chilli powder', qty: 25 }, { name: 'Fish powder', qty: 40 }, { name: 'Shrimp Powder', qty: 15 }
-                ],
-                HOT: [
-                    { name: 'Peeled ginger', qty: 40 }, { name: 'Peeled onion', qty: 462 }, { name: 'Peeled garlic', qty: 28 },
-                    { name: 'Olein/Soyabean oil', qty: 400 }, { name: 'Fine salt', qty: 9 }, { name: 'African nutmeg', qty: 1 },
-                    { name: 'Coriander Powder', qty: 1.5 }, { name: 'Anise seed powder', qty: 1.5 }, { name: 'Star anise seed powder', qty: 1.5 },
-                    { name: 'Rosemary powder', qty: 1.5 }, { name: 'Chilli powder', qty: 5 }, { name: 'Fish powder', qty: 30 },
-                    { name: 'Shrimp Powder', qty: 15 }, { name: 'Oleoresin capsicum', qty: 4 }
-                ]
-            }
-        };
-
-        // --- 2. CORE FUNCTIONS ---
-        
-        // --- Page Navigation & Access Control ---
-        window.showPage = (pageId) => {
-            document.querySelectorAll('.page').forEach(page => page.style.display = 'none');
-            const pageToShow = document.getElementById(pageId);
-            if (pageToShow) {
-                pageToShow.style.display = 'block';
-            }
-            updateDateTime();
-        };
-
-        window.requestAccess = (moduleType) => {
-            const password = prompt(`Enter Access Code for ${moduleType.replace('shito', 'Shito ').replace('Menu', ' Menu').replace('Cooking', ' Cooking')}:`);
-            if (password === MODULE_PASSWORDS[moduleType]) {
-                if(moduleType === 'shitoMenu') {
-                    showPage('page-shito-menu');
-                } else if (moduleType === 'slurry') {
-                    showPage('page-slurry');
-                } else if (moduleType === 'shitoCooking') {
-                    showPage('page-shito-cooking');
-                }
-            } else if (password !== null) {
-                showAlert("Access Denied", "The access code you entered is incorrect.");
-            }
-        };
-        
-        // --- Data Persistence (localStorage) ---
-        const saveState = () => {
-            try {
-                const appState = {
-                    slurryBatches: savedSlurryBatches,
-                    shitoBatchLogs: savedShitoBatchLogs,
-                    shitoCookingLogs: savedShitoCookingLogs,
-                    batchNumbers: Array.from(enteredBatchNumbers),
-                    timestamp: Date.now()
-                };
-                localStorage.setItem('productionLogState', JSON.stringify(appState));
-            } catch (e) {
-                console.error("Failed to save state:", e);
-                showAlert("Save Error", "Could not save data. Your device storage might be full.");
-            }
-        };
-        
-        const loadState = () => {
-            const savedState = localStorage.getItem('productionLogState');
-            if (!savedState) return;
-
-            try {
-                const appState = JSON.parse(savedState);
-                const now = Date.now();
-                const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
-
-                if ((now - appState.timestamp) > TWENTY_FOUR_HOURS) {
-                    localStorage.removeItem('productionLogState');
-                    return;
-                }
-
-                savedSlurryBatches = appState.slurryBatches || [];
-                savedShitoBatchLogs = appState.shitoBatchLogs || [];
-                savedShitoCookingLogs = appState.shitoCookingLogs || [];
-                enteredBatchNumbers = new Set(appState.batchNumbers || []);
-                updateBatchSuggestions();
-                
-            } catch (e) {
-                console.error("Failed to load saved state:", e);
-                localStorage.removeItem('productionLogState');
-            }
-        };
-
-        // --- Utility Functions ---
-        const getShiftInfo = () => {
-            const hours = new Date().getUTCHours();
-            if (hours >= 6 && hours < 14) return { shift: 'Morning', key: 'SHa' };
-            if (hours >= 14 && hours < 22) return { shift: 'Afternoon', key: 'SHb' };
-            return { shift: 'Night', key: 'SHc' };
-        };
-        
-        const updateDateTime = () => {
-            const now = new Date();
-            const dateString = now.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-            currentShiftInfo = getShiftInfo();
-            const shiftString = `${currentShiftInfo.shift} (${currentShiftInfo.key})`;
-
-            ['current-date-slurry', 'current-date-shito-batch', 'current-date-shito-cooking'].forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.textContent = dateString;
-            });
-            ['current-shift-slurry', 'current-shift-shito-batch', 'current-shift-shito-cooking'].forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.textContent = shiftString;
-            });
-        };
-        
-        const showAlert = (title, message) => {
-            document.getElementById('alert-title').textContent = title;
-            document.getElementById('alert-message').textContent = message;
-            document.getElementById('alert-modal').classList.remove('hidden', 'opacity-0', 'pointer-events-none');
-        };
-
-        const formatTimeDiff = (start, end) => {
-            if (!start || !end) return "00:00";
-            const s = new Date(`1970-01-01T${start}:00Z`);
-            const e = new Date(`1970-01-01T${end}:00Z`);
-            let diff = (e.getTime() - s.getTime()) / 60000; // minutes
-            if (diff < 0) { diff += 1440; } // Add 24 hours
-            const hours = Math.floor(diff / 60);
-            const minutes = Math.round(diff % 60);
-            return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
-        };
-
-        // --- Batch Suggestion Functions ---
-        const updateBatchSuggestions = (newBatchNumber = null) => {
-            if (newBatchNumber && newBatchNumber.trim() !== '') {
-                enteredBatchNumbers.add(newBatchNumber.trim());
-            }
-            const datalist = document.getElementById('batch-suggestions');
-            if (!datalist) return;
-            datalist.innerHTML = '';
-            enteredBatchNumbers.forEach(num => {
-                const option = document.createElement('option');
-                option.value = num;
-                datalist.appendChild(option);
-            });
-            if (newBatchNumber) saveState();
-        };
-
-        const addBatchInputListener = (input) => {
-            input.setAttribute('list', 'batch-suggestions');
-            input.addEventListener('change', (e) => updateBatchSuggestions(e.target.value));
-        };
-
-        // --- Generic Form Submission Function ---
-        const submitDataToGoogle = (url, password, batchId, batchData, localCache, tableRenderer) => {
-            const iframe = document.getElementsByName('hidden-iframe')[0];
-            if (!iframe) { console.error("Submission iframe not found!"); return; }
-
-            const hiddenForm = document.createElement('form');
-            hiddenForm.method = 'post';
-            hiddenForm.action = url;
-            hiddenForm.target = 'hidden-iframe'; 
-            
-            const dataToSubmit = { password: password, rowData: batchData };
-            const input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = 'postData';
-            input.value = JSON.stringify(dataToSubmit);
-            hiddenForm.appendChild(input);
-            document.body.appendChild(hiddenForm);
-
-            let submissionHandled = false;
-            const onSubmissionEnd = (status) => {
-                if (submissionHandled) return;
-                submissionHandled = true;
-                const batchToUpdate = localCache.find(b => b.id === batchId);
-                if (batchToUpdate) {
-                    batchToUpdate.syncStatus = status;
-                    tableRenderer();
-                    saveState();
-                }
-                if (document.body.contains(hiddenForm)) {
-                    document.body.removeChild(hiddenForm);
-                }
-                iframe.onload = null;
-                iframe.onerror = null;
-            };
-            
-            iframe.onload = () => onSubmissionEnd('success');
-            iframe.onerror = () => onSubmissionEnd('error');
-            hiddenForm.submit();
-
-            setTimeout(() => {
-                if (!submissionHandled) {
-                    onSubmissionEnd('error');
-                    showAlert("Submission Timeout", "The server did not respond. Please check your connection.");
-                }
-            }, 10000);
-        };
-        
-        // --- 3A. SLURRY MODULE ---
-        
-        function buildSlurryModal() {
-            const form = document.getElementById('form-slurry');
-            if (!form) return;
-            form.innerHTML = `
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div><label for="slurry-line" class="block text-sm font-medium text-gray-700">Production Line</label><select id="slurry-line" required class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm"></select></div>
-                    <div><label for="slurry-product" class="block text-sm font-medium text-gray-700">Product Type</label><select id="slurry-product" required class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm"></select></div>
-                </div>
-                <div><label for="slurry-batch" class="block text-sm font-medium text-gray-700">Slurry Batch Number</label><input type="text" id="slurry-batch" required class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm" placeholder="e.g., SL001"></div>
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t">
-                    <div><label for="slurry-mix-time" class="block text-sm font-medium text-gray-700">Mixing Time (mins)</label><input type="number" step="0.0001" id="slurry-mix-time" required class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm" placeholder="e.g., 15.2500"></div>
-                    <div><label for="slurry-brix" class="block text-sm font-medium text-gray-700">Brix</label><input type="number" step="0.0001" id="slurry-brix" required class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm" placeholder="e.g., 28.5123"></div>
-                    <div><label for="slurry-color-l" class="block text-sm font-medium text-gray-700">Color (L)</label><input type="number" step="0.0001" id="slurry-color-l" required class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm" placeholder="e.g., 23.1000"></div>
-                    <div><label for="slurry-color-ab" class="block text-sm font-medium text-gray-700">Color (a/b)</label><input type="number" step="0.0001" id="slurry-color-ab" required class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm" placeholder="e.g., 2.1500"></div>
-                </div>
-                <div id="slurry-ingredients-container" class="pt-4 border-t space-y-3"><p class="text-gray-500 text-sm">Select a product to see ingredients.</p></div>
-            `;
-            
-            const lineSelect = form.querySelector('#slurry-line');
-            const productSelect = form.querySelector('#slurry-product');
-            lineSelect.innerHTML = appData.productionLines.map(line => `<option value="${line}">${line}</option>`).join('');
-            productSelect.innerHTML = '<option value="">-- Select Product --</option>' + Object.keys(appData.slurryRecipes).map(key => `<option value="${key}">${appData.slurryRecipes[key].name}</option>`).join('');
-            
-            productSelect.addEventListener('change', (e) => populateSlurryIngredients(e.target.value));
-            document.getElementById('modal-slurry').classList.remove('hidden', 'opacity-0', 'pointer-events-none');
-        }
-
-        function populateSlurryIngredients(productKey) {
-            const container = document.getElementById('slurry-ingredients-container');
-            if (!container) return;
-            if (!productKey) { container.innerHTML = '<p class="text-gray-500 text-sm">Select a product to see ingredients.</p>'; return; }
-            
-            container.innerHTML = '<h4 class="text-md font-semibold text-gray-800 mb-2">Enter Ingredient Details</h4>';
-            const recipe = appData.slurryRecipes[productKey];
-            if (!recipe) return;
-
-            recipe.ingredients.forEach(ing => {
-                const isWater = ing.name.toLowerCase() === 'water'; const isBulkPaste = ing.name.toLowerCase().includes('bulk paste');
-                const div = document.createElement('div'); div.className = 'grid grid-cols-1 md:grid-cols-3 gap-3 items-center border-t py-2';
-                let inputsHtml = '';
-                if (isWater) { inputsHtml = `<div class="md:col-span-2 flex items-center"><span class="text-sm text-gray-600 font-semibold">Quantity: ${ing.qty} Kg (Auto)</span><input type="hidden" data-ing-name="${ing.name}" data-ing-qty="${ing.qty}" data-type="batch" value="N/A"></div>`; }
-                else if (isBulkPaste) { inputsHtml = `<div class="md:col-span-2 grid grid-cols-2 gap-2"><input type="text" data-ing-name="${ing.name}" data-ing-qty="${ing.qty}" data-type="batch" required class="batch-input p-2 border border-gray-300 rounded-md shadow-sm" placeholder="Batch #"><input type="text" data-ing-name="${ing.name}" data-ing-qty="${ing.qty}" data-type="ratio" required class="p-2 border border-gray-300 rounded-md shadow-sm" placeholder="Ratio / Note"></div>`; }
-                else { inputsHtml = `<div class="md:col-span-2 grid grid-cols-2 gap-2"><input type="text" data-ing-name="${ing.name}" data-ing-qty="${ing.qty}" data-type="batch" required class="batch-input p-2 border border-gray-300 rounded-md shadow-sm" placeholder="Batch #"><span class="text-sm text-gray-500 self-center">Qty: ${ing.qty} Kg</span></div>`; }
-                div.innerHTML = `<label class="text-sm text-gray-700">${ing.name}</label>${inputsHtml}`;
-                div.querySelectorAll('.batch-input').forEach(addBatchInputListener);
-                container.appendChild(div);
-            });
-        }
-        
-        function handleSlurryFormSubmit(e) {
-            e.preventDefault();
-            const form = e.target;
-            const now = new Date(); const batchId = Date.now();
-            const productSelect = form.querySelector('#slurry-product');
-            const newBatch = {
-                id: batchId, date: now.toLocaleDateString('en-CA'), timeSaved: now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
-                shift: currentShiftInfo.key, line: form.querySelector('#slurry-line').value, productKey: productSelect.value,
-                productName: appData.slurryRecipes[productSelect.value].name, slurryBatch: form.querySelector('#slurry-batch').value,
-                mixTime: form.querySelector('#slurry-mix-time').value, brix: form.querySelector('#slurry-brix').value, colorL: form.querySelector('#slurry-color-l').value,
-                colorAB: form.querySelector('#slurry-color-ab').value, ingredients: [], syncStatus: 'syncing'
-            };
-
-            const ingredientInputs = form.querySelectorAll('#slurry-ingredients-container input[data-type="batch"]');
-            ingredientInputs.forEach(input => {
-                const name = input.dataset.ingName; const qty = input.dataset.ingQty; const batch = input.value; let ratio = null;
-                if (name.toLowerCase().includes('bulk paste')) { const ratioInput = input.closest('.grid').querySelector('input[data-type="ratio"]'); ratio = ratioInput ? ratioInput.value : ''; }
-                newBatch.ingredients.push({ name, qty, batch, ratio });
-                if (!name.toLowerCase().includes('water')) { updateBatchSuggestions(batch); }
-            });
-            
-            savedSlurryBatches.push(newBatch);
-            saveState();
-            renderSlurryTable();
-            document.getElementById('modal-slurry').classList.add('hidden', 'opacity-0', 'pointer-events-none');
-
-            const rowData = { "Date": newBatch.date, "Time Saved": newBatch.timeSaved, "Shift": newBatch.shift, "Line": newBatch.line, "Product": newBatch.productName, "Slurry Batch #": newBatch.slurryBatch, "Mix Time": newBatch.mixTime, "Brix": newBatch.brix, "Color (L)": newBatch.colorL, "Color (a/b)": newBatch.colorAB };
-            newBatch.ingredients.forEach(ing => { rowData[ing.name] = ing.name.toLowerCase().includes('bulk paste') ? `Batch: ${ing.batch}, Ratio: ${ing.ratio}, Qty: ${ing.qty} Kg` : (ing.name.toLowerCase() === 'water' ? ing.qty : ing.batch); });
-
-            submitDataToGoogle(GOOGLE_SCRIPT_URL_SLURRY, MODULE_PASSWORDS.slurry, batchId, rowData, savedSlurryBatches, renderSlurryTable);
-        }
-
-        function renderSlurryTable() {
-            const tableBody = document.getElementById('log-table-body-slurry');
-            if (!tableBody) return;
-            tableBody.innerHTML = '';
-            if (savedSlurryBatches.length === 0) { tableBody.innerHTML = `<tr class="text-center no-data-row"><td colspan="6" class="py-10 text-gray-500">No data saved locally.</td></tr>`; return; }
-            
-            savedSlurryBatches.slice().reverse().forEach(batch => {
-                const summaryRow = document.createElement('tr'); summaryRow.className = 'summary-row'; summaryRow.dataset.batchId = batch.id;
-                let statusHtml;
-                if(batch.syncStatus === 'syncing') statusHtml = '<div class="flex justify-center items-center"><div class="loader"></div></div>';
-                else if(batch.syncStatus === 'success') statusHtml = '<span class="font-bold text-green-600">Synced</span>';
-                else if(batch.syncStatus === 'error') statusHtml = '<span class="font-bold text-red-600">Failed</span>';
-                summaryRow.innerHTML = `<td class="py-3 px-3 border-b border-gray-200 text-orange-600 font-bold expand-icon">+</td> <td class="py-3 px-3 border-b border-gray-200 font-semibold">${batch.slurryBatch}</td> <td class="py-3 px-3 border-b border-gray-200">${batch.productName}</td> <td class="py-3 px-3 border-b border-gray-200">${batch.line}</td> <td class="py-3 px-3 border-b border-gray-200">${batch.timeSaved}</td> <td class="py-3 px-3 border-b border-gray-200 text-center">${statusHtml}</td>`;
-                
-                const detailsRow = document.createElement('tr'); detailsRow.className = 'details-row'; detailsRow.dataset.detailsFor = batch.id;
-                let detailsHtml = `<td colspan="6" class="p-4 bg-orange-50/50"><div class="max-w-4xl mx-auto"><div class="flex flex-col sm:flex-row justify-between items-start mb-3"><div> <h4 class="font-bold mb-1 text-orange-900">Batch Details:</h4> <table class="text-sm"> <tr><td class="font-semibold pr-2">Mix Time:</td><td>${batch.mixTime} mins</td><td class="font-semibold pr-2 pl-4">Brix:</td><td>${batch.brix}</td></tr> <tr><td class="font-semibold pr-2">Color (L):</td><td>${batch.colorL}</td><td class="font-semibold pr-2 pl-4">Color (a/b):</td><td>${batch.colorAB}</td></tr> </table> </div><div class="flex flex-col sm:flex-row gap-2 mt-2 sm:mt-0"> <button data-action="export-png" data-batch-id="${batch.id}" data-type="slurry" class="export-btn bg-white hover:bg-gray-100 text-gray-700 text-sm font-bold py-1 px-3 border rounded-md">Export Image</button> <button data-action="export-pdf" data-batch-id="${batch.id}" data-type="slurry" class="export-btn bg-white hover:bg-gray-100 text-gray-700 text-sm font-bold py-1 px-3 border rounded-md">Export PDF</button> </div></div> <h4 class="font-bold mt-3 mb-1 text-orange-900">Ingredient Details:</h4> <table class="min-w-full text-sm bg-white rounded-md shadow-sm"> <thead class="bg-gray-100"><tr><th class="px-2 py-1 text-left font-semibold">Ingredient</th><th class="px-2 py-1 text-left font-semibold">Batch #</th><th class="px-2 py-1 text-left font-semibold">Details</th></tr></thead><tbody>`;
-                batch.ingredients.forEach(ing => { const details = ing.name.toLowerCase().includes('bulk paste') ? `Ratio: ${ing.ratio}, Qty: ${ing.qty} Kg` : `Qty: ${ing.qty} Kg`; detailsHtml += `<tr class="border-t"><td class="px-2 py-1">${ing.name}</td><td class="px-2 py-1">${ing.batch}</td><td class="px-2 py-1">${details}</td></tr>`; });
-                detailsHtml += '</tbody></table></div></td>';
-                detailsRow.innerHTML = detailsHtml;
-                
-                tableBody.appendChild(summaryRow); tableBody.appendChild(detailsRow);
-            });
-        }
-        
-        // --- 3B. SHITO BATCH ADDITION MODULE ---
-        
-        function buildShitoBatchModal() {
-            const form = document.getElementById('form-shito-batch-add');
-            if (!form) return;
-            form.innerHTML = `
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div><label for="shito-batch-batch" class="block text-sm font-medium text-gray-700">Shito Batch Number</label><input type="text" id="shito-batch-batch" required class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm" placeholder="e.g., SH001"></div>
-                    <div><label for="shito-batch-sku" class="block text-sm font-medium text-gray-700">SKU</label><select id="shito-batch-sku" required class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm"><option value="30g sachet">30g sachet</option><option value="450g Jar">450g Jar</option></select></div>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div><label for="shito-batch-variant" class="block text-sm font-medium text-gray-700">Variant</label><select id="shito-batch-variant" required class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm"><option value="">-- Select Variant --</option><option value="MILD">MILD</option><option value="HOT">HOT</option></select></div>
-                    <div><label for="shito-batch-size" class="block text-sm font-medium text-gray-700">Batch Size</label><select id="shito-batch-size" required class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm"><option value="1">1 Ton</option><option value="1.5">1.5 Ton</Coption></select></div>
-                </div>
-                <div id="shito-batch-ingredients-container" class="pt-4 border-t space-y-3"><p class="text-gray-500 text-sm">Select a variant to see ingredients.</p></div>
-            `;
-            
-            const variantSelect = form.querySelector('#shito-batch-variant');
-            const sizeSelect = form.querySelector('#shito-batch-size');
-
-            variantSelect.addEventListener('change', () => {
-                populateShitoBatchIngredients(variantSelect.value, sizeSelect.value);
-                updateShitoBatchModalAesthetics(variantSelect.value);
-            });
-            sizeSelect.addEventListener('change', () => populateShitoBatchIngredients(variantSelect.value, sizeSelect.value));
-            
-            updateShitoBatchModalAesthetics('');
-            document.getElementById('modal-shito-batch-add').classList.remove('hidden', 'opacity-0', 'pointer-events-none');
-        }
-        
-        function updateShitoBatchModalAesthetics(variant) {
-            const modalContent = document.getElementById('modal-shito-batch-add-content');
-            if (!modalContent) return;
-            const header = modalContent.querySelector('.p-5');
-            const title = header.querySelector('h2');
-            const submitBtn = modalContent.querySelector('button[type="submit"]');
-            
-            if (variant === 'MILD') {
-                modalContent.style.background = 'linear-gradient(to top right, #FFF8E1, #FFECB3)';
-                header.style.background = '#FFF3E0'; header.style.color = '#E65100'; title.style.color = '#E65100';
-                submitBtn.className = "bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded-lg";
-            } else if (variant === 'HOT') {
-                modalContent.style.background = 'linear-gradient(to top right, #FFEBEE, #EF9A9A)';
-                header.style.background = '#FFCDD2'; header.style.color = '#B71C1C'; title.style.color = '#B71C1C';
-                submitBtn.className = "bg-red-700 hover:bg-red-800 text-white font-bold py-2 px-4 rounded-lg";
-            } else {
-                modalContent.style.background = 'white';
-                header.style.background = '#F9FAFB'; header.style.color = '#374151'; title.style.color = '#374151';
-                submitBtn.className = "bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded-lg";
-            }
-        }
-
-        function populateShitoBatchIngredients(variant, size) {
-            const container = document.getElementById('shito-batch-ingredients-container');
-            if (!container) return;
-            if (!variant) { container.innerHTML = '<p class="text-gray-500 text-sm">Select a variant to see ingredients.</p>'; return; }
-            
-            const recipe = appData.shitoRecipes[variant];
-            if (!recipe) return;
-            const multiplier = parseFloat(size);
-            container.innerHTML = '<h4 class="text-md font-semibold text-gray-800 mb-2">Enter Ingredient Details</h4>';
-            
-            recipe.forEach(ing => {
-                const calculatedQty = ing.qty * multiplier;
-                const div = document.createElement('div');
-                div.className = 'grid grid-cols-1 md:grid-cols-3 gap-3 items-center border-t py-2';
-                div.innerHTML = `
-                    <label class="text-sm text-gray-700">${ing.name}</label>
-                    <div class="md:col-span-2 grid grid-cols-2 gap-2">
-                        <input type="text" data-ing-name="${ing.name}" data-ing-qty="${calculatedQty}" data-type="batch" required class="batch-input p-2 border border-gray-300 rounded-md shadow-sm" placeholder="Batch #">
-                        <span class="text-sm text-gray-500 self-center">Qty: ${calculatedQty.toFixed(2)} Kg</span>
-                    </div>
-                `;
-                div.querySelectorAll('.batch-input').forEach(addBatchInputListener);
-                container.appendChild(div);
-            });
-        }
-        
-        function handleShitoBatchFormSubmit(e) {
-            e.preventDefault();
-            const form = e.target;
-            const now = new Date(); const batchId = Date.now();
-            const variant = form.querySelector('#shito-batch-variant').value;
-            const size = form.querySelector('#shito-batch-size').value;
-            const newBatch = {
-                id: batchId, date: now.toLocaleDateString('en-CA'), timeSaved: now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
-                shift: currentShiftInfo.key,
-                batchNumber: form.querySelector('#shito-batch-batch').value,
-                variant: variant,
-                sku: form.querySelector('#shito-batch-sku').value,
-                batchSize: size,
-                ingredients: [],
-                syncStatus: 'syncing'
-            };
-            
-            const rowData = {
-                "Date": newBatch.date, "Time Saved": newBatch.timeSaved, "Shift": newBatch.shift,
-                "Batch Number": newBatch.batchNumber, "Variant": newBatch.variant, "SKU": newBatch.sku,
-                "Batch Size": newBatch.batchSize,
-                "Start of Mixing": "N/A", "End of Mixing": "N/A", "Total Mixing Time (min)": "N/A"
-            };
-            
-            const allShitoIngredients = new Set([...appData.shitoRecipes.MILD.map(i => i.name), ...appData.shitoRecipes.HOT.map(i => i.name)]);
-            allShitoIngredients.forEach(name => rowData[name] = '');
-
-            const ingredientInputs = form.querySelectorAll('#shito-batch-ingredients-container input[data-type="batch"]');
-            ingredientInputs.forEach(input => {
-                const name = input.dataset.ingName;
-                const qty = input.dataset.ingQty;
-                const batch = input.value;
-                newBatch.ingredients.push({ name, qty, batch });
-                rowData[name] = `Batch: ${batch}, Qty: ${qty} Kg`;
-                updateBatchSuggestions(batch);
-            });
-            
-            savedShitoBatchLogs.push(newBatch);
-            saveState();
-            renderShitoBatchTable();
-            document.getElementById('modal-shito-batch-add').classList.add('hidden', 'opacity-0', 'pointer-events-none');
-            
-            submitDataToGoogle(GOOGLE_SCRIPT_URL_SHITO_BATCH, MODULE_PASSWORDS.shitoMenu, batchId, rowData, savedShitoBatchLogs, renderShitoBatchTable);
-        }
-        
-        function renderShitoBatchTable() {
-            const tableBody = document.getElementById('log-table-body-shito-batch');
-            if (!tableBody) return;
-            tableBody.innerHTML = '';
-            if (savedShitoBatchLogs.length === 0) { tableBody.innerHTML = `<tr class="text-center no-data-row"><td colspan="6" class="py-10 text-gray-500">No data saved locally.</td></tr>`; return; }
-            
-            savedShitoBatchLogs.slice().reverse().forEach(batch => {
-                const summaryRow = document.createElement('tr');
-                summaryRow.className = 'summary-row shito';
-                summaryRow.dataset.batchId = batch.id;
-                let statusHtml;
-                if(batch.syncStatus === 'syncing') statusHtml = '<div class="flex justify-center items-center"><div class="loader"></div></div>';
-                else if(batch.syncStatus === 'success') statusHtml = '<span class="font-bold text-green-600">Synced</span>';
-                else if(batch.syncStatus === 'error') statusHtml = '<span class="font-bold text-red-600">Failed</span>';
-                
-                summaryRow.innerHTML = `
-                    <td class="py-3 px-3 border-b border-gray-200 text-red-700 font-bold expand-icon">+</td>
-                    <td class="py-3 px-3 border-b border-gray-200 font-semibold">${batch.batchNumber}</td>
-                    <td class="py-3 px-3 border-b border-gray-200">${batch.variant}</td>
-                    <td class="py-3 px-3 border-b border-gray-200">${batch.sku}</td>
-                    <td class="py-3 px-3 border-b border-gray-200">${batch.timeSaved}</td>
-                    <td class="py-3 px-3 border-b border-gray-200 text-center">${statusHtml}</td>
-                `;
-                
-                const detailsRow = document.createElement('tr');
-                detailsRow.className = 'details-row';
-                detailsRow.dataset.detailsFor = batch.id;
-                
-                let ingredientsTable = '';
-                batch.ingredients.forEach(ing => {
-                    ingredientsTable += `<tr class="border-t"><td class="px-2 py-1">${ing.name}</td><td class="px-2 py-1">${ing.batch}</td><td class="px-2 py-1">Qty: ${ing.qty} Kg</td></tr>`;
-                });
-                
-                detailsRow.innerHTML = `<td colspan="6" class="p-4 bg-red-50/50"><div class="max-w-4xl mx-auto">
-                    <div class="flex flex-col sm:flex-row justify-between items-start mb-3">
-                        <div>
-                            <h4 class="font-bold mb-1 text-red-900">Batch Details:</h4>
-                            <table class="text-sm">
-                                <tr><td class="font-semibold pr-2">Batch Size:</td><td>${batch.batchSize} Ton</td><td class="font-semibold pr-2 pl-4">SKU:</td><td>${batch.sku}</td></tr>
-                            </table>
-                        </div>
-                        <div class="flex flex-col sm:flex-row gap-2 mt-2 sm:mt-0">
-                            <button data-action="export-png" data-batch-id="${batch.id}" data-type="shito-batch" class="export-btn bg-white hover:bg-gray-100 text-gray-700 text-sm font-bold py-1 px-3 border rounded-md">Export Image</button>
-                            <button data-action="export-pdf" data-batch-id="${batch.id}" data-type="shito-batch" class="export-btn bg-white hover:bg-gray-100 text-gray-700 text-sm font-bold py-1 px-3 border rounded-md">Export PDF</button>
-                        </div>
-                    </div>
-                    <h4 class="font-bold mt-3 mb-1 text-red-900">Ingredient Details:</h4>
-                    <table class="min-w-full text-sm bg-white rounded-md shadow-sm">
-                        <thead class="bg-gray-100"><tr><th class="px-2 py-1 text-left font-semibold">Ingredient</th><th class="px-2 py-1 text-left font-semibold">Batch #</th><th class="px-2 py-1 text-left font-semibold">Details</th></tr></thead>
-                        <tbody>${ingredientsTable}</tbody>
-                    </table>
-                </div></td>`;
-                
-                tableBody.appendChild(summaryRow);
-                tableBody.appendChild(detailsRow);
-            });
-        }
-
-        // --- 3C. SHITO COOKING CONTROL MODULE ---
-
-        function buildShitoCookingModal() {
-            const form = document.getElementById('form-shito-cooking');
-            if (!form) return;
-            form.innerHTML = `
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div><label for="cooking-batch-id" class="block text-sm font-medium text-gray-700">Batch ID</label><input type="text" id="cooking-batch-id" required class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm" placeholder="e.g., SH001"></div>
-                    <div><label for="cooking-variant" class="block text-sm font-medium text-gray-700">Variant</label><select id="cooking-variant" required class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm"><option value="">-- Select --</option><option value="MILD">MILD</option><option value="HOT">HOT</option></select></div>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div><label for="cooking-sku" class="block text-sm font-medium text-gray-700">SKU</label><select id="cooking-sku" required class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm"><option value="30g sachet">30g sachet</option><option value="450g Jar">450g Jar</option></select></div>
-                    <div><label for="cooking-batch-size" class="block text-sm font-medium text-gray-700">Batch Size</label><select id="cooking-batch-size" required class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm"><option value="1 Ton">1 Ton</option><option value="1.5 Ton">1.5 Ton</option></select></div>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div><label for="cooking-cycle" class="block text-sm font-medium text-gray-700">Cooking Cycle</label><input type="text" id="cooking-cycle" required class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm" placeholder="e.g., Cycle 1"></div>
-                    <div><label for="cooking-boule-id" class="block text-sm font-medium text-gray-700">Boule ID</label><input type="text" id="cooking-boule-id" required class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm" placeholder="e.g., Boule A"></div>
-                </div>
-                
-                <div class="pt-4 border-t">
-                    <h4 class="text-md font-semibold text-gray-800 mb-2">GOG Transfer</h4>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div><label for="cooking-gog-start" class="block text-sm font-medium text-gray-700">Start Time</label><input type="time" id="cooking-gog-start" required class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm"></div>
-                        <div><label for="cooking-gog-end" class="block text-sm font-medium text-gray-700">End Time</label><input type="time" id="cooking-gog-end" required class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm"></div>
-                        <div><label for="cooking-gog-total" class="block text-sm font-medium text-gray-700">Total Time</label><input type="text" id="cooking-gog-total" readonly class="mt-1 block w-full py-2 px-3 border-gray-200 bg-gray-100 rounded-md shadow-sm" placeholder="HH:MM"></div>
-                    </div>
-                </div>
-                
-                <div class="pt-4 border-t">
-                    <h4 class="text-md font-semibold text-gray-800 mb-2">Cooking Process</h4>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div><label for="cooking-cook-start" class="block text-sm font-medium text-gray-700">Start Time</label><input type="time" id="cooking-cook-start" required class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm"></div>
-                        <div><label for="cooking-cook-end" class="block text-sm font-medium text-gray-700">End Time</label><input type="time" id="cooking-cook-end" required class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm"></div>
-                        <div><label for="cooking-cook-total" class="block text-sm font-medium text-gray-700">Total Time</label><input type="text" id="cooking-cook-total" readonly class="mt-1 block w-full py-2 px-3 border-gray-200 bg-gray-100 rounded-md shadow-sm" placeholder="HH:MM"></div>
-                    </div>
-                </div>
-
-                <div class="pt-4 border-t">
-                    <h4 class="text-md font-semibold text-gray-800 mb-2">Initial Readings</h4>
-                    <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        <div><label for="cooking-ph-initial" class="block text-sm font-medium text-gray-700">Initial pH</label><input type="number" step="0.01" id="cooking-ph-initial" required class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm"></div>
-                        <div><label for="cooking-moisture-initial" class="block text-sm font-medium text-gray-700">Initial %M</label><input type="number" step="0.01" id="cooking-moisture-initial" required class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm"></div>
-                        <div><label for="cooking-ph-final" class="block text-sm font-medium text-gray-700">Final pH</label><input type="number" step="0.01" id="cooking-ph-final" required class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm"></div>
-                        <div><label for="cooking-temp-initial" class="block text-sm font-medium text-gray-700">Initial Temp (°C)</label><input type="number" step="0.01" id="cooking-temp-initial" required class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm"></div>
-                        <div><label for="cooking-pressure-initial" class="block text-sm font-medium text-gray-700">Initial Pressure (Bar)</label><input type="number" step="0.01" id="cooking-pressure-initial" required class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm"></div>
-                    </div>
-                </div>
-
-                <div class="pt-4 border-t">
-                    <div class="flex justify-between items-center mb-2">
-                        <h4 class="text-md font-semibold text-gray-800">Hourly Cooking Records</h4>
-                        <button type="button" id="add-hourly-record-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-1 px-3 rounded-lg text-sm">+ Add Record</button>
-                    </div>
-                    <div id="cooking-hourly-records-container" class="space-y-3">
-                        <!-- Hourly records will be injected here -->
-                    </div>
-                </div>
-                
-                <div class="pt-4 border-t">
-                    <label for="cooking-comments" class="block text-sm font-medium text-gray-700">Comments / Issues</label>
-                    <textarea id="cooking-comments" rows="3" class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm"></textarea>
-                </div>
-            `;
-            
-            const variantSelect = form.querySelector('#cooking-variant');
-            variantSelect.addEventListener('change', () => updateShitoCookingAesthetics(variantSelect.value));
-            
-            ['cooking-gog-start', 'cooking-gog-end'].forEach(id => {
-                form.querySelector(`#${id}`).addEventListener('input', () => {
-                    form.querySelector('#cooking-gog-total').value = formatTimeDiff(form.querySelector('#cooking-gog-start').value, form.querySelector('#cooking-gog-end').value);
-                });
-            });
-            ['cooking-cook-start', 'cooking-cook-end'].forEach(id => {
-                form.querySelector(`#${id}`).addEventListener('input', () => {
-                    form.querySelector('#cooking-cook-total').value = formatTimeDiff(form.querySelector('#cooking-cook-start').value, form.querySelector('#cooking-cook-end').value);
-                });
-            });
-
-            form.querySelector('#add-hourly-record-btn').addEventListener('click', addHourlyRecordRow);
-            updateShitoCookingAesthetics('');
-            document.getElementById('modal-shito-cooking').classList.remove('hidden', 'opacity-0', 'pointer-events-none');
-        }
-
-        function addHourlyRecordRow() {
-            const container = document.getElementById('cooking-hourly-records-container');
-            if (!container) return;
-            
-            const recordId = Date.now();
-            const div = document.createElement('div');
-            div.className = "grid grid-cols-1 md:grid-cols-5 gap-2 items-center p-2 bg-gray-50 rounded-md border";
-            div.dataset.recordId = recordId;
-            
-            div.innerHTML = `
-                <div><label class="block text-xs font-medium text-gray-600">Time</label><input type="time" data-field="time" required class="hourly-record-input mt-1 block w-full py-1 px-2 text-sm border-gray-300 rounded-md"></div>
-                <div><label class="block text-xs font-medium text-gray-600">Temp (°C)</label><input type="number" step="0.01" data-field="temp" required class="hourly-record-input mt-1 block w-full py-1 px-2 text-sm border-gray-300 rounded-md"></div>
-                <div><label class="block text-xs font-medium text-gray-600">Pressure (Bar)</label><input type="number" step="0.01" data-field="pressure" required class="hourly-record-input mt-1 block w-full py-1 px-2 text-sm border-gray-300 rounded-md"></div>
-                <div><label class="block text-xs font-medium text-gray-600">Moisture (%M)</label><input type="number" step="0.01" data-field="moisture" required class="hourly-record-input mt-1 block w-full py-1 px-2 text-sm border-gray-300 rounded-md"></div>
-                <button type="button" onclick="this.parentElement.remove()" class="bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-2 text-xs rounded-md mt-5">Remove</button>
-            `;
-            container.appendChild(div);
-        }
-        
-        function updateShitoCookingAesthetics(variant) {
-            const modalContent = document.getElementById('modal-shito-cooking-content');
-            const pageHeader = document.getElementById('header-shito-cooking');
-            const pageTableHead = document.getElementById('thead-shito-cooking');
-            const addBtn = document.getElementById('add-entry-btn-shito-cooking');
-            if (!modalContent || !pageHeader || !pageTableHead || !addBtn) return;
-            
-            const modalHeader = modalContent.querySelector('.p-5');
-            const modalTitle = modalHeader.querySelector('h2');
-            const modalSubmitBtn = modalContent.querySelector('button[type="submit"]');
-            const pageTitle = pageHeader.querySelector('h1');
-            const pageShift = pageHeader.querySelector('span');
-            const pageBackBtn = pageHeader.querySelector('button');
-            
-            const theme = {
-                MILD: {
-                    pageBorder: 'border-yellow-600', pageTitle: 'text-yellow-800', pageShiftBG: 'bg-yellow-100', pageShiftText: 'text-yellow-800',
-                    pageBack: 'text-yellow-700', addBtn: 'bg-yellow-600 hover:bg-yellow-700', tableHead: 'bg-yellow-50', tableHeadBorder: 'border-yellow-200', tableHeadText: 'text-yellow-900',
-                    modalBG: 'linear-gradient(to top right, #FFF8E1, #FFECB3)', modalHeaderBG: '#FFF3E0', modalHeaderText: '#E65100', modalSubmit: 'bg-yellow-600 hover:bg-yellow-700'
-                },
-                HOT: {
-                    pageBorder: 'border-red-700', pageTitle: 'text-red-800', pageShiftBG: 'bg-red-100', pageShiftText: 'text-red-800',
-                    pageBack: 'text-red-700', addBtn: 'bg-red-700 hover:bg-red-800', tableHead: 'bg-red-50', tableHeadBorder: 'border-red-200', tableHeadText: 'text-red-900',
-                    modalBG: 'linear-gradient(to top right, #FFEBEE, #EF9A9A)', modalHeaderBG: '#FFCDD2', modalHeaderText: '#B71C1C', modalSubmit: 'bg-red-700 hover:bg-red-800'
-                },
-                DEFAULT: {
-                    pageBorder: 'border-gray-700', pageTitle: 'text-gray-800', pageShiftBG: 'bg-gray-100', pageShiftText: 'text-gray-800',
-                    pageBack: 'text-gray-700', addBtn: 'bg-gray-700 hover:bg-gray-800', tableHead: 'bg-gray-50', tableHeadBorder: 'border-gray-200', tableHeadText: 'text-gray-900',
-                    modalBG: 'white', modalHeaderBG: '#F9FAFB', modalHeaderText: '#374151', modalSubmit: 'bg-gray-700 hover:bg-gray-800'
-                }
-            };
-            const s = theme[variant] || theme.DEFAULT;
-            
-            pageHeader.className = `bg-white shadow-lg rounded-xl p-4 mb-6 border-t-4 ${s.pageBorder} transition-all duration-500`;
-            pageTitle.className = `text-3xl font-bold ${s.pageTitle} transition-all duration-500`;
-            pageShift.className = `font-bold px-3 py-1 ${s.pageShiftBG} ${s.pageShiftText} rounded-full transition-all duration-500`;
-            pageBackBtn.className = `mt-2 text-sm ${s.pageBack} hover:underline transition-all duration-500`;
-            addBtn.className = `${s.addBtn} text-white font-bold py-2 px-5 rounded-lg shadow-md transition-transform transform hover:scale-105`;
-            pageTableHead.className = `${s.tableHead} transition-all duration-500`;
-            pageTableHead.querySelectorAll('th').forEach(th => th.className = `py-3 px-3 border-b-2 ${s.tableHeadBorder} text-left text-sm font-semibold ${s.tableHeadText}`);
-            modalContent.style.background = s.modalBG;
-            modalHeader.style.background = s.modalHeaderBG; modalHeader.style.color = s.modalHeaderText; modalTitle.style.color = s.modalHeaderText;
-            modalSubmitBtn.className = `${s.modalSubmit} text-white font-bold py-2 px-4 rounded-lg`;
-        }
-        
-        function handleShitoCookingFormSubmit(e) {
-            e.preventDefault();
-            const form = e.target;
-            const now = new Date(); const batchId = Date.now();
-            
-            const newLog = {
-                id: batchId,
-                date: now.toLocaleDateString('en-CA'),
-                timeSaved: now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
-                shift: currentShiftInfo.key,
-                batchId: form.querySelector('#cooking-batch-id').value,
-                variant: form.querySelector('#cooking-variant').value,
-                sku: form.querySelector('#cooking-sku').value,
-                cookingCycle: form.querySelector('#cooking-cycle').value,
-                bouleId: form.querySelector('#cooking-boule-id').value,
-                gogStart: form.querySelector('#cooking-gog-start').value,
-                gogEnd: form.querySelector('#cooking-gog-end').value,
-                gogTotal: form.querySelector('#cooking-gog-total').value,
-                batchSize: form.querySelector('#cooking-batch-size').value,
-                cookStart: form.querySelector('#cooking-cook-start').value,
-                cookEnd: form.querySelector('#cooking-cook-end').value,
-                cookTotal: form.querySelector('#cooking-cook-total').value,
-                phInitial: form.querySelector('#cooking-ph-initial').value,
-                phFinal: form.querySelector('#cooking-ph-final').value,
-                moistureInitial: form.querySelector('#cooking-moisture-initial').value,
-                tempInitial: form.querySelector('#cooking-temp-initial').value,
-                pressureInitial: form.querySelector('#cooking-pressure-initial').value,
-                comments: form.querySelector('#cooking-comments').value,
-                hourlyRecords: [],
-                syncStatus: 'syncing'
-            };
-            
-            const recordRows = form.querySelectorAll('#cooking-hourly-records-container > div');
-            recordRows.forEach(row => {
-                newLog.hourlyRecords.push({
-                    time: row.querySelector('[data-field="time"]').value,
-                    temp: row.querySelector('[data-field="temp"]').value,
-                    pressure: row.querySelector('[data-field="pressure"]').value,
-                    moisture: row.querySelector('[data-field="moisture"]').value
-                });
-            });
-            
-            const rowData = {
-                "Date": newLog.date, "Time Saved": newLog.timeSaved, "Shift": newLog.shift,
-                "Batch ID": newLog.batchId, "Variant": newLog.variant, "SKU": newLog.sku,
-                "Cooking Cycle": newLog.cookingCycle, "Boule ID": newLog.bouleId,
-                "Start of GOG Transfer": newLog.gogStart, "End of GOG Transfer": newLog.gogEnd, "Total GOG Time": newLog.gogTotal,
-                "Batch Size": newLog.batchSize,
-                "Cooking Start Time": newLog.cookStart, "Cooking End Time": newLog.cookEnd, "Total Cooking Time": newLog.cookTotal,
-                "Initial pH": newLog.phInitial, "Final pH": newLog.phFinal,
-                "Initial Moisture (%M)": newLog.moistureInitial,
-                "Initial Cooking Temp (°C)": newLog.tempInitial,
-                "Initial Cooking Pressure (Bar)": newLog.pressureInitial,
-                "Hourly Records (JSON)": JSON.stringify(newLog.hourlyRecords),
-                "Comments/Issues": newLog.comments
-            };
-            
-            savedShitoCookingLogs.push(newLog);
-            saveState();
-            renderShitoCookingTable();
-            document.getElementById('modal-shito-cooking').classList.add('hidden', 'opacity-0', 'pointer-events-none');
-            
-            submitDataToGoogle(GOOGLE_SCRIPT_URL_SHITO_COOKING, MODULE_PASSWORDS.shitoCooking, batchId, rowData, savedShitoCookingLogs, renderShitoCookingTable);
-        }
-        
-        function renderShitoCookingTable() {
-            const tableBody = document.getElementById('log-table-body-shito-cooking');
-            if (!tableBody) return;
-            
-            Object.values(chartInstances).forEach(chart => chart.destroy());
-            chartInstances = {};
-
-            tableBody.innerHTML = '';
-            if (savedShitoCookingLogs.length === 0) { tableBody.innerHTML = `<tr class="text-center no-data-row"><td colspan="6" class="py-10 text-gray-500">No data saved locally.</td></tr>`; return; }
-            
-            savedShitoCookingLogs.slice().reverse().forEach(log => {
-                const summaryRow = document.createElement('tr');
-                summaryRow.className = 'summary-row shito';
-                summaryRow.dataset.batchId = log.id;
-                let statusHtml;
-                if(log.syncStatus === 'syncing') statusHtml = '<div class="flex justify-center items-center"><div class="loader"></div></div>';
-                else if(log.syncStatus === 'success') statusHtml = '<span class="font-bold text-green-600">Synced</span>';
-                else if(log.syncStatus === 'error') statusHtml = '<span class="font-bold text-red-600">Failed</span>';
-                
-                let variantColor = log.variant === 'HOT' ? 'text-red-700' : 'text-yellow-700';
-                
-                summaryRow.innerHTML = `
-                    <td class="py-3 px-3 border-b border-gray-200 ${variantColor} font-bold expand-icon">+</td>
-                    <td class="py-3 px-3 border-b border-gray-200 font-semibold">${log.batchId}</td>
-                    <td class="py-3 px-3 border-b border-gray-200">${log.variant}</td>
-                    <td class="py-3 px-3 border-b border-gray-200">${log.bouleId}</td>
-                    <td class="py-3 px-3 border-b border-gray-200">${log.timeSaved}</td>
-                    <td class="py-3 px-3 border-b border-gray-200 text-center">${statusHtml}</td>
-                `;
-                
-                const detailsRow = document.createElement('tr');
-                detailsRow.className = 'details-row';
-                detailsRow.dataset.detailsFor = log.id;
-                
-                let hourlyTable = '';
-                log.hourlyRecords.forEach(r => {
-                    hourlyTable += `<tr class="border-t"><td class="px-2 py-1">${r.time}</td><td class="px-2 py-1">${r.temp}</td><td class="px-2 py-1">${r.pressure}</td><td class="px-2 py-1">${r.moisture}</td></tr>`;
-                });
-                if(log.hourlyRecords.length === 0) hourlyTable = '<tr><td colspan="4" class="px-2 py-1 text-gray-500">No hourly records added.</td></tr>';
-
-                const themeColor = log.variant === 'HOT' ? 'red' : 'yellow';
-                
-                detailsRow.innerHTML = `<td colspan="6" class="p-4 bg-${themeColor}-50/50"><div class="max-w-4xl mx-auto">
-                    <div class="flex flex-col sm:flex-row justify-between items-start mb-3">
-                        <div>
-                            <h4 class="font-bold mb-1 text-${themeColor}-900">Cooking Log Details:</h4>
-                            <table class="text-sm">
-                                <tr><td class="font-semibold pr-2">Batch ID:</td><td>${log.batchId}</td><td class="font-semibold pr-2 pl-4">SKU:</td><td>${log.sku}</td></tr>
-                                <tr><td class="font-semibold pr-2">Cycle:</td><td>${log.cookingCycle}</td><td class="font-semibold pr-2 pl-4">Boule:</td><td>${log.bouleId}</td></tr>
-                                <tr><td class="font-semibold pr-2">Batch Size:</td><td>${log.batchSize}</td><td class="font-semibold pr-2 pl-4">Variant:</td><td>${log.variant}</td></tr>
-                                <tr><td class="font-semibold pr-2">GOG Time:</td><td>${log.gogStart} to ${log.gogEnd} (${log.gogTotal})</td><td class="font-semibold pr-2 pl-4">Cooking Time:</td><td>${log.cookStart} to ${log.cookEnd} (${log.cookTotal})</td></tr>
-                                <tr><td class="font-semibold pr-2">Initial pH:</td><td>${log.phInitial}</td><td class="font-semibold pr-2 pl-4">Final pH:</td><td>${log.phFinal}</td></tr>
-                                <tr><td class="font-semibold pr-2">Initial %M:</td><td>${log.moistureInitial}</td><td class="font-semibold pr-2 pl-4">Initial Temp:</td><td>${log.tempInitial} °C</td></tr>
-                                <tr><td class="font-semibold pr-2">Initial Pressure:</td><td>${log.pressureInitial} Bar</td><td></td><td></td></tr>
-                            </table>
-                        </div>
-                        <div class="flex flex-col sm:flex-row gap-2 mt-2 sm:mt-0">
-                            <button data-action="export-png" data-batch-id="${log.id}" data-type="shito-cooking" class="export-btn bg-white hover:bg-gray-100 text-gray-700 text-sm font-bold py-1 px-3 border rounded-md">Export Image</button>
-                            <button data-action="export-pdf" data-batch-id="${log.id}" data-type="shito-cooking" class="export-btn bg-white hover:bg-gray-100 text-gray-700 text-sm font-bold py-1 px-3 border rounded-md">Export PDF</button>
-                        </div>
-                    </div>
-                    
-                    <h4 class="font-bold mt-3 mb-1 text-${themeColor}-900">Comments / Issues:</h4>
-                    <p class="text-sm p-2 bg-white rounded-md shadow-sm border">${log.comments || 'N/A'}</p>
-
-                    <h4 class="font-bold mt-3 mb-1 text-${themeColor}-900">Hourly Trends:</h4>
-                    <div class="p-2 bg-white rounded-md shadow-sm border">
-                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                            <div><canvas id="chart-temp-${log.id}"></canvas></div>
-                            <div><canvas id="chart-pressure-${log.id}"></canvas></div>
-                            <div><canvas id="chart-moisture-${log.id}"></canvas></div>
-                        </div>
-                    </div>
-
-                    <h4 class="font-bold mt-3 mb-1 text-${themeColor}-900">Hourly Records:</h4>
-                    <table class="min-w-full text-sm bg-white rounded-md shadow-sm">
-                        <thead class="bg-gray-100"><tr>
-                            <th class="px-2 py-1 text-left font-semibold">Time</th>
-                            <th class="px-2 py-1 text-left font-semibold">Temp (°C)</th>
-                            <th class="px-2 py-1 text-left font-semibold">Pressure (Bar)</th>
-                            <th class="px-2 py-1 text-left font-semibold">Moisture (%M)</th>
-                        </tr></thead>
-                        <tbody>${hourlyTable}</tbody>
-                    </table>
-                </div></td>`;
-                
-                tableBody.appendChild(summaryRow);
-                tableBody.appendChild(detailsRow);
-            });
-        }
-        
-        function createShitoCookingCharts(log) {
-            if (!log || !log.hourlyRecords || log.hourlyRecords.length === 0) return;
-
-            const labels = log.hourlyRecords.map(r => r.time);
-            const tempData = log.hourlyRecords.map(r => r.temp);
-            const pressureData = log.hourlyRecords.map(r => r.pressure);
-            const moistureData = log.hourlyRecords.map(r => r.moisture);
-
-            const chartOptions = (title, color) => ({
-                responsive: true,
-                plugins: { legend: { display: false }, title: { display: true, text: title } },
-                scales: { y: { beginAtZero: false } },
-                elements: { line: { tension: 0.1, borderColor: color, backgroundColor: `${color}33`, fill: true } }
-            });
-
-            ['temp', 'pressure', 'moisture'].forEach(type => {
-                if (chartInstances[`${type}-${log.id}`]) {
-                    chartInstances[`${type}-${log.id}`].destroy();
-                }
-            });
-
-            try {
-                const tempCtx = document.getElementById(`chart-temp-${log.id}`);
-                if (tempCtx) chartInstances[`temp-${log.id}`] = new Chart(tempCtx, { type: 'line', data: { labels, datasets: [{ data: tempData }] }, options: chartOptions('Temperature (°C)', '#F97316') });
-                
-                const pressureCtx = document.getElementById(`chart-pressure-${log.id}`);
-                if (pressureCtx) chartInstances[`pressure-${log.id}`] = new Chart(pressureCtx, { type: 'line', data: { labels, datasets: [{ data: pressureData }] }, options: chartOptions('Pressure (Bar)', '#3B82F6') });
-
-                const moistureCtx = document.getElementById(`chart-moisture-${log.id}`);
-                if (moistureCtx) chartInstances[`moisture-${log.id}`] = new Chart(moistureCtx, { type: 'line', data: { labels, datasets: [{ data: moistureData }] }, options: chartOptions('Moisture (%M)', '#10B981') });
-            } catch (e) {
-                console.error("Chart rendering failed:", e);
-            }
-        }
-
-        // --- 4. EXPORT FUNCTIONS (VERSION 14.3 - PDF FIX) ---
-        async function exportBatch(batchId, format, type, buttonEl) {
-            const batch = (type === 'slurry') ? savedSlurryBatches.find(b => b.id == batchId) :
-                          (type === 'shito-batch') ? savedShitoBatchLogs.find(b => b.id == batchId) :
-                          (type === 'shito-cooking') ? savedShitoCookingLogs.find(b => b.id == batchId) : null;
-            
-            if (!batch) return;
-
-            const originalText = buttonEl.textContent;
-            buttonEl.textContent = 'Generating...'; buttonEl.disabled = true;
-            const exportContainer = document.getElementById('export-container');
-            const card = document.createElement('div');
-            card.className = 'export-card';
-            
-            let cardHTML = '';
-            let filename = '';
-
-            // --- Card HTML Generation (Same as v14.2) ---
-            if (type === 'slurry') {
-                let ingredientsTable = '';
-                batch.ingredients.forEach(ing => { const details = ing.name.toLowerCase().includes('bulk paste') ? `Ratio: ${ing.ratio}, Qty: ${ing.qty} Kg` : `Qty: ${ing.qty} Kg`; ingredientsTable += `<tr style="border-top: 1px solid #eee;"><td style="padding: 4px;">${ing.name}</td><td style="padding: 4px;">${ing.batch}</td><td style="padding: 4px;">${details}</td></tr>`; });
-                cardHTML = `<div style="border-bottom: 2px solid #F97316; padding-bottom: 0.5rem; margin-bottom: 1rem;"><h2 style="font-size: 1.5rem; font-weight: 700; color: #7C2D12;">Slurry Summary: ${batch.slurryBatch}</h2><p style="color: #666;">${batch.productName} - ${batch.line}</p></div><table style="width: 100%; font-size: 0.9rem; margin-bottom: 1rem;"><tr><td><strong>Date:</strong> ${batch.date}</td><td><strong>Time:</strong> ${batch.timeSaved}</td></tr><tr><td><strong>Shift:</strong> ${currentShiftInfo.shift} (${batch.shift})</td><td><strong>Mix Time:</strong> ${batch.mixTime} mins</td></tr><tr><td><strong>Brix:</strong> ${batch.brix}</td><td><strong>Color (L/ab):</strong> ${batch.colorL} / ${batch.colorAB}</td></tr></table><h3 style="font-size: 1.1rem; font-weight: 600; color: #7C2D12; border-top: 1px solid #ddd; padding-top: 1rem;">Ingredients</h3><table style="width: 100%; font-size: 0.85rem; border-collapse: collapse;"><thead style="text-align: left; background-color: #f4f4f4;"><tr><th style="padding: 4px;">Ingredient</th><th style="padding: 4px;">Batch #</th><th style="padding: 4px;">Details</th></tr></thead><tbody>${ingredientsTable}</tbody></table>`;
-                filename = `Slurry_${batch.slurryBatch}_Summary`;
-            
-            } else if (type === 'shito-batch') {
-                let ingredientsTable = '';
-                batch.ingredients.forEach(ing => { ingredientsTable += `<tr style="border-top: 1px solid #eee;"><td style="padding: 4px;">${ing.name}</td><td style="padding: 4px;">${ing.batch}</td><td style="padding: 4px;">Qty: ${ing.qty} Kg</td></tr>`; });
-                cardHTML = `<div style="border-bottom: 2px solid #B71C1C; padding-bottom: 0.5rem; margin-bottom: 1rem;"><h2 style="font-size: 1.5rem; font-weight: 700; color: #B71C1C;">Shito Batch Summary: ${batch.batchNumber}</h2><p style="color: #666;">${batch.variant} - ${batch.sku}</p></div><table style="width: 100%; font-size: 0.9rem; margin-bottom: 1rem;"><tr><td><strong>Date:</strong> ${batch.date}</td><td><strong>Time:</strong> ${batch.timeSaved}</td></tr><tr><td><strong>Shift:</strong> ${currentShiftInfo.shift} (${batch.shift})</td><td><strong>Batch Size:</strong> ${batch.batchSize} Ton</td></tr></table><h3 style="font-size: 1.1rem; font-weight: 600; color: #B71C1C; border-top: 1px solid #ddd; padding-top: 1rem;">Ingredients</h3><table style="width: 100%; font-size: 0.85rem; border-collapse: collapse;"><thead style="text-align: left; background-color: #f4f4f4;"><tr><th style="padding: 4px;">Ingredient</th><th style="padding: 4px;">Batch #</th><th style="padding: 4px;">Details</th></tr></thead><tbody>${ingredientsTable}</tbody></table>`;
-                filename = `ShitoBatch_${batch.batchNumber}_Summary`;
-            
-            } else if (type === 'shito-cooking') {
-                let hourlyTable = '';
-                batch.hourlyRecords.forEach(r => { hourlyTable += `<tr style="border-top: 1px solid #eee;"><td style="padding: 4px;">${r.time}</td><td style="padding: 4px;">${r.temp}</td><td style="padding: 4px;">${r.pressure}</td><td style="padding: 4px;">${r.moisture}</td></tr>`; });
-                if(batch.hourlyRecords.length === 0) hourlyTable = '<tr><td colspan="4" style="padding: 4px; color: #888;">No hourly records added.</td></tr>';
-                const themeColor = batch.variant === 'HOT' ? '#B71C1C' : '#E65100';
-                
-                cardHTML = `<div style="border-bottom: 2px solid ${themeColor}; padding-bottom: 0.5rem; margin-bottom: 1rem;"><h2 style="font-size: 1.5rem; font-weight: 700; color: ${themeColor};">Shito Cooking Summary: ${batch.batchId}</h2><p style="color: #666;">${batch.variant} - ${batch.sku}</p></div>
-                    <table style="width: 100%; font-size: 0.9rem; margin-bottom: 1rem;">
-                        <tr><td><strong>Date:</strong> ${batch.date}</td><td><strong>Time:</strong> ${batch.timeSaved}</td></tr>
-                        <tr><td><strong>Shift:</strong> ${currentShiftInfo.shift} (${batch.shift})</td><td><strong>Cycle:</strong> ${batch.cookingCycle}</td></tr>
-                        <tr><td><strong>Boule:</strong> ${batch.bouleId}</td><td><strong>Batch Size:</strong> ${batch.batchSize}</td></tr>
-                        <tr><td><strong>GOG Time:</strong> ${batch.gogTotal}</td><td><strong>Cook Time:</strong> ${batch.cookTotal}</td></tr>
-                        <tr><td><strong>Initial pH:</strong> ${batch.phInitial}</td><td><strong>Final pH:</strong> ${batch.phFinal}</td></tr>
-                        <tr><td><strong>Initial %M:</strong> ${batch.moistureInitial}</td><td><strong>Initial Temp:</strong> ${batch.tempInitial} °C</td></tr>
-                    </table>
-                    <h3 style="font-size: 1.1rem; font-weight: 600; color: ${themeColor}; border-top: 1px solid #ddd; padding-top: 1rem;">Comments</h3>
-                    <p style="font-size: 0.85rem; padding: 8px; background-color: #f9f9f9; border-radius: 4px; border: 1px solid #eee; margin-bottom: 1rem;">${batch.comments || 'N/A'}</p>
-                    
-                    <h3 style="font-size: 1.1rem; font-weight: 600; color: ${themeColor};">Hourly Trends</h3>
-                    <div style="width: 550px; height: 250px; margin-top: 10px;"><canvas id="export-chart-temp-${batch.id}"></canvas></div>
-                    <div style="width: 550px; height: 250px; margin-top: 10px;"><canvas id="export-chart-pressure-${batch.id}"></canvas></div>
-                    <div style="width: 550px; height: 250px; margin-top: 10px;"><canvas id="export-chart-moisture-${batch.id}"></canvas></div>
-
-                    <h3 style="font-size: 1.1rem; font-weight: 600; color: ${themeColor}; margin-top: 1.5rem;">Hourly Records</h3>
-                    <table style="width: 100%; font-size: 0.85rem; border-collapse: collapse;">
-                        <thead style="text-align: left; background-color: #f4f4f4;"><tr><th style="padding: 4px;">Time</th><th style="padding: 4px;">Temp (°C)</th><th style="padding: 4px;">Pressure (Bar)</th><th style="padding: 4px;">Moisture (%M)</th></tr></thead>
-                        <tbody>${hourlyTable}</tbody>
-                    </table>`;
-                filename = `ShitoCooking_${batch.batchId}_Summary`;
-            }
-            
-            card.innerHTML = cardHTML;
-            exportContainer.appendChild(card);
-            
-            if (type === 'shito-cooking' && batch.hourlyRecords.length > 0) {
-                const labels = batch.hourlyRecords.map(r => r.time);
-                const chartOptions = (title, color) => ({
-                    responsive: true,
-                    maintainAspectRatio: false, 
-                    plugins: { legend: { display: false }, title: { display: true, text: title } },
-                    scales: { y: { beginAtZero: false } },
-                    elements: { line: { tension: 0.1, borderColor: color, backgroundColor: `${color}33`, fill: true } },
-                    animation: false 
-                });
-                
-                try {
-                    new Chart(document.getElementById(`export-chart-temp-${batch.id}`), { type: 'line', data: { labels, datasets: [{ data: batch.hourlyRecords.map(r => r.temp) }] }, options: chartOptions('Temperature (°C)', '#F97316') });
-                    new Chart(document.getElementById(`export-chart-pressure-${batch.id}`), { type: 'line', data: { labels, datasets: [{ data: batch.hourlyRecords.map(r => r.pressure) }] }, options: chartOptions('Pressure (Bar)', '#3B82F6') });
-                    new Chart(document.getElementById(`export-chart-moisture-${batch.id}`), { type: 'line', data: { labels, datasets: [{ data: batch.hourlyRecords.map(r => r.moisture) }] }, options: chartOptions('Moisture (%M)', '#10B981') });
-                } catch(e) { console.error("Export chart rendering failed:", e); }
-                
-                await new Promise(res => setTimeout(res, 500));
-            }
-
-            try {
-                const canvas = await html2canvas(card, { scale: 2 });
-                const imgData = canvas.toDataURL('image/png');
-
-                // --- *** NEW LOGIC (v14.3) *** ---
-                if (format === 'pdf') {
-                    // PDF LOGIC (for both mobile and desktop)
-                    const pdf = new jsPDF({ orientation: 'p', unit: 'px', format: [canvas.width, canvas.height] }); 
-                    pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-                    
-                    if (isMobile) {
-                        // On mobile, open the PDF in a new tab
-                        const pdfBlob = pdf.output('blob');
-                        const pdfUrl = URL.createObjectURL(pdfBlob);
-                        window.open(pdfUrl, '_blank');
-                    } else {
-                        // On desktop, save the file directly
-                        pdf.save(`${filename}.pdf`); 
-                    }
-
-                } else {
-                    // PNG LOGIC (format === 'png')
-                    if (isMobile) {
-                        // On mobile, show the image preview modal
-                        const previewModal = document.getElementById('export-preview-modal');
-                        const previewImage = document.getElementById('preview-image');
-                        previewImage.src = imgData;
-                        previewModal.classList.remove('hidden', 'opacity-0', 'pointer-events-none');
-                    } else {
-                        // On desktop, save the file directly
-                        const link = document.createElement('a'); 
-                        link.download = `${filename}.png`; 
-                        link.href = imgData; 
-                        link.click(); 
-                    }
-                }
-                // --- *** END OF NEW LOGIC *** ---
-
-            } catch(err) { console.error("Export failed:", err); showAlert("Export Failed", "Sorry, the summary could not be exported."); }
-            finally { exportContainer.innerHTML = ''; buttonEl.textContent = originalText; buttonEl.disabled = false; }
-        }
-        
-        // --- 5. EVENT LISTENERS ---
-        function setupEventListeners() {
-            // Slurry Listeners
-            document.getElementById('add-entry-btn-slurry').addEventListener('click', buildSlurryModal);
-            document.getElementById('form-slurry').addEventListener('submit', handleSlurryFormSubmit);
-            document.getElementById('log-table-body-slurry').addEventListener('click', (e) => {
-                const actionButton = e.target.closest('[data-action]');
-                if (actionButton) { exportBatch(actionButton.dataset.batchId, actionButton.dataset.action.split('-')[1], 'slurry', actionButton); return; }
-                const summaryRow = e.target.closest('.summary-row');
-                if (summaryRow) {
-                    const batchId = summaryRow.dataset.batchId; 
-                    const detailsRow = document.querySelector(`#page-slurry .details-row[data-details-for="${batchId}"]`);
-                    if (!detailsRow) return;
-                    summaryRow.classList.toggle('expanded');
-                    detailsRow.style.display = detailsRow.style.display === 'table-row' ? 'none' : 'table-row';
-                    const icon = summaryRow.querySelector('.expand-icon');
-                    if(icon) icon.textContent = summaryRow.classList.contains('expanded') ? '−' : '+';
-                }
-            });
-            
-            // Shito Batch Add Listeners
-            document.getElementById('add-entry-btn-shito-batch').addEventListener('click', buildShitoBatchModal);
-            document.getElementById('form-shito-batch-add').addEventListener('submit', handleShitoBatchFormSubmit);
-            document.getElementById('log-table-body-shito-batch').addEventListener('click', (e) => {
-                const actionButton = e.target.closest('[data-action]');
-                if (actionButton) { exportBatch(actionButton.dataset.batchId, actionButton.dataset.action.split('-')[1], 'shito-batch', actionButton); return; }
-                const summaryRow = e.target.closest('.summary-row');
-                if (summaryRow) {
-                    const batchId = summaryRow.dataset.batchId; 
-                    const detailsRow = document.querySelector(`#page-shito-batch-add .details-row[data-details-for="${batchId}"]`);
-                    if (!detailsRow) return;
-                    summaryRow.classList.toggle('expanded');
-                    detailsRow.style.display = detailsRow.style.display === 'table-row' ? 'none' : 'table-row';
-                    const icon = summaryRow.querySelector('.expand-icon');
-                    if(icon) icon.textContent = summaryRow.classList.contains('expanded') ? '−' : '+';
-                }
-            });
-
-            // Shito Cooking Log Listeners
-            document.getElementById('add-entry-btn-shito-cooking').addEventListener('click', buildShitoCookingModal);
-            document.getElementById('form-shito-cooking').addEventListener('submit', handleShitoCookingFormSubmit);
-            document.getElementById('log-table-body-shito-cooking').addEventListener('click', (e) => {
-                const actionButton = e.target.closest('[data-action]');
-                if (actionButton) { exportBatch(actionButton.dataset.batchId, actionButton.dataset.action.split('-')[1], 'shito-cooking', actionButton); return; }
-                const summaryRow = e.target.closest('.summary-row');
-                if (summaryRow) {
-                    const batchId = summaryRow.dataset.batchId; 
-                    const detailsRow = document.querySelector(`#page-shito-cooking .details-row[data-details-for="${batchId}"]`);
-                    if (!detailsRow) return;
-                    
-                    const isExpanding = !summaryRow.classList.contains('expanded');
-                    summaryRow.classList.toggle('expanded');
-                    detailsRow.style.display = isExpanding ? 'table-row' : 'none';
-                    const icon = summaryRow.querySelector('.expand-icon');
-                    if(icon) icon.textContent = isExpanding ? '−' : '+';
-
-                    if (isExpanding) {
-                        const log = savedShitoCookingLogs.find(l => l.id == batchId);
-                        createShitoCookingCharts(log);
-                    }
-                }
-            });
-
-            // Shared Modal Listeners
-            document.querySelectorAll('.cancel-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const modalId = btn.dataset.modal;
-                    if (modalId) {
-                        document.getElementById(modalId).classList.add('hidden', 'opacity-0', 'pointer-events-none');
-                    }
-                });
-            });
-            document.getElementById('close-preview-btn').addEventListener('click', () => { document.getElementById('export-preview-modal').classList.add('hidden', 'opacity-0', 'pointer-events-none'); document.getElementById('preview-image').src = ''; });
-            document.getElementById('alert-ok-btn').addEventListener('click', () => { document.getElementById('alert-modal').classList.add('hidden', 'opacity-0', 'pointer-events-none'); });
-        }
-        
-        // --- 6. INITIALIZE THE APP ---
-        function initializeApp() {
-            loadState(); // Load 24-hour persistent data
-            updateDateTime();
-            setInterval(updateDateTime, 60000);
-            setupEventListeners();
-            const iframe = document.createElement('iframe');
-            iframe.name = 'hidden-iframe';
-            iframe.style.display = 'none';
-            document.body.appendChild(iframe);
-            renderSlurryTable(); 
-            renderShitoBatchTable();
-            renderShitoCookingTable();
-            showPage('page-home');
-        }
-
-        initializeApp();
-    });
-    </script>
+    <script src="app.js"></script>
 </body>
 </html>
