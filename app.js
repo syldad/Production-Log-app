@@ -997,33 +997,27 @@ background-color: #f4f4f4;"><tr><th style="padding: 4px;">Time</th><th style="pa
                 const canvas = await html2canvas(card, { scale: 2 });
                 const imgData = canvas.toDataURL('image/png');
 
-                // --- *** NEW LOGIC (v14.3) *** ---
+                // --- *** PDF LOGIC (v14.3) *** ---
                 if (format === 'pdf') {
-                    // PDF LOGIC (for both mobile and desktop)
                     const pdf = new jsPDF({ orientation: 'p', unit: 'px', format: [canvas.width, canvas.height] });
                     pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
                     
                     if (isMobile) {
-                        // On mobile, open the PDF in a new tab
                         const pdfBlob = pdf.output('blob');
                         const pdfUrl = URL.createObjectURL(pdfBlob);
                         window.open(pdfUrl, '_blank');
                     } else {
-                        // On desktop, save the file directly
                         pdf.save(`${filename}.pdf`);
                     }
 
                 } else {
-                    // PNG LOGIC (format === 'png')
+                    // PNG LOGIC
                     if (isMobile) {
-                        // On mobile, show the image preview modal
-    
                         const previewModal = document.getElementById('export-preview-modal');
                         const previewImage = document.getElementById('preview-image');
                         previewImage.src = imgData;
                         previewModal.classList.remove('hidden', 'opacity-0', 'pointer-events-none');
                     } else {
-                        // On desktop, save the file directly
                         const link = document.createElement('a');
                         link.download = `${filename}.png`; 
                         link.href = imgData; 
@@ -1041,7 +1035,8 @@ background-color: #f4f4f4;"><tr><th style="padding: 4px;">Time</th><th style="pa
         // --- 5. EVENT LISTENERS ---
         function setupEventListeners() {
             
-            // === NEW NAVIGATION LISTENER FOR HOME PAGE BUTTONS ===
+            // === FIXED NAVIGATION LISTENER FOR HOME PAGE BUTTONS ===
+            // This targets the 'nav-button' class we added to the HTML
             document.querySelectorAll('.nav-button').forEach(button => {
                 button.addEventListener('click', (e) => {
                     const moduleType = e.currentTarget.dataset.module;
@@ -1050,11 +1045,9 @@ background-color: #f4f4f4;"><tr><th style="padding: 4px;">Time</th><th style="pa
                     }
                 });
             });
-            // =====================================================
+            // =======================================================
 
-            // Slurry Listeners
-            document.getElementById('add-entry-btn-slurry').addEventListener('click', buildSlurryModal);
-            // ... (rest of your existing event listeners) ...
+
             // Slurry Listeners
             document.getElementById('add-entry-btn-slurry').addEventListener('click', buildSlurryModal);
             document.getElementById('form-slurry').addEventListener('submit', handleSlurryFormSubmit);
@@ -1153,5 +1146,4 @@ background-color: #f4f4f4;"><tr><th style="padding: 4px;">Time</th><th style="pa
         }
 
         initializeApp();
-
     });
