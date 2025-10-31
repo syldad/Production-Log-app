@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Production Log v16 (Multi-Page)</title>
+    <title>Production Log v16.1 (Recursion Fixed)</title>
     
     <!-- PWA / Full-Screen Tags -->
     <link rel="manifest" href="manifest.json">
@@ -93,7 +93,6 @@
         #custom-alert.show .alert-box {
             transform: scale(1);
         }
-        /* Page container style from winner.txt */
         .page-content {
             display: none; /* All pages hidden by default */
         }
@@ -107,7 +106,7 @@
         <!-- Header - This is the main navigation -->
         <header class="mb-6">
             <div class="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
-                <h1 class="text-3xl font-bold text-orange-600">Production Log v16.0</h1>
+                <h1 class="text-3xl font-bold text-orange-600">Production Log v16.1</h1>
                 <div class="flex space-x-2">
                     <!-- These buttons now control the page navigation -->
                     <button id="btn-nav-home" class="btn btn-primary">Home</button>
@@ -144,6 +143,7 @@
 
             <!-- Page: Slurry Logs -->
             <div id="page-slurry-log" class="page-content">
+                <!-- Typo Fix: class_id="tab-slurry" -> id="tab-slurry" -->
                 <div id="tab-slurry" class="tab-content bg-white rounded-lg shadow-md overflow-x-auto">
                     <div class="p-4 flex flex-col sm:flex-row justify-between items-center space-y-2 sm:space-y-0">
                         <h2 class="text-xl font-semibold">Slurry Batch Records</h2>
@@ -528,7 +528,8 @@
     <!-- Firebase App (v11.6.1) -->
     <script type="module">
         // Import Firebase services
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        // RECURSION FIX: Alias the import to avoid name collision
+        import { initializeApp as initializeFirebaseApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { 
             getFirestore, collection, addDoc, getDocs, onSnapshot, 
@@ -542,6 +543,7 @@
           apiKey: "AIzaSyB2jsnwvaQIJvUPLIvdWx7yS4o0xU0QOis",
           authDomain: "production-log-16c82.firebaseapp.com",
           projectId: "production-log-16c82",
+          // FIX: Corrected to .appspot.com
           storageBucket: "production-log-16c82.appspot.com",
           messagingSenderId: "751331602949",
           appId: "1:751331602949:web:86843596e32483865aa26c",
@@ -578,7 +580,9 @@
                 page.style.display = 'block';
             } else {
                 console.error("Page not found:", pageId);
-                document.getElementById('page-home').style.display = 'block'; // Fallback
+                // Fallback to home page if specified page doesn't exist
+                const homePage = document.getElementById('page-home');
+                if (homePage) homePage.style.display = 'block';
             }
             
             // Special case for summary page
@@ -627,13 +631,859 @@
         }
 
         const showAlert = (title, message) => {
-            document.getElementById('alert-title').textContent = title;
-            document.getElementById('alert-message').textContent = message;
-            document.getElementById('custom-alert').classList.add('show');
+            const alertTitle = document.getElementById('alert-title');
+            const alertMessage = document.getElementById('alert-message');
+            const customAlert = document.getElementById('custom-alert');
+            
+            if(alertTitle) alertTitle.textContent = title;
+            if(alertMessage) alertMessage.textContent = message;
+            if(customAlert) customAlert.classList.add('show');
         }
 
         const addSlurryIngredient = (presetName = "") => {
             const list = document.getElementById('slurry-ingredients-list');
+            if (!list) return; // Safeguard
             const index = list.children.length;
             const row = document.createElement('div');
-            row.className = 'grid grid-cols-5 gap-2
+            row.className = 'grid grid-cols-5 gap-2 items-center';
+            row.innerHTML = `
+                <input type="text" name="ingredient[${index}][name]" class="form-input col-span-2" placeholder="Ingredient Name" value="${presetName}" required>
+                <input type="number" step="0.01" name="ingredient[${index}][qty]" class="form-input" placeholder="Qty (kg)" required>
+                <input type="text" name="ingredient[${index}][batch]" class="form-input" placeholder="Batch #">
+                <input type="text" name="ingredient[${index}][ratio]" class="form-input" placeholder="Ratio (e.g., 1:1)">
+                <button type="button" class="btn-remove-row btn btn-danger h-10 w-10 flex-shrink-0">X</button>
+            `;
+            row.querySelector('.btn-remove-row').addEventListener('click', (e) => {
+                e.target.closest('div.grid').remove();
+            });
+            list.appendChild(row);
+        }
+
+        const addShitoBatchIngredient = (presetName = "") => {
+            const list = document.getElementById('shito-batch-ingredients-list');
+            if (!list) return; // Safeguard
+            const index = list.children.length;
+            const row = document.createElement('div');
+            row.className = 'grid grid-cols-4 gap-2 items-center';
+            row.innerHTML = `
+                <input type="text" name="ingredient[${index}][name]" class="form-input col-span-2" placeholder="Ingredient Name" value="${presetName}" required>
+                <input type="number" step="0.01" name="ingredient[${index}][qty]" class="form-input" placeholder="Qty (kg)" required>
+                <input type="text" name="ingredient[${index}][batch]" class="form-input" placeholder="Batch #">
+                <button type="button" class="btn-remove-row btn btn-danger h-10 w-10 flex-shrink-0">X</button>
+            `;
+            row.querySelector('.btn-remove-row').addEventListener('click', (e) => {
+                e.target.closest('div.grid').remove();
+            });
+            list.appendChild(row);
+        }
+
+        const addHourlyRecord = () => {
+            const list = document.getElementById('hourly-records-list');
+            if (!list) return; // Safeguard
+            const index = list.children.length;
+            const row = document.createElement('div');
+            row.className = 'grid grid-cols-5 gap-2 items-center';
+            row.innerHTML = `
+                <input type="time" name="record[${index}][time]" class="form-input" required>
+                <input type="number" step="0.01" name="record[${index}][temp]" class="form-input" placeholder="Temp (°C)" required>
+                <input type="number" step="0.01" name="record[${index}][pressure]" class="form-input" placeholder="Pressure (Bar)">
+                <input type="number" step="0.01" name="record[${index}][moisture]" class="form-input" placeholder="Moisture (%)">
+                <button type="button" class="btn-remove-row btn btn-danger h-10 w-10 flex-shrink-0">X</button>
+            `;
+            row.querySelector('.btn-remove-row').addEventListener('click', (e) => {
+                e.target.closest('div.grid').remove();
+            });
+            list.appendChild(row);
+        }
+        
+        // =================================================================
+        // --- TABLE RENDERING & VIEW DETAILS ---
+        // =================================================================
+
+        const renderSlurryTable = (searchTerm = "") => {
+            const tableBody = document.getElementById('slurry-table-body');
+            if (!tableBody) return;
+            tableBody.innerHTML = '';
+            const lowerSearch = searchTerm.toLowerCase();
+
+            const filteredLogs = savedSlurryLogs.filter(log => {
+                return (log.slurryBatch && log.slurryBatch.toLowerCase().includes(lowerSearch)) ||
+                       (log.productName && log.productName.toLowerCase().includes(lowerSearch)) ||
+                       (log.line && log.line.toLowerCase().includes(lowerSearch)) ||
+                       (log.date && log.date.includes(lowerSearch));
+            });
+
+            if (filteredLogs.length === 0) {
+                tableBody.innerHTML = `<tr><td class="table-cell text-center" colspan="7">No matching slurry logs found.</td></tr>`;
+                return;
+            }
+
+            filteredLogs.forEach(log => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-orange-50 cursor-pointer';
+                tr.innerHTML = `
+                    <td class="table-cell">${log.date}</td>
+                    <td class="table-cell font-medium text-orange-700">${log.slurryBatch}</td>
+                    <td class="table-cell">${log.productName}</td>
+                    <td class="table-cell">${log.line}</td>
+                    <td class="table-cell">${log.brix || 'N/A'}</td>
+                    <td class="table-cell">${log.colorL || 'N/A'}</td>
+                    <td class="table-cell"><button class="btn btn-outline text-sm py-1 px-3">View</button></td>
+                `;
+                tr.addEventListener('click', () => viewLogDetails('slurry', log.id));
+                tableBody.appendChild(tr);
+            });
+        }
+
+        const renderShitoBatchTable = (searchTerm = "") => {
+            const tableBody = document.getElementById('shito-batch-table-body');
+            if (!tableBody) return;
+            tableBody.innerHTML = '';
+            const lowerSearch = searchTerm.toLowerCase();
+
+            const filteredLogs = savedShitoBatchLogs.filter(log => {
+                return (log.batchNumber && log.batchNumber.toLowerCase().includes(lowerSearch)) ||
+                       (log.variant && log.variant.toLowerCase().includes(lowerSearch)) ||
+                       (log.sku && log.sku.toLowerCase().includes(lowerSearch)) ||
+                       (log.date && log.date.includes(lowerSearch));
+            });
+
+            if (filteredLogs.length === 0) {
+                tableBody.innerHTML = `<tr><td class="table-cell text-center" colspan="6">No matching shito batch logs found.</td></tr>`;
+                return;
+            }
+
+            filteredLogs.forEach(log => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-orange-50 cursor-pointer';
+                tr.innerHTML = `
+                    <td class="table-cell">${log.date}</td>
+                    <td class="table-cell font-medium text-orange-700">${log.batchNumber}</td>
+                    <td class="table-cell">${log.variant}</td>
+                    <td class="table-cell">${log.sku}</td>
+                    <td class="table-cell">${log.batchSize || 'N/A'}</td>
+                    <td class="table-cell"><button class="btn btn-outline text-sm py-1 px-3">View</button></td>
+                `;
+                tr.addEventListener('click', () => viewLogDetails('shitoBatch', log.id));
+                tableBody.appendChild(tr);
+            });
+        }
+
+        const renderShitoCookingTable = (searchTerm = "") => {
+            const tableBody = document.getElementById('shito-cooking-table-body');
+            if (!tableBody) return;
+            tableBody.innerHTML = '';
+            const lowerSearch = searchTerm.toLowerCase();
+
+            const filteredLogs = savedShitoCookingLogs.filter(log => {
+                return (log.batchId && log.batchId.toLowerCase().includes(lowerSearch)) ||
+                       (log.cookingCycle && log.cookingCycle.toLowerCase().includes(lowerSearch)) ||
+                       (log.variant && log.variant.toLowerCase().includes(lowerSearch)) ||
+                       (log.sku && log.sku.toLowerCase().includes(lowerSearch)) ||
+                       (log.date && log.date.includes(lowerSearch));
+            });
+
+            if (filteredLogs.length === 0) {
+                tableBody.innerHTML = `<tr><td class="table-cell text-center" colspan="7">No matching shito cooking logs found.</td></tr>`;
+                return;
+            }
+
+            filteredLogs.forEach(log => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-orange-50 cursor-pointer';
+                tr.innerHTML = `
+                    <td class="table-cell">${log.date}</td>
+                    <td class="table-cell font-medium text-orange-700">${log.batchId}</td>
+                    <td class="table-cell">${log.variant}</td>
+                    <td class="table-cell">${log.sku}</td>
+                    <td class="table-cell">${log.cookingCycle}</td>
+                    <td class="table-cell">${log.cookTotal || 'N/A'}</td>
+                    <td class="table-cell"><button class="btn btn-outline text-sm py-1 px-3">View</button></td>
+                `;
+                tr.addEventListener('click', () => viewLogDetails('shitoCooking', log.id));
+                tableBody.appendChild(tr);
+            });
+        }
+        
+        const viewLogDetails = (logType, id) => {
+            let log, title;
+            let contentHtml = '';
+            let collectionName = '';
+
+            const detailRow = (label, value) => {
+                if (!value || value === 'N/A') return ''; 
+                return `<div class="grid grid-cols-3 gap-4">
+                            <span class="font-medium text-gray-600 col-span-1">${label}</span>
+                            <span class="text-gray-800 col-span-2">${value}</span>
+                        </div>`;
+            };
+
+            const buildTable = (headers, data) => {
+                if (!data || data.length === 0) return '<p>No records found.</p>';
+                let table = '<div class="overflow-x-auto rounded-lg border border-orange-200 mt-2"><table class="min-w-full divide-y divide-orange-200">';
+                table += '<thead class="bg-orange-50"><tr class="text-left">';
+                headers.forEach(h => table += `<th class="table-cell text-sm font-medium">${h}</th>`);
+                table += '</tr></thead><tbody class="bg-white divide-y divide-orange-100">';
+                
+                data.forEach(row => {
+                    table += '<tr>';
+                    headers.forEach(h => {
+                        const key = h.toLowerCase().replace(' #', '').replace(' (kg)', '').replace(' (°c)', '').replace(' (bar)', '').replace(' (%)', '');
+                        table += `<td class="table-cell text-sm">${row[key] || 'N/A'}</td>`;
+                    });
+                    table += '</tr>';
+                });
+                
+                table += '</tbody></table></div>';
+                return table;
+            };
+
+            if (logType === 'slurry') {
+                log = savedSlurryLogs.find(l => l.id === id);
+                if (!log) return;
+                title = `Slurry Batch: ${log.slurryBatch}`;
+                collectionName = 'slurryBatches';
+                contentHtml = `
+                    <div id="pdf-export-content" class="space-y-3">
+                        ${detailRow('Date', log.date)}
+                        ${detailRow('Time Saved', log.timeSaved)}
+                        ${detailRow('Shift', log.shift)}
+                        ${detailRow('Line', log.line)}
+                        ${detailRow('Product', log.productName)}
+                        <hr class="border-orange-100">
+                        ${detailRow('Mix Time', log.mixTime ? `${log.mixTime} mins` : 'N/A')}
+                        ${detailRow('Brix', log.brix)}
+                        ${detailRow('Color (L)', log.colorL)}
+                        ${detailRow('Color (a/b)', log.colorAB)}
+                        <hr class="border-orange-100">
+                        <h4 class="text-lg font-semibold text-orange-600 mt-2">Ingredients</h4>
+                        ${buildTable(['Name', 'Qty (kg)', 'Batch #', 'Ratio'], log.ingredients)}
+                    </div>
+                `;
+            } else if (logType === 'shitoBatch') {
+                log = savedShitoBatchLogs.find(l => l.id === id);
+                if (!log) return;
+                title = `Shito Batch: ${log.batchNumber}`;
+                collectionName = 'shitoBatchLogs';
+                contentHtml = `
+                    <div id="pdf-export-content" class="space-y-3">
+                        ${detailRow('Date', log.date)}
+                        ${detailRow('Time Saved', log.timeSaved)}
+                        ${detailRow('Shift', log.shift)}
+                        ${detailRow('Variant', log.variant)}
+                        ${detailRow('SKU', log.sku)}
+                        ${detailRow('Batch Size (T)', log.batchSize)}
+                        <hr class="border-orange-100">
+                        <h4 class="text-lg font-semibold text-orange-600 mt-2">Ingredients</h4>
+                        ${buildTable(['Name', 'Qty (kg)', 'Batch #'], log.ingredients)}
+                    </div>
+                `;
+            } else if (logType === 'shitoCooking') {
+                log = savedShitoCookingLogs.find(l => l.id === id);
+                if (!log) return;
+                title = `Shito Cooking: ${log.batchId}`;
+                collectionName = 'shitoCookingLogs';
+                contentHtml = `
+                    <div id="pdf-export-content" class="space-y-3">
+                        ${detailRow('Date', log.date)}
+                        ${detailRow('Time Saved', log.timeSaved)}
+                        ${detailRow('Shift', log.shift)}
+                        ${detailRow('Variant', log.variant)}
+                        ${detailRow('SKU', log.sku)}
+                        ${detailRow('Cooking Cycle', log.cookingCycle)}
+                        ${detailRow('Boule ID', log.bouleId)}
+                        ${detailRow('Batch Size (T)', log.batchSize)}
+                        <hr class="border-orange-100">
+                        <h4 class="text-md font-semibold text-orange-600">GOG</h4>
+                        ${detailRow('Start', log.gogStart)}
+                        ${detailRow('End', log.gogEnd)}
+                        ${detailRow('Total', log.gogTotal)}
+                        <h4 class="text-md font-semibold text-orange-600 mt-2">Cooking</h4>
+                        ${detailRow('Start', log.cookStart)}
+                        ${detailRow('End', log.cookEnd)}
+                        ${detailRow('Total', log.cookTotal)}
+                        <hr class="border-orange-100">
+                        <h4 class="text-md font-semibold text-orange-600 mt-2">Quality</h4>
+                        ${detailRow('Initial pH', log.phInitial)}
+                        ${detailRow('Final pH', log.phFinal)}
+                        ${detailRow('Initial Moisture', log.moistureInitial)}
+                        ${detailRow('Initial Temp', log.tempInitial)}
+                        ${detailRow('Initial Pressure', log.pressureInitial)}
+                        ${detailRow('Comments', log.comments)}
+                        <hr class="border-orange-100">
+                        <h4 class="text-lg font-semibold text-orange-600 mt-2">Hourly Records</h4>
+                        ${buildTable(['Time', 'Temp (°C)', 'Pressure (Bar)', 'Moisture (%)'], log.hourlyRecords)}
+                    </div>
+                `;
+            }
+
+            document.getElementById('view-log-title').textContent = title;
+            document.getElementById('view-log-content').innerHTML = contentHtml;
+            
+            // Re-bind delete button listener
+            const deleteBtn = document.getElementById('btn-delete-log');
+            const newDeleteBtn = deleteBtn.cloneNode(true); // Recreate to remove old listeners
+            deleteBtn.parentNode.replaceChild(newDeleteBtn, deleteBtn);
+            newDeleteBtn.addEventListener('click', async () => {
+                // Using built-in confirm for simplicity. 
+                if (confirm(`Are you sure you want to delete this log: ${title}? This cannot be undone.`)) {
+                    try {
+                        newDeleteBtn.textContent = "Deleting...";
+                        newDeleteBtn.disabled = true;
+                        await deleteDoc(doc(db, collectionName, id));
+                        showAlert("Deleted", "Log has been deleted.");
+                        closeModal('modal-view-log');
+                    } catch (error) {
+                        console.error("Delete failed:", error);
+                        showAlert("Error", "Could not delete log. " + error.message);
+                        newDeleteBtn.textContent = "Delete Log";
+                        newDeleteBtn.disabled = false;
+                    }
+                }
+            });
+
+            // Re-bind export button listener
+            const exportBtn = document.getElementById('btn-export-pdf');
+            const newExportBtn = exportBtn.cloneNode(true);
+            exportBtn.parentNode.replaceChild(newExportBtn, exportBtn);
+            newExportBtn.addEventListener('click', () => {
+                exportLogToPDF(title);
+            });
+
+            openModal('modal-view-log');
+        }
+        
+        async function exportLogToPDF(fileName) {
+            const content = document.getElementById('pdf-export-content');
+            if (!content) return;
+            
+            const exportBtn = document.getElementById('btn-export-pdf');
+            exportBtn.textContent = "Exporting...";
+            exportBtn.disabled = true;
+
+            try {
+                const canvas = await html2canvas(content, {
+                    scale: 2, 
+                    useCORS: true,
+                    backgroundColor: '#ffffff'
+                });
+                
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jsPDF({
+                    orientation: 'p',
+                    unit: 'mm',
+                    format: 'a4'
+                });
+
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = pdf.internal.pageSize.getHeight();
+                const imgWidth = canvas.width;
+                const imgHeight = canvas.height;
+                
+                const ratio = imgHeight / imgWidth;
+                let newImgWidth = pdfWidth - 20; 
+                let newImgHeight = newImgWidth * ratio;
+                
+                if (newImgHeight > pdfHeight - 20) {
+                    newImgHeight = pdfHeight - 20;
+                    newImgWidth = newImgHeight / ratio;
+                }
+                
+                const x = (pdfWidth - newImgWidth) / 2; 
+                const y = 10; 
+
+                pdf.addImage(imgData, 'PNG', x, y, newImgWidth, newImgHeight);
+                pdf.save(`${fileName.replace(/[\/:]/g, '-')}.pdf`);
+                
+            } catch (error) {
+                console.error("PDF Export Failed:", error);
+                showAlert("Export Failed", "Could not generate PDF. " + error.message);
+            } finally {
+                exportBtn.textContent = "Export as PDF";
+                exportBtn.disabled = false;
+            }
+        }
+
+        // =================================================================
+        // --- SUMMARY CHARTS ---
+        // =================================================================
+
+        function initSummaryCharts() {
+            const slurryCtx = document.getElementById('slurry-chart')?.getContext('2d');
+            if (!slurryCtx) return; // Safeguard
+            if (slurryChart) slurryChart.destroy();
+            
+            const slurryData = {
+                labels: [],
+                datasets: [{
+                    label: 'Average Brix',
+                    data: [],
+                    backgroundColor: 'rgba(249, 115, 22, 0.2)',
+                    borderColor: 'rgba(249, 115, 22, 1)',
+                    borderWidth: 1
+                }]
+            };
+            
+            const productBrix = {}; 
+            savedSlurryLogs.forEach(log => {
+                if (log.productName && log.brix) {
+                    if (!productBrix[log.productName]) {
+                        productBrix[log.productName] = [];
+                    }
+                    productBrix[log.productName].push(parseFloat(log.brix));
+                }
+            });
+            
+            for (const [product, brixValues] of Object.entries(productBrix)) {
+                slurryData.labels.push(product);
+                const avg = brixValues.reduce((a, b) => a + b, 0) / brixValues.length;
+                slurryData.datasets[0].data.push(avg.toFixed(2));
+            }
+
+            slurryChart = new Chart(slurryCtx, {
+                type: 'bar',
+                data: slurryData,
+                options: {
+                    scales: { y: { beginAtZero: false, title: { display: true, text: 'Average Brix' } } },
+                    responsive: true,
+                    plugins: { legend: { display: false }, title: { display: true, text: 'Average Brix by Product' } }
+                }
+            });
+            
+            const shitoCtx = document.getElementById('shito-chart')?.getContext('2d');
+            if (!shitoCtx) return; // Safeguard
+            if (shitoChart) shitoChart.destroy();
+            
+            const shitoData = {
+                labels: ['HOT', 'MILD'],
+                datasets: [{
+                    label: 'Batch Count',
+                    data: [0, 0],
+                    backgroundColor: ['rgba(220, 38, 38, 0.2)', 'rgba(5, 150, 105, 0.2)'],
+                    borderColor: ['rgba(220, 38, 38, 1)', 'rgba(5, 150, 105, 1)'],
+                    borderWidth: 1
+                }]
+            };
+            
+            savedShitoBatchLogs.forEach(log => {
+                if (log.variant === 'HOT') shitoData.datasets[0].data[0]++;
+                if (log.variant === 'MILD') shitoData.datasets[0].data[1]++;
+            });
+            
+            shitoChart = new Chart(shitoCtx, {
+                type: 'pie',
+                data: shitoData,
+                options: {
+                    responsive: true,
+                    plugins: { legend: { position: 'top' }, title: { display: true, text: 'Shito Batch Count by Variant' } }
+                }
+            });
+        }
+        
+        // =================================================================
+        // --- DATA PARSING & SAVING (From after.txt) ---
+        // =================================================================
+            
+        function getCurrentTime() {
+            return new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+        }
+
+        function parseDynamicFields(form, fieldPrefix) {
+            const data = new FormData(form);
+            const items = [];
+            const keys = new Set();
+            
+            data.forEach((value, key) => {
+                if (key.startsWith(fieldPrefix)) {
+                    keys.add(key);
+                }
+            });
+
+            const indices = new Set();
+            keys.forEach(key => {
+                const match = key.match(new RegExp(`^${fieldPrefix}\\[(\\d+)\\]`));
+                if (match && match[1]) {
+                    indices.add(parseInt(match[1], 10));
+                }
+            });
+
+            indices.forEach(index => {
+                const item = {};
+                const itemKeys = Array.from(keys).filter(k => k.startsWith(`${fieldPrefix}[${index}]`));
+                
+                itemKeys.forEach(key => {
+                    const propMatch = key.match(new RegExp(`\\[(.*?)\\]$`));
+                    if (propMatch && propMatch[1]) {
+                        const propName = propMatch[1];
+                        item[propName] = data.get(key) || null;
+                    }
+                });
+                
+                if (Object.keys(item).length > 0) {
+                    if ((item.name && item.qty) || (item.time && item.temp)) {
+                        items.push(item);
+                    }
+                }
+            });
+            return items;
+        }
+
+        const calculateTotalTime = (start, end) => {
+            if (!start || !end) return null;
+            try {
+                const startTime = new Date(`1970-01-01T${start}:00`);
+                const endTime = new Date(`1970-01-01T${end}:00`);
+                let diff = (endTime.getTime() - startTime.getTime()) / 60000; 
+                if (diff < 0) diff += 1440; 
+                const hours = Math.floor(diff / 60);
+                const minutes = Math.floor(diff % 60);
+                return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+            } catch {
+                return null;
+            }
+        };
+
+        // --- FORM SUBMIT HANDLERS (Dual Save Logic) ---
+        
+        async function handleSlurryFormSubmit(e) {
+            e.preventDefault();
+            const form = e.target;
+            const submitButton = document.getElementById('btn-save-slurry');
+            submitButton.textContent = 'Saving...';
+            submitButton.disabled = true;
+
+            try {
+                const formData = new FormData(form);
+                const newBatch = {
+                    logType: "slurry", 
+                    date: formData.get('date'),
+                    timeSaved: getCurrentTime(),
+                    shift: formData.get('shift'),
+                    line: formData.get('line'),
+                    productName: formData.get('productName'),
+                    slurryBatch: formData.get('slurryBatch'),
+                    mixTime: formData.get('mixTime') || null,
+                    brix: formData.get('brix') || null,
+                    colorL: formData.get('colorL') || null,
+                    colorAB: formData.get('colorAB') || null,
+                    ingredients: parseDynamicFields(form, 'ingredient'),
+                    createdAt: serverTimestamp() 
+                };
+
+                console.log("Saving new slurry batch:", newBatch);
+
+                const firestorePromise = addDoc(collection(db, "slurryBatches"), newBatch);
+
+                const sheetsPromise = fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'cors', 
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(newBatch),
+                }).then(response => {
+                    if (!response.ok) throw new Error(`Google Sheets status: ${response.status}`);
+                    return response.text();
+                }).then(text => {
+                    if (text !== 'success') throw new Error(`Google Sheets error: ${text}`);
+                    return text;
+                });
+
+                await Promise.all([firestorePromise, sheetsPromise]);
+
+                console.log("Successfully saved to both.");
+                showAlert("Success", "New slurry batch saved successfully.");
+                form.reset();
+                setFormDefaults(form); 
+                closeModal('modal-slurry');
+
+            } catch (error) {
+                console.error("Save Failed:", error);
+                showAlert("Save Failed", "Could not save data. Error: " + error.message);
+            } finally {
+                submitButton.textContent = 'Save Slurry Batch';
+                submitButton.disabled = false;
+            }
+        }
+
+        async function handleShitoBatchFormSubmit(e) {
+            e.preventDefault();
+            const form = e.target;
+            const submitButton = document.getElementById('btn-save-shito-batch');
+            submitButton.textContent = 'Saving...';
+            submitButton.disabled = true;
+
+            try {
+                const formData = new FormData(form);
+                const newBatch = {
+                    logType: "shitoBatch", 
+                    date: formData.get('date'),
+                    timeSaved: getCurrentTime(),
+                    shift: formData.get('shift'),
+                    batchNumber: formData.get('batchNumber'),
+                    variant: formData.get('variant'),
+                    sku: formData.get('sku'),
+                    batchSize: formData.get('batchSize') || null,
+                    ingredients: parseDynamicFields(form, 'ingredient'),
+                    createdAt: serverTimestamp() 
+                };
+
+                console.log("Saving new shito batch:", newBatch);
+                
+                const firestorePromise = addDoc(collection(db, "shitoBatchLogs"), newBatch);
+
+                const sheetsPromise = fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(newBatch),
+                }).then(response => response.text()).then(text => {
+                    if (text !== 'success') throw new Error(`Google Sheets script error: ${text}`);
+                });
+
+                await Promise.all([firestorePromise, sheetsPromise]);
+
+                console.log("Successfully saved to both.");
+                showAlert("Success", "New shito batch saved successfully.");
+                form.reset();
+                setFormDefaults(form); 
+                closeModal('modal-shito-batch');
+
+            } catch (error) {
+                console.error("Save Failed:", error);
+                showAlert("Save Failed", "Could not save data. Error: " + error.message);
+            } finally {
+                submitButton.textContent = 'Save Shito Batch';
+                submitButton.disabled = false;
+            }
+        }
+
+        async function handleShitoCookingFormSubmit(e) {
+            e.preventDefault();
+            const form = e.target;
+            const submitButton = document.getElementById('btn-save-shito-cooking');
+            submitButton.textContent = 'Saving...';
+            submitButton.disabled = true;
+
+            try {
+                const formData = new FormData(form);
+                
+                const gogStart = formData.get('gogStart') || null;
+                const gogEnd = formData.get('gogEnd') || null;
+                const cookStart = formData.get('cookStart') || null;
+                const cookEnd = formData.get('cookEnd') || null;
+
+                const newLog = {
+                    logType: "shitoCooking", 
+                    date: formData.get('date'),
+                    timeSaved: getCurrentTime(),
+                    shift: formData.get('shift'),
+                    batchId: formData.get('batchId'),
+                    variant: formData.get('variant'),
+                    sku: formData.get('sku'),
+                    cookingCycle: formData.get('cookingCycle'),
+                    bouleId: formData.get('bouleId') || null,
+                    gogStart: gogStart,
+                    gogEnd: gogEnd,
+                    gogTotal: calculateTotalTime(gogStart, gogEnd),
+                    batchSize: formData.get('batchSize') || null,
+                    cookStart: cookStart,
+                    cookEnd: cookEnd,
+                    cookTotal: calculateTotalTime(cookStart, cookEnd),
+                    phInitial: formData.get('phInitial') || null,
+                    phFinal: formData.get('phFinal') || null,
+                    moistureInitial: formData.get('moistureInitial') || null,
+                    tempInitial: formData.get('tempInitial') || null,
+                    pressureInitial: formData.get('pressureInitial') || null,
+                    comments: formData.get('comments') || null,
+                    hourlyRecords: parseDynamicFields(form, 'record'),
+                    createdAt: serverTimestamp() 
+                };
+
+                console.log("Saving new shito cooking log:", newLog);
+
+                const firestorePromise = addDoc(collection(db, "shitoCookingLogs"), newLog);
+
+                const sheetsPromise = fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(newLog),
+                }).then(response => response.text()).then(text => {
+                    if (text !== 'success') throw new Error(`Google Sheets script error: ${text}`);
+                });
+
+                await Promise.all([firestorePromise, sheetsPromise]);
+
+                console.log("Successfully saved to both.");
+                showAlert("Success", "New shito cooking log saved successfully.");
+                form.reset();
+                setFormDefaults(form); 
+                closeModal('modal-shito-cooking');
+
+            } catch (error) {
+                console.error("Save Failed:", error);
+                showAlert("Save Failed", "Could not save data. Error: " + error.message);
+            } finally {
+                submitButton.textContent = 'Save Cooking Log';
+                submitButton.disabled = false;
+            }
+        }
+
+        // =================================================================
+        // --- APP INITIALIZATION ---
+        // =================================================================
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            // RECURSION FIX: Renamed local function to avoid collision
+            function startApp() {
+                try {
+                    // RECURSION FIX: Call the aliased Firebase import
+                    app = initializeFirebaseApp(firebaseConfig);
+                    auth = getAuth(app);
+                    db = getFirestore(app);
+                    
+                    setLogLevel('debug'); 
+                    console.log("Firebase initialized.");
+
+                    signInAnonymously(auth)
+                        .then(() => {
+                            console.log("User signed in anonymously.", auth.currentUser?.uid);
+                            attachDataListeners(); // Start listening for data
+                        })
+                        .catch((error) => {
+                            console.error("Anonymous sign-in failed:", error);
+                            showAlert("Authentication Error", "Could not connect to the database.");
+                        });
+                    
+                    // This is the key fix:
+                    // We set up the buttons *immediately* after the page loads.
+                    setupEventListeners();
+                    setFormDefaults();
+                    showPage('page-home'); // Show the home page on start
+                    
+                } catch (error) {
+                    console.error("Error during app initialization:", error);
+                    showAlert("Fatal Error", "App could not be initialized. Please check console for errors.");
+                }
+            }
+
+            /**
+             * Attaches all click/input listeners for the app.
+             * This is the fix for the unresponsive buttons.
+             */
+            function setupEventListeners() {
+                console.log("Setting up event listeners...");
+                
+                // Page Navigation (from winner.txt architecture)
+                document.getElementById('btn-nav-home')?.addEventListener('click', () => showPage('page-home'));
+                document.getElementById('btn-nav-summary')?.addEventListener('click', () => showPage('page-summary'));
+                document.getElementById('btn-nav-slurry')?.addEventListener('click', () => showPage('page-slurry-log'));
+                document.getElementById('btn-nav-shito-batch')?.addEventListener('click', () => showPage('page-shito-batch-log'));
+                document.getElementById('btn-nav-shito-cooking')?.addEventListener('click', () => showPage('page-shito-cooking-log'));
+
+                // Open Modals (from home page)
+                document.getElementById('btn-open-slurry')?.addEventListener('click', () => openModal('modal-slurry'));
+                document.getElementById('btn-open-shito-batch')?.addEventListener('click', () => openModal('modal-shito-batch'));
+                document.getElementById('btn-open-shito-cooking')?.addEventListener('click', () => openModal('modal-shito-cooking'));
+
+                // Close Modals (Cancel buttons and backdrop clicks)
+                document.getElementById('btn-cancel-slurry')?.addEventListener('click', () => closeModal('modal-slurry'));
+                document.getElementById('modal-slurry-backdrop')?.addEventListener('click', () => closeModal('modal-slurry'));
+                
+                document.getElementById('btn-cancel-shito-batch')?.addEventListener('click', () => closeModal('modal-shito-batch'));
+                document.getElementById('modal-shito-batch-backdrop')?.addEventListener('click', () => closeModal('modal-shito-batch'));
+
+                document.getElementById('btn-cancel-shito-cooking')?.addEventListener('click', () => closeModal('modal-shito-cooking'));
+                document.getElementById('modal-shito-cooking-backdrop')?.addEventListener('click', () => closeModal('modal-shito-cooking'));
+                
+                document.getElementById('btn-close-view-log')?.addEventListener('click', () => closeModal('modal-view-log'));
+                document.getElementById('modal-view-log-backdrop')?.addEventListener('click', () => closeModal('modal-view-log'));
+
+                // Form "Add" buttons
+                document.getElementById('btn-add-slurry-ingredient')?.addEventListener('click', () => addSlurryIngredient());
+                document.getElementById('btn-add-shito-ingredient')?.addEventListener('click', () => addShitoBatchIngredient());
+                document.getElementById('btn-add-hourly-record')?.addEventListener('click', () => addHourlyRecord());
+
+                // Form submit handlers
+                document.getElementById('form-slurry')?.addEventListener('submit', handleSlurryFormSubmit);
+                document.getElementById('form-shito-batch')?.addEventListener('submit', handleShitoBatchFormSubmit);
+                document.getElementById('form-shito-cooking')?.addEventListener('submit', handleShitoCookingFormSubmit);
+
+                // Search/filter handlers
+                document.getElementById('search-slurry')?.addEventListener('input', (e) => renderSlurryTable(e.target.value));
+                document.getElementById('search-shito-batch')?.addEventListener('input', (e) => renderShitoBatchTable(e.target.value));
+                document.getElementById('search-shito-cooking')?.addEventListener('input', (e) => renderShitoCookingTable(e.target.value));
+
+                // Custom alert OK button
+                document.getElementById('alert-ok-btn')?.addEventListener('click', () => {
+                    document.getElementById('custom-alert').classList.remove('show');
+                });
+            }
+
+            /**
+             * Sets the default date on all forms to today.
+             */
+            function setFormDefaults(form) {
+                const today = new Date().toISOString().split('T')[0];
+                if (form) {
+                    // Set date only for the form that was just reset
+                    const dateInput = form.querySelector('input[name="date"]');
+                    if(dateInput) dateInput.value = today;
+                } else {
+                    // Set date for all forms on initial load
+                    document.querySelectorAll('input[name="date"]').forEach(input => input.value = today);
+                }
+            }
+
+            /**
+             * Attaches the real-time Firebase listeners.
+             */
+            function attachDataListeners() {
+                if (!db) {
+                    console.error("Firestore DB is not initialized. Cannot attach listeners.");
+                    return;
+                }
+                console.log("Attaching data listeners...");
+
+                const slurryQuery = query(collection(db, "slurryBatches"), orderBy("createdAt", "desc"));
+                onSnapshot(slurryQuery, (snapshot) => {
+                    savedSlurryLogs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    const searchInput = document.getElementById('search-slurry');
+                    renderSlurryTable(searchInput ? searchInput.value : "");
+                    console.log("Live Slurry Batches Updated:", savedSlurryLogs.length);
+                }, (error) => {
+                    console.error("Error listening to slurry batches:", error);
+                    showAlert("Connection Error", "Could not load slurry data.");
+                });
+
+                const shitoBatchQuery = query(collection(db, "shitoBatchLogs"), orderBy("createdAt", "desc"));
+                onSnapshot(shitoBatchQuery, (snapshot) => {
+                    savedShitoBatchLogs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    const searchInput = document.getElementById('search-shito-batch');
+                    renderShitoBatchTable(searchInput ? searchInput.value : "");
+                    console.log("Live Shito Batches Updated:", savedShitoBatchLogs.length);
+                }, (error) => {
+                    console.error("Error listening to shito batches:", error);
+                    showAlert("Connection Error", "Could not load shito batch data.");
+                });
+
+                const shitoCookingQuery = query(collection(db, "shitoCookingLogs"), orderBy("createdAt", "desc"));
+                onSnapshot(shitoCookingQuery, (snapshot) => {
+                    savedShitoCookingLogs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    const searchInput = document.getElementById('search-shito-cooking');
+                    renderShitoCookingTable(searchInput ? searchInput.value : "");
+                    console.log("Live Shito Cooking Logs Updated:", savedShitoCookingLogs.length);
+                }, (error) => {
+                    console.error("Error listening to shito cooking logs:", error);
+                    showAlert("Connection Error", "Could not load shito cooking data.");
+                });
+            }
+
+            // --- START THE APP ---
+            // RECURSION FIX: Call the renamed local function
+            startApp();
+        });
+    </script>
+</body>
+</html>
+
