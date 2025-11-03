@@ -5,19 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Production Log v14.4</title>
     
-    <!-- PWA / Full-Screen Tags -->
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#F97316">
     <link rel="apple-touch-icon" href="icon-192.png">
 
-    <!-- Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #FFF8F0; }
@@ -41,7 +42,6 @@
 </head>
 <body class="text-gray-800">
 
-    <!-- === HOME PAGE === -->
     <div id="page-home" class="page container mx-auto p-4 max-w-xl text-center" style="display: block;">
         <header class="bg-white shadow-lg rounded-xl p-6 mb-8 border-t-4 border-orange-500">
             <h1 class="text-3xl font-bold text-orange-800">Production Log</h1>
@@ -57,7 +57,6 @@
         </div>
     </div>
 
-    <!-- === SHITO SUB-MENU PAGE === -->
     <div id="page-shito-menu" class="page container mx-auto p-4 max-w-xl text-center">
         <header class="bg-white shadow-lg rounded-xl p-6 mb-8 border-t-4 border-red-700">
             <div class="flex justify-between items-center mb-4">
@@ -76,7 +75,6 @@
         </div>
     </div>
 
-    <!-- === SLURRY PAGE === -->
     <div id="page-slurry" class="page container mx-auto p-4 max-w-7xl">
         <header class="bg-white shadow-lg rounded-xl p-4 mb-6 border-t-4 border-orange-500">
              <div class="flex flex-col sm:flex-row justify-between items-center">
@@ -114,7 +112,6 @@
         </main>
     </div>
     
-    <!-- === SHITO BATCH ADDITION PAGE === -->
     <div id="page-shito-batch-add" class="page container mx-auto p-4 max-w-7xl">
          <header class="bg-white shadow-lg rounded-xl p-4 mb-6 border-t-4 border-red-700">
              <div class="flex flex-col sm:flex-row justify-between items-center">
@@ -152,7 +149,6 @@
         </main>
     </div>
 
-    <!-- === SHITO COOKING CONTROL PAGE === -->
     <div id="page-shito-cooking" class="page container mx-auto p-4 max-w-7xl">
          <header id="header-shito-cooking" class="bg-white shadow-lg rounded-xl p-4 mb-6 border-t-4 border-gray-700 transition-all duration-500">
              <div class="flex flex-col sm:flex-row justify-between items-center">
@@ -190,8 +186,6 @@
         </main>
     </div>
 
-    <!-- === MODALS === -->
-    <!-- Slurry Entry Modal -->
     <div id="modal-slurry" class="modal fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 hidden pointer-events-none opacity-0">
         <div class="bg-white rounded-lg shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
             <div class="p-5 border-b bg-orange-50"><h2 class="text-xl font-bold text-orange-800">New Slurry Batch Entry</h2></div>
@@ -203,7 +197,6 @@
         </div>
     </div>
     
-    <!-- Shito Batch Entry Modal -->
     <div id="modal-shito-batch-add" class="modal fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 hidden pointer-events-none opacity-0">
         <div id="modal-shito-batch-add-content" class="bg-white rounded-lg shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col transition-all duration-500">
             <div class="p-5 border-b"><h2 class="text-xl font-bold">New Shito Batch Entry</h2></div>
@@ -215,7 +208,6 @@
         </div>
     </div>
     
-    <!-- Shito Cooking Control Modal -->
     <div id="modal-shito-cooking" class="modal fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 hidden pointer-events-none opacity-0">
         <div id="modal-shito-cooking-content" class="bg-white rounded-lg shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col transition-all duration-500">
             <div class="p-5 border-b"><h2 class="text-xl font-bold">New Shito Cooking Log</h2></div>
@@ -227,14 +219,12 @@
         </div>
     </div>
 
-    <!-- Export Preview Modal (Shared) -->
     <div id="export-preview-modal" class="modal fixed inset-0 bg-black bg-opacity-70 flex flex-col items-center justify-center p-4 hidden pointer-events-none opacity-0">
         <p class="text-white text-lg mb-4">Long-press the image to save</p>
         <img id="preview-image" src="" alt="Batch Summary Preview" />
         <button id="close-preview-btn" class="mt-6 bg-white text-black font-bold py-2 px-6 rounded-lg">Close</button>
     </div>
 
-    <!-- Alert Modal -->
     <div id="alert-modal" class="modal fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 hidden pointer-events-none opacity-0">
         <div class="bg-white rounded-lg shadow-2xl w-full max-w-sm overflow-hidden flex flex-col">
             <div class="p-5 border-b"><h2 id="alert-title" class="text-xl font-bold text-gray-800">Alert</h2></div>
@@ -245,18 +235,29 @@
         </div>
     </div>
     
-    <!-- Hidden container for generating exports -->
     <div id="export-container" class="fixed top-0 left-0 -z-10 opacity-0 pointer-events-none"></div>
     
-    <!-- Datalist for batch number suggestions -->
     <datalist id="batch-suggestions"></datalist>
 
-    <!-- === COMPLETE JAVASCRIPT === -->
     <script>
     const { jsPDF } = window.jspdf;
 
     document.addEventListener('DOMContentLoaded', () => {
         // --- 1. CONFIGURATION & STATE ---
+        
+        // === FIREBASE CONFIG ===
+        const firebaseConfig = {
+          apiKey: "AIzaSyC8rXcbcFuWQKVJcCqnUgN2fssQEwpEtwg",
+          authDomain: "process-monitoring-c569e.firebaseapp.com",
+          databaseURL: "https://process-monitoring-c569e-default-rtdb.firebaseio.com",
+          projectId: "process-monitoring-c569e",
+          storageBucket: "process-monitoring-c569e.firebasestorage.app",
+          messagingSenderId: "747507348877",
+          appId: "1:747507348877:web:d653d33908c9ea179039c4",
+          measurementId: "G-YP9P5FZJR9"
+        };
+        // === END OF FIREBASE CONFIG ===
+
         const GOOGLE_SCRIPT_URL_SLURRY = 'https://script.google.com/macros/s/AKfycbwEz9bz3P2Z5fSYgmQcvuv2j4fDCErygGSBzzpZThmN20iOQWbJInE86aXgohOfg3f1hA/exec';
         const GOOGLE_SCRIPT_URL_SHITO_BATCH = 'https://script.google.com/macros/s/AKfycbw-ZHeruo5GEdjn96iTCb1Gj8p-SPNRUtSx2LU-HKUxDzUiioJLEcM0HWjBc7rEvsGm/exec'; 
         const GOOGLE_SCRIPT_URL_SHITO_COOKING = 'https://script.google.com/macros/s/AKfycbykcdMJFjbB3uL05BVqwumwQg-yZ6eubPw5kQqIHjEuG2pgu5xZXenC2RuxIZeJaf6nOw/exec';
@@ -266,6 +267,9 @@
             shitoMenu: "DIDI",
             shitoCooking: "DIDI shito"
         };
+        
+        // === NEW FIREBASE DATABASE VARIABLE ===
+        let db; 
         
         let currentShiftInfo = {};
         let savedSlurryBatches = [];
@@ -302,6 +306,102 @@
         };
 
         // --- 2. CORE FUNCTIONS ---
+        
+        // === NEW FIREBASE FUNCTION TO PUSH DATA ===
+        const pushToFirebase = (path, data) => {
+            if (!db) {
+                console.error("Firebase DB not initialized.");
+                return;
+            }
+            try {
+                // Use the batch's unique ID as the key
+                db.ref(path + '/' + data.id).set(data);
+            } catch (error) {
+                console.error("Firebase push failed:", error);
+                showAlert("Live Sync Error", "Could not send live update. Data is still saved locally.");
+            }
+        };
+
+        // === NEW FIREBASE FUNCTION TO LISTEN FOR DATA ===
+        const initializeFirebaseListeners = () => {
+            try {
+                firebase.initializeApp(firebaseConfig);
+                db = firebase.database();
+            } catch (e) {
+                console.error("Firebase init failed:", e);
+                showAlert("Connection Error", "Could not connect to the live sync service.");
+                return;
+            }
+
+            // --- Listener for Slurry Batches (added) ---
+            db.ref('slurry').on('child_added', (snapshot) => {
+                const newBatch = snapshot.val();
+                if (newBatch && !savedSlurryBatches.find(b => b.id === newBatch.id)) {
+                    console.log("Live update: New Slurry batch received.");
+                    savedSlurryBatches.push(newBatch);
+                    saveState();
+                    renderSlurryTable();
+                }
+            });
+
+            // --- Listener for Slurry Batches (changed) ---
+            db.ref('slurry').on('child_changed', (snapshot) => {
+                const updatedBatch = snapshot.val();
+                const localBatch = savedSlurryBatches.find(b => b.id === updatedBatch.id);
+                if (localBatch && localBatch.syncStatus !== updatedBatch.syncStatus) {
+                    console.log(`Live update: Slurry ${localBatch.id} status changed.`);
+                    localBatch.syncStatus = updatedBatch.syncStatus;
+                    renderSlurryTable();
+                    saveState();
+                }
+            });
+
+            // --- Listener for Shito Batches (added) ---
+            db.ref('shito-batch').on('child_added', (snapshot) => {
+                const newBatch = snapshot.val();
+                if (newBatch && !savedShitoBatchLogs.find(b => b.id === newBatch.id)) {
+                    console.log("Live update: New Shito batch received.");
+                    savedShitoBatchLogs.push(newBatch);
+                    saveState();
+                    renderShitoBatchTable();
+                }
+            });
+
+            // --- Listener for Shito Batches (changed) ---
+            db.ref('shito-batch').on('child_changed', (snapshot) => {
+                const updatedBatch = snapshot.val();
+                const localBatch = savedShitoBatchLogs.find(b => b.id === updatedBatch.id);
+                if (localBatch && localBatch.syncStatus !== updatedBatch.syncStatus) {
+                    console.log(`Live update: Shito Batch ${localBatch.id} status changed.`);
+                    localBatch.syncStatus = updatedBatch.syncStatus;
+                    renderShitoBatchTable();
+                    saveState();
+                }
+            });
+
+            // --- Listener for Shito Cooking Logs (added) ---
+            db.ref('shito-cooking').on('child_added', (snapshot) => {
+                const newLog = snapshot.val();
+                if (newLog && !savedShitoCookingLogs.find(l => l.id === newLog.id)) {
+                    console.log("Live update: New Cooking log received.");
+                    savedShitoCookingLogs.push(newLog);
+                    saveState();
+                    renderShitoCookingTable();
+                }
+            });
+
+            // --- Listener for Shito Cooking Logs (changed) ---
+            db.ref('shito-cooking').on('child_changed', (snapshot) => {
+                const updatedLog = snapshot.val();
+                const localLog = savedShitoCookingLogs.find(l => l.id === updatedLog.id);
+                if (localLog && localLog.syncStatus !== updatedLog.syncStatus) {
+                    console.log(`Live update: Shito Cooking ${localLog.id} status changed.`);
+                    localLog.syncStatus = updatedLog.syncStatus;
+                    renderShitoCookingTable();
+                    saveState();
+                }
+            });
+        };
         
         // --- Page Navigation & Access Control ---
         window.showPage = (pageId) => {
@@ -433,8 +533,8 @@
             input.addEventListener('change', (e) => updateBatchSuggestions(e.target.value));
         };
 
-        // --- Generic Form Submission Function ---
-        const submitDataToGoogle = (url, password, batchId, batchData, localCache, tableRenderer) => {
+        // --- MODIFIED Generic Form Submission Function (with Firebase Status Update) ---
+        const submitDataToGoogle = (url, password, batchId, batchData, localCache, tableRenderer, fbPath) => {
             const iframe = document.getElementsByName('hidden-iframe')[0];
             if (!iframe) { console.error("Submission iframe not found!"); return; }
 
@@ -460,6 +560,11 @@
                     batchToUpdate.syncStatus = status;
                     tableRenderer();
                     saveState();
+                    // === UPDATE FIREBASE STATUS ===
+                    if (db && fbPath) {
+                        db.ref(fbPath + '/' + batchId).update({ syncStatus: status });
+                    }
+                    // === END OF FIREBASE UPDATE ===
                 }
                 if (document.body.contains(hiddenForm)) {
                     document.body.removeChild(hiddenForm);
@@ -552,6 +657,9 @@
                 if (!name.toLowerCase().includes('water')) { updateBatchSuggestions(batch); }
             });
             
+            // === PUSH TO FIREBASE ===
+            pushToFirebase('slurry', newBatch);
+
             savedSlurryBatches.push(newBatch);
             saveState();
             renderSlurryTable();
@@ -560,7 +668,8 @@
             const rowData = { "Date": newBatch.date, "Time Saved": newBatch.timeSaved, "Shift": newBatch.shift, "Line": newBatch.line, "Product": newBatch.productName, "Slurry Batch #": newBatch.slurryBatch, "Mix Time": newBatch.mixTime, "Brix": newBatch.brix, "Color (L)": newBatch.colorL, "Color (a/b)": newBatch.colorAB };
             newBatch.ingredients.forEach(ing => { rowData[ing.name] = ing.name.toLowerCase().includes('bulk paste') ? `Batch: ${ing.batch}, Ratio: ${ing.ratio}, Qty: ${ing.qty} Kg` : (ing.name.toLowerCase() === 'water' ? ing.qty : ing.batch); });
 
-            submitDataToGoogle(GOOGLE_SCRIPT_URL_SLURRY, MODULE_PASSWORDS.slurry, batchId, rowData, savedSlurryBatches, renderSlurryTable);
+            // === MODIFIED SUBMIT CALL (added fbPath) ===
+            submitDataToGoogle(GOOGLE_SCRIPT_URL_SLURRY, MODULE_PASSWORDS.slurry, batchId, rowData, savedSlurryBatches, renderSlurryTable, 'slurry');
         }
 
         function renderSlurryTable() {
@@ -569,7 +678,9 @@
             tableBody.innerHTML = '';
             if (savedSlurryBatches.length === 0) { tableBody.innerHTML = `<tr class="text-center no-data-row"><td colspan="6" class="py-10 text-gray-500">No data saved locally.</td></tr>`; return; }
             
-            savedSlurryBatches.slice().reverse().forEach(batch => {
+            savedSlurryBatches.sort((a, b) => b.id - a.id); // Sort by new entries first
+            
+            savedSlurryBatches.forEach(batch => {
                 const summaryRow = document.createElement('tr'); summaryRow.className = 'summary-row'; summaryRow.dataset.batchId = batch.id;
                 let statusHtml;
                 if(batch.syncStatus === 'syncing') statusHtml = '<div class="flex justify-center items-center"><div class="loader"></div></div>';
@@ -601,7 +712,6 @@
                     <div><label for="shito-batch-variant" class="block text-sm font-medium text-gray-700">Variant</label><select id="shito-batch-variant" required class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm"><option value="">-- Select Variant --</option><option value="MILD">MILD</option><option value="HOT">HOT</option></select></div>
                     <div><label for="shito-batch-size" class="block text-sm font-medium text-gray-700">Batch Size</label><select id="shito-batch-size" required class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm"><option value="1">1 Ton</option><option value="1.5">1.5 Ton</Coption></select></div>
                 </div>
-                <!-- === NEW MIXING FIELDS START === -->
                 <div class="pt-4 border-t">
                     <h4 class="text-md font-semibold text-gray-800 mb-2">Mixing Times</h4>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -610,7 +720,6 @@
                         <div><label for="shito-batch-mix-total" class="block text-sm font-medium text-gray-700">Total Time (min)</label><input type="text" id="shito-batch-mix-total" readonly class="mt-1 block w-full py-2 px-3 border-gray-200 bg-gray-100 rounded-md shadow-sm" placeholder="Auto"></div>
                     </div>
                 </div>
-                <!-- === NEW MIXING FIELDS END === -->
                 <div id="shito-batch-ingredients-container" class="pt-4 border-t space-y-3"><p class="text-gray-500 text-sm">Select a variant to see ingredients.</p></div>
             `;
             
@@ -740,12 +849,16 @@
                 updateBatchSuggestions(batch);
             });
             
+            // === PUSH TO FIREBASE ===
+            pushToFirebase('shito-batch', newBatch);
+
             savedShitoBatchLogs.push(newBatch);
             saveState();
             renderShitoBatchTable();
             document.getElementById('modal-shito-batch-add').classList.add('hidden', 'opacity-0', 'pointer-events-none');
             
-            submitDataToGoogle(GOOGLE_SCRIPT_URL_SHITO_BATCH, MODULE_PASSWORDS.shitoMenu, batchId, rowData, savedShitoBatchLogs, renderShitoBatchTable);
+            // === MODIFIED SUBMIT CALL (added fbPath) ===
+            submitDataToGoogle(GOOGLE_SCRIPT_URL_SHITO_BATCH, MODULE_PASSWORDS.shitoMenu, batchId, rowData, savedShitoBatchLogs, renderShitoBatchTable, 'shito-batch');
         }
         
         function renderShitoBatchTable() {
@@ -754,7 +867,9 @@
             tableBody.innerHTML = '';
             if (savedShitoBatchLogs.length === 0) { tableBody.innerHTML = `<tr class="text-center no-data-row"><td colspan="6" class="py-10 text-gray-500">No data saved locally.</td></tr>`; return; }
             
-            savedShitoBatchLogs.slice().reverse().forEach(batch => {
+            savedShitoBatchLogs.sort((a, b) => b.id - a.id); // Sort by new entries first
+
+            savedShitoBatchLogs.forEach(batch => {
                 const summaryRow = document.createElement('tr');
                 summaryRow.className = 'summary-row shito';
                 summaryRow.dataset.batchId = batch.id;
@@ -785,14 +900,12 @@
                     <div class="flex flex-col sm:flex-row justify-between items-start mb-3">
                         <div>
                             <h4 class="font-bold mb-1 text-red-900">Batch Details:</h4>
-                            <!-- === UPDATED DETAILS TABLE START === -->
                             <table class="text-sm">
                                 <tr><td class="font-semibold pr-2">Batch Size:</td><td>${batch.batchSize} Ton</td><td class="font-semibold pr-2 pl-4">SKU:</td><td>${batch.sku}</td></tr>
                                 <tr><td class="font-semibold pr-2">Mix Start:</td><td>${batch.startMixing || 'N/A'}</td><td class="font-semibold pr-2 pl-4">Mix End:</td><td>${batch.endMixing || 'N/A'}</td></tr>
                                 <tr><td class="font-semibold pr-2">Total Mix:</td><td>${batch.totalMixing || 'N/A'} min</td><td></td><td></td></tr>
                             </table>
-                            <!-- === UPDATED DETAILS TABLE END === -->
-                        </div>
+                            </div>
                         <div class="flex flex-col sm:flex-row gap-2 mt-2 sm:mt-0">
                             <button data-action="export-png" data-batch-id="${batch.id}" data-type="shito-batch" class="export-btn bg-white hover:bg-gray-100 text-gray-700 text-sm font-bold py-1 px-3 border rounded-md">Export Image</button>
                             <button data-action="export-pdf" data-batch-id="${batch.id}" data-type="shito-batch" class="export-btn bg-white hover:bg-gray-100 text-gray-700 text-sm font-bold py-1 px-3 border rounded-md">Export PDF</button>
@@ -864,8 +977,7 @@
                         <button type="button" id="add-hourly-record-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-1 px-3 rounded-lg text-sm">+ Add Record</button>
                     </div>
                     <div id="cooking-hourly-records-container" class="space-y-3">
-                        <!-- Hourly records will be injected here -->
-                    </div>
+                        </div>
                 </div>
                 
                 <div class="pt-4 border-t">
@@ -1014,12 +1126,16 @@
                 "Comments/Issues": newLog.comments
             };
             
+            // === PUSH TO FIREBASE ===
+            pushToFirebase('shito-cooking', newLog);
+
             savedShitoCookingLogs.push(newLog);
             saveState();
             renderShitoCookingTable();
             document.getElementById('modal-shito-cooking').classList.add('hidden', 'opacity-0', 'pointer-events-none');
             
-            submitDataToGoogle(GOOGLE_SCRIPT_URL_SHITO_COOKING, MODULE_PASSWORDS.shitoCooking, batchId, rowData, savedShitoCookingLogs, renderShitoCookingTable);
+            // === MODIFIED SUBMIT CALL (added fbPath) ===
+            submitDataToGoogle(GOOGLE_SCRIPT_URL_SHITO_COOKING, MODULE_PASSWORDS.shitoCooking, batchId, rowData, savedShitoCookingLogs, renderShitoCookingTable, 'shito-cooking');
         }
         
         function renderShitoCookingTable() {
@@ -1032,7 +1148,9 @@
             tableBody.innerHTML = '';
             if (savedShitoCookingLogs.length === 0) { tableBody.innerHTML = `<tr class="text-center no-data-row"><td colspan="6" class="py-10 text-gray-500">No data saved locally.</td></tr>`; return; }
             
-            savedShitoCookingLogs.slice().reverse().forEach(log => {
+            savedShitoCookingLogs.sort((a, b) => b.id - a.id); // Sort by new entries first
+
+            savedShitoCookingLogs.forEach(log => {
                 const summaryRow = document.createElement('tr');
                 summaryRow.className = 'summary-row shito';
                 summaryRow.dataset.batchId = log.id;
@@ -1176,14 +1294,12 @@
                 let ingredientsTable = '';
                 batch.ingredients.forEach(ing => { ingredientsTable += `<tr style="border-top: 1px solid #eee;"><td style="padding: 4px;">${ing.name}</td><td style="padding: 4px;">${ing.batch}</td><td style="padding: 4px;">Qty: ${ing.qty} Kg</td></tr>`; });
                 cardHTML = `<div style="border-bottom: 2px solid #B71C1C; padding-bottom: 0.5rem; margin-bottom: 1rem;"><h2 style="font-size: 1.5rem; font-weight: 700; color: #B71C1C;">Shito Batch Summary: ${batch.batchNumber}</h2><p style="color: #666;">${batch.variant} - ${batch.sku}</p></div>
-                    <!-- === UPDATED EXPORT TABLE START === -->
                     <table style="width: 100%; font-size: 0.9rem; margin-bottom: 1rem;">
                         <tr><td><strong>Date:</strong> ${batch.date}</td><td><strong>Time:</strong> ${batch.timeSaved}</td></tr>
                         <tr><td><strong>Shift:</strong> ${currentShiftInfo.shift} (${batch.shift})</td><td><strong>Batch Size:</strong> ${batch.batchSize} Ton</td></tr>
                         <tr><td><strong>Mix Start:</strong> ${batch.startMixing || 'N/A'}</td><td><strong>Mix End:</strong> ${batch.endMixing || 'N/A'}</td></tr>
                         <tr><td><strong>Total Mix:</strong> ${batch.totalMixing || 'N/A'} min</td><td></td></tr>
                     </table>
-                    <!-- === UPDATED EXPORT TABLE END === -->
                     <h3 style="font-size: 1.1rem; font-weight: 600; color: #B71C1C; border-top: 1px solid #ddd; padding-top: 1rem;">Ingredients</h3><table style="width: 100%; font-size: 0.85rem; border-collapse: collapse;"><thead style="text-align: left; background-color: #f4f4f4;"><tr><th style="padding: 4px;">Ingredient</th><th style="padding: 4px;">Batch #</th><th style="padding: 4px;">Details</th></tr></thead><tbody>${ingredientsTable}</tbody></table>`;
                 filename = `ShitoBatch_${batch.batchNumber}_Summary`;
             
@@ -1362,6 +1478,10 @@
         // --- 6. INITIALIZE THE APP ---
         function initializeApp() {
             loadState(); // Load 24-hour persistent data
+            
+            // === START FIREBASE LISTENERS ===
+            initializeFirebaseListeners();
+            
             updateDateTime();
             setInterval(updateDateTime, 60000);
             setupEventListeners();
@@ -1380,4 +1500,3 @@
     </script>
 </body>
 </html>
-
