@@ -586,17 +586,16 @@
             const onSubmissionEnd = (status) => {
                 if (submissionHandled) return;
                 submissionHandled = true;
-                const batchToUpdate = localCache.find(b => b.id === batchId);
-                if (batchToUpdate) {
-                    batchToUpdate.syncStatus = status;
-                    tableRenderer();
-                    saveState();
-                    // === UPDATE FIREBASE STATUS ===
-                    if (db && fbPath) {
-                        db.ref(fbPath + '/' + batchId).update({ syncStatus: status });
-                    }
-                    // === END OF FIREBASE UPDATE ===
+
+                // --- MODIFIED LOGIC (v15.1) ---
+                // We no longer update the local cache directly.
+                // We just update Firebase, and the 'child_changed'
+                // listener will handle updating the UI on ALL devices.
+                if (db && fbPath) {
+                    db.ref(fbPath + '/' + batchId).update({ syncStatus: status });
                 }
+                // --- END OF MODIFIED LOGIC ---
+
                 if (document.body.contains(hiddenForm)) {
                     document.body.removeChild(hiddenForm);
                 }
@@ -1754,5 +1753,6 @@
     </script>
 </body>
 </html>
+
 
 
