@@ -691,9 +691,9 @@
             // === PUSH TO FIREBASE ===
             pushToFirebase('slurry', newBatch);
 
-            savedSlurryBatches.push(newBatch);
-            saveState();
-            renderSlurryTable();
+            // REMOVED: savedSlurryBatches.push(newBatch);
+            // REMOVED: saveState();
+            // REMOVED: renderSlurryTable();
             document.getElementById('modal-slurry').classList.add('hidden', 'opacity-0', 'pointer-events-none');
 
             const rowData = { "Date": newBatch.date, "Time Saved": newBatch.timeSaved, "Shift": newBatch.shift, "Line": newBatch.line, "Product": newBatch.productName, "Slurry Batch #": newBatch.slurryBatch, "Mix Time": newBatch.mixTime, "Brix": newBatch.brix, "Color (L)": newBatch.colorL, "Color (a/b)": newBatch.colorAB };
@@ -902,9 +902,9 @@
             // === PUSH TO FIREBASE ===
             pushToFirebase('shito-batch', newBatch);
 
-            savedShitoBatchLogs.push(newBatch);
-            saveState();
-            renderShitoBatchTable();
+            // REMOVED: savedShitoBatchLogs.push(newBatch);
+            // REMOVED: saveState();
+            // REMOVED: renderShitoBatchTable();
             document.getElementById('modal-shito-batch-add').classList.add('hidden', 'opacity-0', 'pointer-events-none');
             
             // === MODIFIED SUBMIT CALL (added fbPath) ===
@@ -1194,9 +1194,9 @@
             // === PUSH TO FIREBASE ===
             pushToFirebase('shito-cooking', newLog);
 
-            savedShitoCookingLogs.push(newLog);
-            saveState();
-            renderShitoCookingTable();
+            // REMOVED: savedShitoCookingLogs.push(newLog);
+            // REMOVED: saveState();
+            // REMOVED: renderShitoCookingTable();
             document.getElementById('modal-shito-cooking').classList.add('hidden', 'opacity-0', 'pointer-events-none');
             
             // === MODIFIED SUBMIT CALL (added fbPath) ===
@@ -1754,4 +1754,5 @@
     </script>
 </body>
 </html>
+
 
