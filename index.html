@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Production Log v14.4</title>
+    <!-- v15: Added Google Sheet data fetching for cross-device sync -->
+    <title>Production Log v15.0</title>
     
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -38,9 +39,27 @@
         input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: auto; opacity: 1; }
         .page { display: none; }
         #alert-modal { transition: opacity 0.2s ease; }
+
+        /* --- NEW Loading Overlay Style --- */
+        #loading-overlay {
+            transition: opacity 0.3s ease;
+        }
+        #loading-overlay .loader {
+            width: 48px; height: 48px; border-width: 5px;
+            border-top-color: #F97316;
+            border-right-color: #FED7AA;
+            border-bottom-color: #FED7AA;
+            border-left-color: #FED7AA;
+        }
     </style>
 </head>
 <body class="text-gray-800">
+
+    <!-- --- NEW Loading Overlay --- -->
+    <div id="loading-overlay" class="fixed inset-0 bg-black bg-opacity-80 flex-col flex items-center justify-center z-50 pointer-events-none opacity-0">
+        <div class="loader"></div>
+        <div class="text-white text-lg font-semibold mt-4" id="loading-message">Syncing data, please wait...</div>
+    </div>
 
     <div id="page-home" class="page container mx-auto p-4 max-w-xl text-center" style="display: block;">
         <header class="bg-white shadow-lg rounded-xl p-6 mb-8 border-t-4 border-orange-500">
@@ -307,7 +326,7 @@
 
         // --- 2. CORE FUNCTIONS ---
         
-        // === NEW FIREBASE FUNCTION TO PUSH DATA ===
+        // === FIREBASE FUNCTION TO PUSH DATA ===
         const pushToFirebase = (path, data) => {
             if (!db) {
                 console.error("Firebase DB not initialized.");
@@ -322,7 +341,7 @@
             }
         };
 
-        // === NEW FIREBASE FUNCTION TO LISTEN FOR DATA ===
+        // === FIREBASE FUNCTION TO LISTEN FOR DATA ===
         const initializeFirebaseListeners = () => {
             try {
                 firebase.initializeApp(firebaseConfig);
@@ -454,6 +473,7 @@
                 const now = Date.now();
                 const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
 
+                // This check ensures data is cleared daily, matching the Google Sheet "one-day" logic
                 if ((now - appState.timestamp) > TWENTY_FOUR_HOURS) {
                     localStorage.removeItem('productionLogState');
                     return;
@@ -500,6 +520,17 @@
             document.getElementById('alert-message').textContent = message;
             document.getElementById('alert-modal').classList.remove('hidden', 'opacity-0', 'pointer-events-none');
         };
+
+        // --- NEW: Loading Overlay Functions ---
+        const showLoading = (message) => {
+            document.getElementById('loading-message').textContent = message;
+            document.getElementById('loading-overlay').classList.remove('opacity-0', 'pointer-events-none');
+        };
+
+        const hideLoading = () => {
+            document.getElementById('loading-overlay').classList.add('opacity-0', 'pointer-events-none');
+        };
+        // --- End of New Functions ---
 
         const formatTimeDiff = (start, end) => {
             if (!start || !end) return "00:00";
@@ -667,6 +698,9 @@
 
             const rowData = { "Date": newBatch.date, "Time Saved": newBatch.timeSaved, "Shift": newBatch.shift, "Line": newBatch.line, "Product": newBatch.productName, "Slurry Batch #": newBatch.slurryBatch, "Mix Time": newBatch.mixTime, "Brix": newBatch.brix, "Color (L)": newBatch.colorL, "Color (a/b)": newBatch.colorAB };
             newBatch.ingredients.forEach(ing => { rowData[ing.name] = ing.name.toLowerCase().includes('bulk paste') ? `Batch: ${ing.batch}, Ratio: ${ing.ratio}, Qty: ${ing.qty} Kg` : (ing.name.toLowerCase() === 'water' ? ing.qty : ing.batch); });
+            
+            // --- NEW: Add the unique App_ID to the rowData ---
+            rowData["App_ID"] = newBatch.id;
 
             // === MODIFIED SUBMIT CALL (added fbPath) ===
             submitDataToGoogle(GOOGLE_SCRIPT_URL_SLURRY, MODULE_PASSWORDS.slurry, batchId, rowData, savedSlurryBatches, renderSlurryTable, 'slurry');
@@ -676,7 +710,12 @@
             const tableBody = document.getElementById('log-table-body-slurry');
             if (!tableBody) return;
             tableBody.innerHTML = '';
-            if (savedSlurryBatches.length === 0) { tableBody.innerHTML = `<tr class="text-center no-data-row"><td colspan="6" class="py-10 text-gray-500">No data saved locally.</td></tr>`; return; }
+            
+            // --- NEW: Check for empty table AFTER potential merge ---
+            if (savedSlurryBatches.length === 0) { 
+                tableBody.innerHTML = `<tr class="text-center no-data-row"><td colspan="6" class="py-10 text-gray-500">No data saved locally or synced for today.</td></tr>`; 
+                return; 
+            }
             
             savedSlurryBatches.sort((a, b) => b.id - a.id); // Sort by new entries first
             
@@ -689,9 +728,17 @@
                 summaryRow.innerHTML = `<td class="py-3 px-3 border-b border-gray-200 text-orange-600 font-bold expand-icon">+</td> <td class="py-3 px-3 border-b border-gray-200 font-semibold">${batch.slurryBatch}</td> <td class="py-3 px-3 border-b border-gray-200">${batch.productName}</td> <td class="py-3 px-3 border-b border-gray-200">${batch.line}</td> <td class="py-3 px-3 border-b border-gray-200">${batch.timeSaved}</td> <td class="py-3 px-3 border-b border-gray-200 text-center">${statusHtml}</td>`;
                 
                 const detailsRow = document.createElement('tr'); detailsRow.className = 'details-row'; detailsRow.dataset.detailsFor = batch.id;
-                let detailsHtml = `<td colspan="6" class="p-4 bg-orange-50/50"><div class="max-w-4xl mx-auto"><div class="flex flex-col sm:flex-row justify-between items-start mb-3"><div> <h4 class="font-bold mb-1 text-orange-900">Batch Details:</h4> <table class="text-sm"> <tr><td class="font-semibold pr-2">Mix Time:</td><td>${batch.mixTime} mins</td><td class="font-semibold pr-2 pl-4">Brix:</td><td>${batch.brix}</td></tr> <tr><td class="font-semibold pr-2">Color (L):</td><td>${batch.colorL}</td><td class="font-semibold pr-2 pl-4">Color (a/b):</td><td>${batch.colorAB}</td></tr> </table> </div><div class="flex flex-col sm:flex-row gap-2 mt-2 sm:mt-0"> <button data-action="export-png" data-batch-id="${batch.id}" data-type="slurry" class="export-btn bg-white hover:bg-gray-100 text-gray-700 text-sm font-bold py-1 px-3 border rounded-md">Export Image</button> <button data-action="export-pdf" data-batch-id="${batch.id}" data-type="slurry" class="export-btn bg-white hover:bg-gray-100 text-gray-700 text-sm font-bold py-1 px-3 border rounded-md">Export PDF</button> </div></div> <h4 class="font-bold mt-3 mb-1 text-orange-900">Ingredient Details:</h4> <table class="min-w-full text-sm bg-white rounded-md shadow-sm"> <thead class="bg-gray-100"><tr><th class="px-2 py-1 text-left font-semibold">Ingredient</th><th class="px-2 py-1 text-left font-semibold">Batch #</th><th class="px-2 py-1 text-left font-semibold">Details</th></tr></thead><tbody>`;
-                batch.ingredients.forEach(ing => { const details = ing.name.toLowerCase().includes('bulk paste') ? `Ratio: ${ing.ratio}, Qty: ${ing.qty} Kg` : `Qty: ${ing.qty} Kg`; detailsHtml += `<tr class="border-t"><td class="px-2 py-1">${ing.name}</td><td class="px-2 py-1">${ing.batch}</td><td class="px-2 py-1">${details}</td></tr>`; });
-                detailsHtml += '</tbody></table></div></td>';
+                
+                // --- NEW: Handle items synced from sheet (which have no ingredients) ---
+                let detailsHtml;
+                if (!batch.ingredients || batch.ingredients.length === 0) {
+                    detailsHtml = `<td colspan="6" class="p-4 bg-orange-50/50"><div class="max-w-4xl mx-auto"><div class="text-gray-600 text-sm">Detailed ingredient data is not available for this entry (it was synced from another device). Summary data: ${batch.mixTime || 'N/A'} mins, ${batch.brix || 'N/A'} Brix, Color L: ${batch.colorL || 'N/A'}, Color a/b: ${batch.colorAB || 'N/A'}</div></div></td>`;
+                } else {
+                    let ingredientsTable = '';
+                    batch.ingredients.forEach(ing => { const details = ing.name.toLowerCase().includes('bulk paste') ? `Ratio: ${ing.ratio}, Qty: ${ing.qty} Kg` : `Qty: ${ing.qty} Kg`; ingredientsTable += `<tr class="border-t"><td class="px-2 py-1">${ing.name}</td><td class="px-2 py-1">${ing.batch}</td><td class="px-2 py-1">${details}</td></tr>`; });
+                    detailsHtml = `<td colspan="6" class="p-4 bg-orange-50/50"><div class="max-w-4xl mx-auto"><div class="flex flex-col sm:flex-row justify-between items-start mb-3"><div> <h4 class="font-bold mb-1 text-orange-900">Batch Details:</h4> <table class="text-sm"> <tr><td class="font-semibold pr-2">Mix Time:</td><td>${batch.mixTime} mins</td><td class="font-semibold pr-2 pl-4">Brix:</td><td>${batch.brix}</td></tr> <tr><td class="font-semibold pr-2">Color (L):</td><td>${batch.colorL}</td><td class="font-semibold pr-2 pl-4">Color (a/b):</td><td>${batch.colorAB}</td></tr> </table> </div><div class="flex flex-col sm:flex-row gap-2 mt-2 sm:mt-0"> <button data-action="export-png" data-batch-id="${batch.id}" data-type="slurry" class="export-btn bg-white hover:bg-gray-100 text-gray-700 text-sm font-bold py-1 px-3 border rounded-md">Export Image</button> <button data-action="export-pdf" data-batch-id="${batch.id}" data-type="slurry" class="export-btn bg-white hover:bg-gray-100 text-gray-700 text-sm font-bold py-1 px-3 border rounded-md">Export PDF</button> </div></div> <h4 class="font-bold mt-3 mb-1 text-orange-900">Ingredient Details:</h4> <table class="min-w-full text-sm bg-white rounded-md shadow-sm"> <thead class="bg-gray-100"><tr><th class="px-2 py-1 text-left font-semibold">Ingredient</th><th class="px-2 py-1 text-left font-semibold">Batch #</th><th class="px-2 py-1 text-left font-semibold">Details</th></tr></thead><tbody>${ingredientsTable}</tbody></table></div></td>`;
+                }
+                
                 detailsRow.innerHTML = detailsHtml;
                 
                 tableBody.appendChild(summaryRow); tableBody.appendChild(detailsRow);
@@ -849,6 +896,9 @@
                 updateBatchSuggestions(batch);
             });
             
+            // --- NEW: Add the unique App_ID to the rowData ---
+            rowData["App_ID"] = newBatch.id;
+
             // === PUSH TO FIREBASE ===
             pushToFirebase('shito-batch', newBatch);
 
@@ -865,7 +915,12 @@
             const tableBody = document.getElementById('log-table-body-shito-batch');
             if (!tableBody) return;
             tableBody.innerHTML = '';
-            if (savedShitoBatchLogs.length === 0) { tableBody.innerHTML = `<tr class="text-center no-data-row"><td colspan="6" class="py-10 text-gray-500">No data saved locally.</td></tr>`; return; }
+
+            // --- NEW: Check for empty table AFTER potential merge ---
+            if (savedShitoBatchLogs.length === 0) { 
+                tableBody.innerHTML = `<tr class="text-center no-data-row"><td colspan="6" class="py-10 text-gray-500">No data saved locally or synced for today.</td></tr>`; 
+                return; 
+            }
             
             savedShitoBatchLogs.sort((a, b) => b.id - a.id); // Sort by new entries first
 
@@ -891,33 +946,40 @@
                 detailsRow.className = 'details-row';
                 detailsRow.dataset.detailsFor = batch.id;
                 
-                let ingredientsTable = '';
-                batch.ingredients.forEach(ing => {
-                    ingredientsTable += `<tr class="border-t"><td class="px-2 py-1">${ing.name}</td><td class="px-2 py-1">${ing.batch}</td><td class="px-2 py-1">Qty: ${ing.qty} Kg</td></tr>`;
-                });
-                
-                detailsRow.innerHTML = `<td colspan="6" class="p-4 bg-red-50/50"><div class="max-w-4xl mx-auto">
-                    <div class="flex flex-col sm:flex-row justify-between items-start mb-3">
-                        <div>
-                            <h4 class="font-bold mb-1 text-red-900">Batch Details:</h4>
-                            <table class="text-sm">
-                                <tr><td class="font-semibold pr-2">Batch Size:</td><td>${batch.batchSize} Ton</td><td class="font-semibold pr-2 pl-4">SKU:</td><td>${batch.sku}</td></tr>
-                                <tr><td class="font-semibold pr-2">Mix Start:</td><td>${batch.startMixing || 'N/A'}</td><td class="font-semibold pr-2 pl-4">Mix End:</td><td>${batch.endMixing || 'N/A'}</td></tr>
-                                <tr><td class="font-semibold pr-2">Total Mix:</td><td>${batch.totalMixing || 'N/A'} min</td><td></td><td></td></tr>
-                            </table>
+                // --- NEW: Handle items synced from sheet (which have no ingredients) ---
+                let detailsHtml;
+                if (!batch.ingredients || batch.ingredients.length === 0) {
+                     detailsHtml = `<td colspan="6" class="p-4 bg-red-50/50"><div class="max-w-4xl mx-auto"><div class="text-gray-600 text-sm">Detailed ingredient data is not available for this entry (it was synced from another device). Summary data: ${batch.batchSize || 'N/A'} Ton, Mix Time: ${batch.totalMixing || 'N/A'} min</div></div></td>`;
+                } else {
+                    let ingredientsTable = '';
+                    batch.ingredients.forEach(ing => {
+                        ingredientsTable += `<tr class="border-t"><td class="px-2 py-1">${ing.name}</td><td class="px-2 py-1">${ing.batch}</td><td class="px-2 py-1">Qty: ${ing.qty} Kg</td></tr>`;
+                    });
+                    
+                    detailsHtml = `<td colspan="6" class="p-4 bg-red-50/50"><div class="max-w-4xl mx-auto">
+                        <div class="flex flex-col sm:flex-row justify-between items-start mb-3">
+                            <div>
+                                <h4 class="font-bold mb-1 text-red-900">Batch Details:</h4>
+                                <table class="text-sm">
+                                    <tr><td class="font-semibold pr-2">Batch Size:</td><td>${batch.batchSize} Ton</td><td class="font-semibold pr-2 pl-4">SKU:</td><td>${batch.sku}</td></tr>
+                                    <tr><td class="font-semibold pr-2">Mix Start:</td><td>${batch.startMixing || 'N/A'}</td><td class="font-semibold pr-2 pl-4">Mix End:</td><td>${batch.endMixing || 'N/A'}</td></tr>
+                                    <tr><td class="font-semibold pr-2">Total Mix:</td><td>${batch.totalMixing || 'N/A'} min</td><td></td><td></td></tr>
+                                </table>
+                                </div>
+                            <div class="flex flex-col sm:flex-row gap-2 mt-2 sm:mt-0">
+                                <button data-action="export-png" data-batch-id="${batch.id}" data-type="shito-batch" class="export-btn bg-white hover:bg-gray-100 text-gray-700 text-sm font-bold py-1 px-3 border rounded-md">Export Image</button>
+                                <button data-action="export-pdf" data-batch-id="${batch.id}" data-type="shito-batch" class="export-btn bg-white hover:bg-gray-100 text-gray-700 text-sm font-bold py-1 px-3 border rounded-md">Export PDF</button>
                             </div>
-                        <div class="flex flex-col sm:flex-row gap-2 mt-2 sm:mt-0">
-                            <button data-action="export-png" data-batch-id="${batch.id}" data-type="shito-batch" class="export-btn bg-white hover:bg-gray-100 text-gray-700 text-sm font-bold py-1 px-3 border rounded-md">Export Image</button>
-                            <button data-action="export-pdf" data-batch-id="${batch.id}" data-type="shito-batch" class="export-btn bg-white hover:bg-gray-100 text-gray-700 text-sm font-bold py-1 px-3 border rounded-md">Export PDF</button>
                         </div>
-                    </div>
-                    <h4 class="font-bold mt-3 mb-1 text-red-900">Ingredient Details:</h4>
-                    <table class="min-w-full text-sm bg-white rounded-md shadow-sm">
-                        <thead class="bg-gray-100"><tr><th class="px-2 py-1 text-left font-semibold">Ingredient</th><th class="px-2 py-1 text-left font-semibold">Batch #</th><th class="px-2 py-1 text-left font-semibold">Details</th></tr></thead>
-                        <tbody>${ingredientsTable}</tbody>
-                    </table>
-                </div></td>`;
+                        <h4 class="font-bold mt-3 mb-1 text-red-900">Ingredient Details:</h4>
+                        <table class="min-w-full text-sm bg-white rounded-md shadow-sm">
+                            <thead class="bg-gray-100"><tr><th class="px-2 py-1 text-left font-semibold">Ingredient</th><th class="px-2 py-1 text-left font-semibold">Batch #</th><th class="px-2 py-1 text-left font-semibold">Details</th></tr></thead>
+                            <tbody>${ingredientsTable}</tbody>
+                        </table>
+                    </div></td>`;
+                }
                 
+                detailsRow.innerHTML = detailsHtml;
                 tableBody.appendChild(summaryRow);
                 tableBody.appendChild(detailsRow);
             });
@@ -1126,6 +1188,9 @@
                 "Comments/Issues": newLog.comments
             };
             
+            // --- NEW: Add the unique App_ID to the rowData ---
+            rowData["App_ID"] = newLog.id;
+
             // === PUSH TO FIREBASE ===
             pushToFirebase('shito-cooking', newLog);
 
@@ -1146,7 +1211,12 @@
             chartInstances = {};
 
             tableBody.innerHTML = '';
-            if (savedShitoCookingLogs.length === 0) { tableBody.innerHTML = `<tr class="text-center no-data-row"><td colspan="6" class="py-10 text-gray-500">No data saved locally.</td></tr>`; return; }
+            
+            // --- NEW: Check for empty table AFTER potential merge ---
+            if (savedShitoCookingLogs.length === 0) { 
+                tableBody.innerHTML = `<tr class="text-center no-data-row"><td colspan="6" class="py-10 text-gray-500">No data saved locally or synced for today.</td></tr>`; 
+                return; 
+            }
             
             savedShitoCookingLogs.sort((a, b) => b.id - a.id); // Sort by new entries first
 
@@ -1173,59 +1243,66 @@
                 const detailsRow = document.createElement('tr');
                 detailsRow.className = 'details-row';
                 detailsRow.dataset.detailsFor = log.id;
-                
-                let hourlyTable = '';
-                log.hourlyRecords.forEach(r => {
-                    hourlyTable += `<tr class="border-t"><td class="px-2 py-1">${r.time}</td><td class="px-2 py-1">${r.temp}</td><td class="px-2 py-1">${r.pressure}</td><td class="px-2 py-1">${r.moisture}</td></tr>`;
-                });
-                if(log.hourlyRecords.length === 0) hourlyTable = '<tr><td colspan="4" class="px-2 py-1 text-gray-500">No hourly records added.</td></tr>';
 
-                const themeColor = log.variant === 'HOT' ? 'red' : 'yellow';
-                
-                detailsRow.innerHTML = `<td colspan="6" class="p-4 bg-${themeColor}-50/50"><div class="max-w-4xl mx-auto">
-                    <div class="flex flex-col sm:flex-row justify-between items-start mb-3">
-                        <div>
-                            <h4 class="font-bold mb-1 text-${themeColor}-900">Cooking Log Details:</h4>
-                            <table class="text-sm">
-                                <tr><td class="font-semibold pr-2">Batch ID:</td><td>${log.batchId}</td><td class="font-semibold pr-2 pl-4">SKU:</td><td>${log.sku}</td></tr>
-                                <tr><td class="font-semibold pr-2">Cycle:</td><td>${log.cookingCycle}</td><td class="font-semibold pr-2 pl-4">Boule:</td><td>${log.bouleId}</td></tr>
-                                <tr><td class="font-semibold pr-2">Batch Size:</td><td>${log.batchSize}</td><td class="font-semibold pr-2 pl-4">Variant:</td><td>${log.variant}</td></tr>
-                                <tr><td class="font-semibold pr-2">GOG Time:</td><td>${log.gogStart} to ${log.gogEnd} (${log.gogTotal})</td><td class="font-semibold pr-2 pl-4">Cooking Time:</td><td>${log.cookStart} to ${log.cookEnd} (${log.cookTotal})</td></tr>
-                                <tr><td class="font-semibold pr-2">Initial pH:</td><td>${log.phInitial}</td><td class="font-semibold pr-2 pl-4">Final pH:</td><td>${log.phFinal}</td></tr>
-                                <tr><td class="font-semibold pr-2">Initial %M:</td><td>${log.moistureInitial}</td><td class="font-semibold pr-2 pl-4">Initial Temp:</td><td>${log.tempInitial} °C</td></tr>
-                                <tr><td class="font-semibold pr-2">Initial Pressure:</td><td>${log.pressureInitial} Bar</td><td></td><td></td></tr>
-                            </table>
-                        </div>
-                        <div class="flex flex-col sm:flex-row gap-2 mt-2 sm:mt-0">
-                            <button data-action="export-png" data-batch-id="${log.id}" data-type="shito-cooking" class="export-btn bg-white hover:bg-gray-100 text-gray-700 text-sm font-bold py-1 px-3 border rounded-md">Export Image</button>
-                            <button data-action="export-pdf" data-batch-id="${log.id}" data-type="shito-cooking" class="export-btn bg-white hover:bg-gray-100 text-gray-700 text-sm font-bold py-1 px-3 border rounded-md">Export PDF</button>
-                        </div>
-                    </div>
+                // --- NEW: Handle items synced from sheet (which have no hourly records) ---
+                let detailsHtml;
+                if (!log.hourlyRecords) {
+                    detailsHtml = `<td colspan="6" class="p-4 bg-${log.variant === 'HOT' ? 'red' : 'yellow'}-50/50"><div class="max-w-4xl mx-auto"><div class="text-gray-600 text-sm">Detailed hourly data is not available for this entry (it was synced from another device).</div></div></td>`;
+                } else {
+                    let hourlyTable = '';
+                    log.hourlyRecords.forEach(r => {
+                        hourlyTable += `<tr class="border-t"><td class="px-2 py-1">${r.time}</td><td class="px-2 py-1">${r.temp}</td><td class="px-2 py-1">${r.pressure}</td><td class="px-2 py-1">${r.moisture}</td></tr>`;
+                    });
+                    if(log.hourlyRecords.length === 0) hourlyTable = '<tr><td colspan="4" class="px-2 py-1 text-gray-500">No hourly records added.</td></tr>';
+
+                    const themeColor = log.variant === 'HOT' ? 'red' : 'yellow';
                     
-                    <h4 class="font-bold mt-3 mb-1 text-${themeColor}-900">Comments / Issues:</h4>
-                    <p class="text-sm p-2 bg-white rounded-md shadow-sm border">${log.comments || 'N/A'}</p>
-
-                    <h4 class="font-bold mt-3 mb-1 text-${themeColor}-900">Hourly Trends:</h4>
-                    <div class="p-2 bg-white rounded-md shadow-sm border">
-                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                            <div><canvas id="chart-temp-${log.id}"></canvas></div>
-                            <div><canvas id="chart-pressure-${log.id}"></canvas></div>
-                            <div><canvas id="chart-moisture-${log.id}"></canvas></div>
+                    detailsHtml = `<td colspan="6" class="p-4 bg-${themeColor}-50/50"><div class="max-w-4xl mx-auto">
+                        <div class="flex flex-col sm:flex-row justify-between items-start mb-3">
+                            <div>
+                                <h4 class="font-bold mb-1 text-${themeColor}-900">Cooking Log Details:</h4>
+                                <table class="text-sm">
+                                    <tr><td class="font-semibold pr-2">Batch ID:</td><td>${log.batchId}</td><td class="font-semibold pr-2 pl-4">SKU:</td><td>${log.sku}</td></tr>
+                                    <tr><td class="font-semibold pr-2">Cycle:</td><td>${log.cookingCycle}</td><td class="font-semibold pr-2 pl-4">Boule:</td><td>${log.bouleId}</td></tr>
+                                    <tr><td class="font-semibold pr-2">Batch Size:</td><td>${log.batchSize}</td><td class="font-semibold pr-2 pl-4">Variant:</td><td>${log.variant}</td></tr>
+                                    <tr><td class="font-semibold pr-2">GOG Time:</td><td>${log.gogStart} to ${log.gogEnd} (${log.gogTotal})</td><td class="font-semibold pr-2 pl-4">Cooking Time:</td><td>${log.cookStart} to ${log.cookEnd} (${log.cookTotal})</td></tr>
+                                    <tr><td class="font-semibold pr-2">Initial pH:</td><td>${log.phInitial}</td><td class="font-semibold pr-2 pl-4">Final pH:</td><td>${log.phFinal}</td></tr>
+                                    <tr><td class="font-semibold pr-2">Initial %M:</td><td>${log.moistureInitial}</td><td class="font-semibold pr-2 pl-4">Initial Temp:</td><td>${log.tempInitial} °C</td></tr>
+                                    <tr><td class="font-semibold pr-2">Initial Pressure:</td><td>${log.pressureInitial} Bar</td><td></td><td></td></tr>
+                                </table>
+                            </div>
+                            <div class="flex flex-col sm:flex-row gap-2 mt-2 sm:mt-0">
+                                <button data-action="export-png" data-batch-id="${log.id}" data-type="shito-cooking" class="export-btn bg-white hover:bg-gray-100 text-gray-700 text-sm font-bold py-1 px-3 border rounded-md">Export Image</button>
+                                <button data-action="export-pdf" data-batch-id="${log.id}" data-type="shito-cooking" class="export-btn bg-white hover:bg-gray-100 text-gray-700 text-sm font-bold py-1 px-3 border rounded-md">Export PDF</button>
+                            </div>
                         </div>
-                    </div>
+                        
+                        <h4 class="font-bold mt-3 mb-1 text-${themeColor}-900">Comments / Issues:</h4>
+                        <p class="text-sm p-2 bg-white rounded-md shadow-sm border">${log.comments || 'N/A'}</p>
 
-                    <h4 class="font-bold mt-3 mb-1 text-${themeColor}-900">Hourly Records:</h4>
-                    <table class="min-w-full text-sm bg-white rounded-md shadow-sm">
-                        <thead class="bg-gray-100"><tr>
-                            <th class="px-2 py-1 text-left font-semibold">Time</th>
-                            <th class="px-2 py-1 text-left font-semibold">Temp (°C)</th>
-                            <th class="px-2 py-1 text-left font-semibold">Pressure (Bar)</th>
-                            <th class="px-2 py-1 text-left font-semibold">Moisture (%M)</th>
-                        </tr></thead>
-                        <tbody>${hourlyTable}</tbody>
-                    </table>
-                </div></td>`;
-                
+                        <h4 class="font-bold mt-3 mb-1 text-${themeColor}-900">Hourly Trends:</h4>
+                        <div class="p-2 bg-white rounded-md shadow-sm border">
+                            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                                <div><canvas id="chart-temp-${log.id}"></canvas></div>
+                                <div><canvas id="chart-pressure-${log.id}"></canvas></div>
+                                <div><canvas id="chart-moisture-${log.id}"></canvas></div>
+                            </div>
+                        </div>
+
+                        <h4 class="font-bold mt-3 mb-1 text-${themeColor}-900">Hourly Records:</h4>
+                        <table class="min-w-full text-sm bg-white rounded-md shadow-sm">
+                            <thead class="bg-gray-100"><tr>
+                                <th class="px-2 py-1 text-left font-semibold">Time</th>
+                                <th class="px-2 py-1 text-left font-semibold">Temp (°C)</th>
+                                <th class="px-2 py-1 text-left font-semibold">Pressure (Bar)</th>
+                                <th class="px-2 py-1 text-left font-semibold">Moisture (%M)</th>
+                            </tr></thead>
+                            <tbody>${hourlyTable}</tbody>
+                        </table>
+                    </div></td>`;
+                }
+
+                detailsRow.innerHTML = detailsHtml;
                 tableBody.appendChild(summaryRow);
                 tableBody.appendChild(detailsRow);
             });
@@ -1273,6 +1350,14 @@
                           (type === 'shito-cooking') ? savedShitoCookingLogs.find(b => b.id == batchId) : null;
             
             if (!batch) return;
+            if ((type === 'slurry' || type === 'shito-batch') && (!batch.ingredients || batch.ingredients.length === 0)) {
+                showAlert("Export Not Available", "Cannot export a synced entry with partial data. Please export from the original device.");
+                return;
+            }
+            if (type === 'shito-cooking' && !batch.hourlyRecords) {
+                showAlert("Export Not Available", "Cannot export a synced entry with partial data. Please export from the original device.");
+                return;
+            }
 
             const originalText = buttonEl.textContent;
             buttonEl.textContent = 'Generating...'; buttonEl.disabled = true;
@@ -1361,39 +1446,32 @@
                 const canvas = await html2canvas(card, { scale: 2 });
                 const imgData = canvas.toDataURL('image/png');
 
-                // --- *** NEW LOGIC (v14.3) *** ---
+                // --- *** PDF FIX LOGIC (v14.3) *** ---
                 if (format === 'pdf') {
-                    // PDF LOGIC (for both mobile and desktop)
                     const pdf = new jsPDF({ orientation: 'p', unit: 'px', format: [canvas.width, canvas.height] }); 
                     pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-                    
                     if (isMobile) {
-                        // On mobile, open the PDF in a new tab
                         const pdfBlob = pdf.output('blob');
                         const pdfUrl = URL.createObjectURL(pdfBlob);
                         window.open(pdfUrl, '_blank');
                     } else {
-                        // On desktop, save the file directly
                         pdf.save(`${filename}.pdf`); 
                     }
-
                 } else {
                     // PNG LOGIC (format === 'png')
                     if (isMobile) {
-                        // On mobile, show the image preview modal
                         const previewModal = document.getElementById('export-preview-modal');
                         const previewImage = document.getElementById('preview-image');
                         previewImage.src = imgData;
                         previewModal.classList.remove('hidden', 'opacity-0', 'pointer-events-none');
                     } else {
-                        // On desktop, save the file directly
                         const link = document.createElement('a'); 
                         link.download = `${filename}.png`; 
                         link.href = imgData; 
                         link.click(); 
                     }
                 }
-                // --- *** END OF NEW LOGIC *** ---
+                // --- *** END OF PDF FIX LOGIC *** ---
 
             } catch(err) { console.error("Export failed:", err); showAlert("Export Failed", "Sorry, the summary could not be exported."); }
             finally { exportContainer.innerHTML = ''; buttonEl.textContent = originalText; buttonEl.disabled = false; }
@@ -1475,28 +1553,205 @@
             document.getElementById('alert-ok-btn').addEventListener('click', () => { document.getElementById('alert-modal').classList.add('hidden', 'opacity-0', 'pointer-events-none'); });
         }
         
-        // --- 6. INITIALIZE THE APP ---
-        function initializeApp() {
+        // --- 6. NEW DATA FETCH & MERGE FUNCTIONS ---
+
+        /**
+         * Fetches data from a Google Apps Script URL.
+         * @param {string} url The Apps Script URL to fetch from.
+         * @returns {Promise<Array|null>} A promise that resolves to the data array or null on error.
+         */
+        async function fetchSyncedData(url) {
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    console.error('Fetch error:', response.statusText);
+                    return null;
+                }
+                const result = await response.json();
+                if (result.status === 'success' || result.status === 'empty') {
+                    return result.data || [];
+                }
+                console.error('Script error:', result.message);
+                return null;
+            } catch (error) {
+                console.error('Failed to fetch synced data from', url, error);
+                return null;
+            }
+        }
+
+        /**
+         * Merges synced Slurry data from the sheet with local data.
+         * @param {Array} syncedData - Data array from Google Sheet.
+         */
+        function mergeSlurryData(syncedData) {
+            if (!syncedData) return;
+            const localIds = new Set(savedSlurryBatches.map(b => b.id));
+            
+            syncedData.forEach(item => {
+                const syncedId = parseInt(item.App_ID, 10);
+                if (syncedId && !localIds.has(syncedId)) {
+                    // This item is on the sheet but not locally. Add it.
+                    // Note: We only get summary data, not detailed ingredients.
+                    savedSlurryBatches.push({
+                        id: syncedId,
+                        date: item.Date,
+                        timeSaved: item['Time Saved'],
+                        shift: item.Shift,
+                        line: item.Line,
+                        productName: item.Product,
+                        slurryBatch: item['Slurry Batch #'],
+                        mixTime: item['Mix Time'],
+                        brix: item.Brix,
+                        colorL: item['Color (L)'],
+                        colorAB: item['Color (a/b)'],
+                        ingredients: [], // Details are not available from sheet
+                        syncStatus: 'success'
+                    });
+                }
+            });
+        }
+
+        /**
+         * Merges synced Shito Batch data from the sheet with local data.
+         * @param {Array} syncedData - Data array from Google Sheet.
+         */
+        function mergeShitoBatchData(syncedData) {
+            if (!syncedData) return;
+            const localIds = new Set(savedShitoBatchLogs.map(b => b.id));
+
+            syncedData.forEach(item => {
+                const syncedId = parseInt(item.App_ID, 10);
+                if (syncedId && !localIds.has(syncedId)) {
+                    savedShitoBatchLogs.push({
+                        id: syncedId,
+                        date: item.Date,
+                        timeSaved: item['Time Saved'],
+                        shift: item.Shift,
+                        batchNumber: item['Batch Number'],
+                        variant: item.Variant,
+                        sku: item.SKU,
+                        batchSize: item['Batch Size'],
+                        startMixing: item['Start of Mixing'],
+                        endMixing: item['End of Mixing'],
+                        totalMixing: item['Total Mixing Time (min)'],
+                        ingredients: [], // Details are not available
+                        syncStatus: 'success'
+                    });
+                }
+            });
+        }
+
+        /**
+         * Merges synced Shito Cooking data from the sheet with local data.
+         * @param {Array} syncedData - Data array from Google Sheet.
+         */
+        function mergeShitoCookingData(syncedData) {
+            if (!syncedData) return;
+            const localIds = new Set(savedShitoCookingLogs.map(l => l.id));
+
+            syncedData.forEach(item => {
+                const syncedId = parseInt(item.App_ID, 10);
+                if (syncedId && !localIds.has(syncedId)) {
+                    savedShitoCookingLogs.push({
+                        id: syncedId,
+                        date: item.Date,
+                        timeSaved: item['Time Saved'],
+                        shift: item.Shift,
+                        batchId: item['Batch ID'],
+                        variant: item.Variant,
+                        sku: item.SKU,
+                        cookingCycle: item['Cooking Cycle'],
+                        bouleId: item['Boule ID'],
+                        gogStart: item['Start of GOG Transfer'],
+                        gogEnd: item['End of GOG Transfer'],
+                        gogTotal: item['Total GOG Time'],
+                        batchSize: item['Batch Size'],
+                        cookStart: item['Cooking Start Time'],
+                        cookEnd: item['Cooking End Time'],
+                        cookTotal: item['Total Cooking Time'],
+                        phInitial: item['Initial pH'],
+                        phFinal: item['Final pH'],
+                        moistureInitial: item['Initial Moisture (%M)'],
+                        tempInitial: item['Initial Cooking Temp (°C)'],
+                        pressureInitial: item['Initial Cooking Pressure (Bar)'],
+                        comments: item['Comments/Issues'],
+                        hourlyRecords: null, // Set to null to indicate partial data
+                        syncStatus: 'success'
+                    });
+                }
+            });
+        }
+
+        /**
+         * Fetches and merges data from all three Google Sheets.
+         */
+        async function fetchAndMergeData() {
+            showLoading('Syncing data from Google Sheets...');
+            
+            const results = await Promise.allSettled([
+                fetchSyncedData(GOOGLE_SCRIPT_URL_SLURRY),
+                fetchSyncedData(GOOGLE_SCRIPT_URL_SHITO_BATCH),
+                fetchSyncedData(GOOGLE_SCRIPT_URL_SHITO_COOKING)
+            ]);
+
+            const slurryData = results[0].status === 'fulfilled' ? results[0].value : null;
+            const shitoBatchData = results[1].status === 'fulfilled' ? results[1].value : null;
+            const shitoCookingData = results[2].status === 'fulfilled' ? results[2].value : null;
+
+            if (slurryData) mergeSlurryData(slurryData);
+            if (shitoBatchData) mergeShitoBatchData(shitoBatchData);
+            if (shitoCookingData) mergeShitoCookingData(shitoCookingData);
+
+            if (results.some(r => r.status === 'rejected' || r.value === null)) {
+                showAlert("Sync Warning", "Could not fetch all data. Some entries from other devices may be missing. Check your internet connection.");
+            }
+            
+            // Data is merged, now save the new combined state
+            saveState();
+        }
+
+        // --- 7. MODIFIED INITIALIZE THE APP ---
+        
+        /**
+         * Main app initialization function.
+         */
+        async function initializeApp() {
+            // Load local data first
             loadState(); // Load 24-hour persistent data
             
-            // === START FIREBASE LISTENERS ===
+            // Start Firebase listeners for real-time updates
             initializeFirebaseListeners();
             
+            // Set up date/time
             updateDateTime();
             setInterval(updateDateTime, 60000);
+            
+            // Set up all click/submit listeners
             setupEventListeners();
+            
+            // Create the hidden iframe for Google Sheet submissions
             const iframe = document.createElement('iframe');
             iframe.name = 'hidden-iframe';
             iframe.style.display = 'none';
             document.body.appendChild(iframe);
+            
+            // --- NEW: Fetch and Merge remote data ---
+            await fetchAndMergeData();
+            
+            // --- Render tables AFTER merging ---
             renderSlurryTable(); 
             renderShitoBatchTable();
             renderShitoCookingTable();
+            
+            // Hide loading screen and show the app
+            hideLoading();
             showPage('page-home');
         }
 
+        // Start the app!
         initializeApp();
     });
     </script>
 </body>
 </html>
+
